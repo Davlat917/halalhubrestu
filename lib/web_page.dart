@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:halal_hub_resto/device_registration_service.dart';
 import 'package:halal_hub_resto/push_notification_service.dart';
 import 'package:halal_hub_resto/widgets/webview_error_view.dart';
@@ -15,12 +16,15 @@ class WebViewPage extends StatefulWidget {
 
 class _WebViewPageState extends State<WebViewPage> {
   static const String _initialUrl = 'https://vendor.wehalalhub.com';
+  final Color primary = const Color(0xFF0DA84A);
 
   InAppWebViewController? _controller;
   PullToRefreshController? _pullToRefreshController;
   String? accessToken;
   String? _errorMessage;
   double _progress = 0;
+  bool _isWebViewReady = false;
+  bool _overlayVisible = true;
 
   bool get _hasError => _errorMessage != null;
 
@@ -35,11 +39,17 @@ class _WebViewPageState extends State<WebViewPage> {
     );
   }
 
-  Future<void> _readAccessTokenFromWebView() async {
-    if (_controller == null) {
-      return;
-    }
+  Future<void> _hideOverlay() async {
+    if (_isWebViewReady) return;
+    setState(() => _isWebViewReady = true);
+    // Animatsiya tugagandan keyin widgetni stack'dan olib tashlash
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (mounted) setState(() => _overlayVisible = false);
+    });
+  }
 
+  Future<void> _readAccessTokenFromWebView() async {
+    if (_controller == null) return;
     try {
       await _controller!.evaluateJavascript(
         source: """
@@ -56,11 +66,10 @@ class _WebViewPageState extends State<WebViewPage> {
     setState(() {
       _errorMessage = null;
       _progress = 0.15;
+      _isWebViewReady = false;
+      _overlayVisible = true;
     });
-
-    await _controller?.loadUrl(
-      urlRequest: URLRequest(url: WebUri(_initialUrl)),
-    );
+    await _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(_initialUrl)));
   }
 
   Future<void> _showExitDialog() async {
@@ -70,23 +79,14 @@ class _WebViewPageState extends State<WebViewPage> {
         return AlertDialog(
           title: const Text('Ilovadan chiqilsinmi?'),
           content: const Text('Orqaga qaytish uchun sahifalar qolmadi. Ilovani yopishni xohlaysizmi?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Bekor qilish'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Chiqish'),
-            ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Bekor qilish')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Chiqish')),
           ],
         );
       },
     );
-
-    if (shouldExit == true) {
-      SystemNavigator.pop();
-    }
+    if (shouldExit == true) SystemNavigator.pop();
   }
 
   Future<void> _handleBackNavigation() async {
@@ -94,11 +94,7 @@ class _WebViewPageState extends State<WebViewPage> {
       await _controller?.goBack();
       return;
     }
-
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     await _showExitDialog();
   }
 
@@ -107,27 +103,19 @@ class _WebViewPageState extends State<WebViewPage> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
-          await _handleBackNavigation();
-        }
+        if (!didPop) await _handleBackNavigation();
       },
       child: Scaffold(
         body: SafeArea(
           child: Stack(
-            children: <Widget>[
+            children: [
+              // ── WebView ──────────────────────────────────────────
               InAppWebView(
                 initialUrlRequest: URLRequest(url: WebUri(_initialUrl)),
                 pullToRefreshController: _pullToRefreshController,
-                initialSettings: InAppWebViewSettings(
-                  javaScriptEnabled: true,
-                  allowsBackForwardNavigationGestures: true,
-                  mediaPlaybackRequiresUserGesture: false,
-                  supportZoom: false,
-                  transparentBackground: false,
-                ),
+                initialSettings: InAppWebViewSettings(javaScriptEnabled: true, allowsBackForwardNavigationGestures: true, mediaPlaybackRequiresUserGesture: false, supportZoom: false, transparentBackground: false),
                 onWebViewCreated: (controller) {
                   _controller = controller;
-
                   controller.addJavaScriptHandler(
                     handlerName: "sendToken",
                     callback: (args) {
@@ -136,7 +124,6 @@ class _WebViewPageState extends State<WebViewPage> {
                         DeviceRegistrationService.setAccessToken(accessToken);
                         DeviceRegistrationService.syncDeviceToken(PushNotificationHelper.fcmToken);
                       }
-
                       return {"status": "ok"};
                     },
                   );
@@ -148,13 +135,8 @@ class _WebViewPageState extends State<WebViewPage> {
                   });
                 },
                 onProgressChanged: (controller, progress) {
-                  if (progress == 100) {
-                    _pullToRefreshController?.endRefreshing();
-                  }
-
-                  setState(() {
-                    _progress = progress / 100;
-                  });
+                  if (progress == 100) _pullToRefreshController?.endRefreshing();
+                  setState(() => _progress = progress / 100);
                 },
                 onLoadStop: (controller, url) async {
                   _pullToRefreshController?.endRefreshing();
@@ -163,6 +145,7 @@ class _WebViewPageState extends State<WebViewPage> {
                     _errorMessage = null;
                   });
                   await _readAccessTokenFromWebView();
+                  await _hideOverlay();
                 },
                 onReceivedError: (controller, request, error) {
                   if (request.isForMainFrame ?? false) {
@@ -171,6 +154,7 @@ class _WebViewPageState extends State<WebViewPage> {
                       _errorMessage = error.description;
                       _progress = 0;
                     });
+                    _hideOverlay();
                   }
                 },
                 onReceivedHttpError: (controller, request, errorResponse) {
@@ -180,20 +164,71 @@ class _WebViewPageState extends State<WebViewPage> {
                       _errorMessage = 'HTTP ${errorResponse.statusCode} xatolik yuz berdi.';
                       _progress = 0;
                     });
+                    _hideOverlay();
                   }
                 },
                 onConsoleMessage: (controller, consoleMessage) {
                   debugPrint("JS Console: ${consoleMessage.message}");
                 },
               ),
+
+              // ── Progress Bar ──────────────────────────────────────
               Align(
                 alignment: Alignment.topCenter,
                 child: WebViewProgressBar(progress: _progress),
               ),
-              if (_hasError)
-                WebViewErrorView(
-                  message: _errorMessage ?? 'Internet aloqasini tekshirib, qayta urinib ko‘ring.',
-                  onRetry: _retryLoad,
+
+              // ── Error View ────────────────────────────────────────
+              if (_hasError) WebViewErrorView(message: _errorMessage ?? "Internet aloqasini tekshirib, qayta urinib ko'ring.", onRetry: _retryLoad),
+
+              // ── Loading Overlay ───────────────────────────────────
+              if (_overlayVisible)
+                AnimatedOpacity(
+                  opacity: _isWebViewReady ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeOut,
+                  child: Container(
+                    color: primary,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8), //\
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: SvgPicture.asset(
+                                "assets/icons/brand_logo.svg",
+                                fit: BoxFit.cover, //
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'HalalHub Restaurant',
+                            style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Halol taomlar dünyosi', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                          const SizedBox(height: 48),
+                          const CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
