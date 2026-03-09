@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Halal Hub Resto',
-      home: const WebViewPage(),
+      home: const WebViewPage(), //
     );
   }
 }
