@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:halal_hub_resto/push_notification_service.dart';
 import 'package:halal_hub_resto/web_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PushNotificationHelper.initialized();
   runApp(const MyApp());
 }
 
@@ -11,8 +14,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
+      debugShowCheckedModeBanner: false,
+      title: 'Halal Hub Resto',
       home: const WebViewPage(),
     );
   }

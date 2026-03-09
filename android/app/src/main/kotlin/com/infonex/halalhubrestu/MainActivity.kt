@@ -1,4 +1,4 @@
-package com.example.halal_hub_resto
+package com.infonex.halalhubrestu
 
 import io.flutter.embedding.android.FlutterActivity
 

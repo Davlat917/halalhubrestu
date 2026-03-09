@@ -1,0 +1,142 @@
+{
+  "project_info": {
+    "project_number": "810092682000",
+    "project_id": "halalhubmobile",
+    "storage_bucket": "halalhubmobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810092682000:android:3694509b5cb81ec9876395",
+        "android_client_info": {
+          "package_name": "com.example.halal_hub_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810092682000-i4ri0ilt5is253smunl0891htithbil3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.halal_hub_mobile",
+            "certificate_hash": "68cc94db806a522a80278cb4b03c81f498789f05"
+          }
+        },
+        {
+          "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWh0pSOiMJh3qdBNuotjf4hem_fZONTMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "810092682000-911ptlrllfccgc4numnsuneanqo2ikan.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.halalHubMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810092682000:android:7a8e096de2732c4b876395",
+        "android_client_info": {
+          "package_name": "com.infonex.halalhub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810092682000-dkgiicquf5v0efqkgjnv68b2a61mejtj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.infonex.halalhub",
+            "certificate_hash": "75579299c6e8f501ccef21154fe6b119ce134e59"
+          }
+        },
+        {
+          "client_id": "810092682000-ptg7mov7hpdhrc7isdf6mmpreali7cas.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.infonex.halalhub",
+            "certificate_hash": "ea4aa40ec7cc032b00b7b9d155e7966948063d67"
+          }
+        },
+        {
+          "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWh0pSOiMJh3qdBNuotjf4hem_fZONTMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "810092682000-911ptlrllfccgc4numnsuneanqo2ikan.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.halalHubMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810092682000:android:27a23abdfcd0dc12876395",
+        "android_client_info": {
+          "package_name": "com.infonex.halalhubrestu"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAWh0pSOiMJh3qdBNuotjf4hem_fZONTMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "810092682000-5m2cdd92gv7nfetchtc0h1vnll2s89ga.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "810092682000-911ptlrllfccgc4numnsuneanqo2ikan.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.halalHubMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
