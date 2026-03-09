@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:halal_hub_resto/device_registration_service.dart';
-import 'package:halal_hub_resto/push_notification_service.dart';
-import 'package:halal_hub_resto/widgets/webview_error_view.dart';
-import 'package:halal_hub_resto/widgets/webview_progress_bar.dart';
+import 'package:halal_hub_resto/controllers/web_view_page_controller.dart';
+import 'package:halal_hub_resto/functions/web_view_feedback.dart';
+import 'package:halal_hub_resto/widgets/web_view_body.dart';
 
 class WebViewPage extends StatefulWidget {
   const WebViewPage({super.key});
@@ -14,92 +12,46 @@ class WebViewPage extends StatefulWidget {
 }
 
 class _WebViewPageState extends State<WebViewPage> {
-  static const String _initialUrl = 'https://vendor.wehalalhub.com';
-
-  InAppWebViewController? _controller;
-  PullToRefreshController? _pullToRefreshController;
-  String? accessToken;
-  String? _errorMessage;
-  double _progress = 0;
-
-  bool get _hasError => _errorMessage != null;
+  late final WebViewPageController _controller;
 
   @override
   void initState() {
     super.initState();
-    _pullToRefreshController = PullToRefreshController(
-      settings: PullToRefreshSettings(color: Colors.green.shade700),
-      onRefresh: () async {
-        await _controller?.reload();
-      },
-    );
+    _controller = WebViewPageController()..initialize();
   }
 
-  Future<void> _readAccessTokenFromWebView() async {
-    if (_controller == null) {
-      return;
-    }
-
-    try {
-      await _controller!.evaluateJavascript(
-        source: """
-          const access = window.localStorage.getItem('access');
-          window.flutter_inappwebview.callHandler('sendToken', access ?? 'Token topilmadi');
-        """,
-      );
-    } catch (e) {
-      debugPrint("Token olishda xato: $e");
-    }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
-  Future<void> _retryLoad() async {
-    setState(() {
-      _errorMessage = null;
-      _progress = 0.15;
-    });
-
-    await _controller?.loadUrl(
-      urlRequest: URLRequest(url: WebUri(_initialUrl)),
-    );
-  }
-
-  Future<void> _showExitDialog() async {
-    final shouldExit = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Ilovadan chiqilsinmi?'),
-          content: const Text('Orqaga qaytish uchun sahifalar qolmadi. Ilovani yopishni xohlaysizmi?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Bekor qilish'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Chiqish'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldExit == true) {
-      SystemNavigator.pop();
-    }
-  }
-
-  Future<void> _handleBackNavigation() async {
-    if (await _controller?.canGoBack() ?? false) {
-      await _controller?.goBack();
-      return;
-    }
-
+  Future<void> _handleRetry() async {
+    final result = await _controller.attemptRecovery(showFailureFeedback: true);
     if (!mounted) {
       return;
     }
 
-    await _showExitDialog();
+    switch (result) {
+      case RecoveryResult.success:
+        return;
+      case RecoveryResult.noInternet:
+        await showWebViewFailureSnackBar(context, "Internet hali mavjud emas");
+      case RecoveryResult.failedToLoad:
+        await showWebViewFailureSnackBar(context, "Sahifani ochib bo'lmadi. Qayta urinib ko'ring.");
+    }
+  }
+
+  Future<void> _handleBackNavigation() async {
+    final shouldExit = await _controller.handleBackNavigation();
+    if (!mounted || !shouldExit) {
+      return;
+    }
+
+    final exitConfirmed = await showExitDialog(context);
+    if (exitConfirmed) {
+      SystemNavigator.pop();
+    }
   }
 
   @override
@@ -112,90 +64,16 @@ class _WebViewPageState extends State<WebViewPage> {
         }
       },
       child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SafeArea(
-          child: Stack(
-            children: <Widget>[
-              InAppWebView(
-                initialUrlRequest: URLRequest(url: WebUri(_initialUrl)),
-                pullToRefreshController: _pullToRefreshController,
-                initialSettings: InAppWebViewSettings(
-                  javaScriptEnabled: true,
-                  allowsBackForwardNavigationGestures: true,
-                  mediaPlaybackRequiresUserGesture: false,
-                  supportZoom: false,
-                  transparentBackground: false,
-                ),
-                onWebViewCreated: (controller) {
-                  _controller = controller;
-
-                  controller.addJavaScriptHandler(
-                    handlerName: "sendToken",
-                    callback: (args) {
-                      if (args.isNotEmpty) {
-                        accessToken = args[0] as String?;
-                        DeviceRegistrationService.setAccessToken(accessToken);
-                        DeviceRegistrationService.syncDeviceToken(PushNotificationHelper.fcmToken);
-                      }
-
-                      return {"status": "ok"};
-                    },
-                  );
-                },
-                onLoadStart: (controller, url) {
-                  setState(() {
-                    _errorMessage = null;
-                    _progress = 0.15;
-                  });
-                },
-                onProgressChanged: (controller, progress) {
-                  if (progress == 100) {
-                    _pullToRefreshController?.endRefreshing();
-                  }
-
-                  setState(() {
-                    _progress = progress / 100;
-                  });
-                },
-                onLoadStop: (controller, url) async {
-                  _pullToRefreshController?.endRefreshing();
-                  setState(() {
-                    _progress = 1;
-                    _errorMessage = null;
-                  });
-                  await _readAccessTokenFromWebView();
-                },
-                onReceivedError: (controller, request, error) {
-                  if (request.isForMainFrame ?? false) {
-                    _pullToRefreshController?.endRefreshing();
-                    setState(() {
-                      _errorMessage = error.description;
-                      _progress = 0;
-                    });
-                  }
-                },
-                onReceivedHttpError: (controller, request, errorResponse) {
-                  if (request.isForMainFrame ?? false) {
-                    _pullToRefreshController?.endRefreshing();
-                    setState(() {
-                      _errorMessage = 'HTTP ${errorResponse.statusCode} xatolik yuz berdi.';
-                      _progress = 0;
-                    });
-                  }
-                },
-                onConsoleMessage: (controller, consoleMessage) {
-                  debugPrint("JS Console: ${consoleMessage.message}");
-                },
-              ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: WebViewProgressBar(progress: _progress),
-              ),
-              if (_hasError)
-                WebViewErrorView(
-                  message: _errorMessage ?? 'Internet aloqasini tekshirib, qayta urinib ko‘ring.',
-                  onRetry: _retryLoad,
-                ),
-            ],
+          child: ListenableBuilder(
+            listenable: _controller,
+            builder: (context, _) {
+              return WebViewBody(
+                controller: _controller,
+                onRetry: _handleRetry,
+              );
+            },
           ),
         ),
       ),

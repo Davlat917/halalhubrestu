@@ -1,25 +1,58 @@
 import 'package:flutter/material.dart';
 
 class NotInternetPage extends StatelessWidget {
+  const NotInternetPage({
+    super.key,
+    required this.onRetry,
+    required this.isLoading,
+  });
+
   final VoidCallback onRetry;
-  const NotInternetPage({super.key, required this.onRetry});
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(38.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset("assets/images/not_connected.png", width: width * 0.5),
-            SizedBox(height: 30),
-            Text("Whoops!"),
-            Text("No Internet connection found. Check your connection or try again."),
-            SizedBox(),
-            ElevatedButton(onPressed: onRetry, child: Text("Try Again")),
-          ],
+    final theme = Theme.of(context);
+
+    return ColoredBox(
+      color: theme.colorScheme.surface,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.wifi_off_rounded,
+                size: 72,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Internet mavjud emas",
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Tarmoqni tekshirib, qayta urinib ko'ring.",
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: isLoading ? null : onRetry,
+                icon: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh_rounded),
+                label: Text(isLoading ? "Tekshirilmoqda..." : "Qayta urinish"),
+              ),
+            ],
+          ),
         ),
       ),
     );
