@@ -18,6 +18,7 @@ dependencies:
   firebase_messaging: ^16.1.2
   flutter_local_notifications: ^21.0.0
   flutter_svg: ^2.2.4
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -31,21 +32,21 @@ dev_dependencies:
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icon/app_icon.png" # 1024x1024
+  image_path: "assets/icon/icon.png" # 1024x1024
   adaptive_icon_foreground: "assets/icon/foreground_icon.png" #432x432
   adaptive_icon_background: "assets/icon/background_icon.png" #432x432
   # min_sdk_android: 21
   remove_alpha_ios: true
-  # image_path_ios: "assets/icon/background_green.png"
+  image_path_ios: "assets/icon/icon.png"
 
 flutter_native_splash:
   android: true
   ios: true
   color: "#0DA84A"
   color_dark: "#0DA84A"
-  image: assets/icon/splash_small_icon.png # 640x640
+  image: "assets/icon/icon.png" # 640x640
   android_12:
-    image: assets/icon/splash_small_icon.png
+    image: "assets/icon/icon.png"
     color: "#0DA84A"
     color_dark: "#0DA84A"
   #   icon_background_color: "#0DA84A"
@@ -57,7 +58,6 @@ flutter:
     - assets/images/
     - assets/icon/
     - assets/icons/
-
 
   # example:
   # fonts:

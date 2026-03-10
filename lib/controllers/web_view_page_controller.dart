@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:halal_hub_resto/device_registration_service.dart';
 import 'package:halal_hub_resto/push_notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum RecoveryResult {
   success,
@@ -163,6 +164,40 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<NavigationActionPolicy> onShouldOverrideUrlLoading(
+    InAppWebViewController controller,
+    NavigationAction action,
+  ) async {
+    final uri = action.request.url?.uriValue;
+    if (uri == null) {
+      return NavigationActionPolicy.ALLOW;
+    }
+
+    if (_isGoogleAuthUrl(uri)) {
+      final launched = await _launchExternal(uri);
+      return launched ? NavigationActionPolicy.CANCEL : NavigationActionPolicy.ALLOW;
+    }
+
+    return NavigationActionPolicy.ALLOW;
+  }
+
+  Future<bool> onCreateWindow(
+    InAppWebViewController controller,
+    CreateWindowAction action,
+  ) async {
+    final uri = action.request.url?.uriValue;
+    if (uri != null && _isGoogleAuthUrl(uri)) {
+      await _launchExternal(uri);
+      return false;
+    }
+
+    if (action.request.url != null) {
+      await controller.loadUrl(urlRequest: action.request);
+    }
+
+    return false;
+  }
+
   Future<void> onLoadStop(InAppWebViewController controller, WebUri? url) async {
     pullToRefreshController?.endRefreshing();
 
@@ -283,6 +318,27 @@ class WebViewPageController extends ChangeNotifier {
     try {
       final result = await InternetAddress.lookup(_host);
       return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _isGoogleAuthUrl(Uri uri) {
+    final host = uri.host.toLowerCase();
+    if (host == 'accounts.google.com' || host == 'oauth2.googleapis.com') {
+      return true;
+    }
+
+    if (host.endsWith('.google.com') && uri.path.contains('o/oauth2')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<bool> _launchExternal(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       return false;
     }

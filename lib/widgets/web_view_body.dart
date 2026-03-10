@@ -20,26 +20,33 @@ class WebViewBody extends StatelessWidget {
     return Stack(
       children: <Widget>[
         if (!controller.isCheckingConnection)
-          InAppWebView(
-            initialUrlRequest: URLRequest(url: WebUri(WebViewPageController.initialUrl)),
-            pullToRefreshController: controller.pullToRefreshController,
-            initialSettings: InAppWebViewSettings(
-              javaScriptEnabled: true,
-              allowsBackForwardNavigationGestures: true,
-              mediaPlaybackRequiresUserGesture: false,
-              supportZoom: false,
-              transparentBackground: false,
-              disableDefaultErrorPage: true,
+          SafeArea(
+            child: InAppWebView(
+              initialUrlRequest: URLRequest(url: WebUri(WebViewPageController.initialUrl)),
+              pullToRefreshController: controller.pullToRefreshController,
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                javaScriptCanOpenWindowsAutomatically: true,
+                allowsBackForwardNavigationGestures: true,
+                mediaPlaybackRequiresUserGesture: false,
+                supportZoom: false,
+                supportMultipleWindows: true,
+                transparentBackground: false,
+                disableDefaultErrorPage: true,
+                useShouldOverrideUrlLoading: true,
+              ),
+              onWebViewCreated: controller.onWebViewCreated,
+              onLoadStart: controller.onLoadStart,
+              onLoadStop: controller.onLoadStop,
+              onProgressChanged: controller.onProgressChanged,
+              onReceivedError: controller.onReceivedError,
+              onReceivedHttpError: controller.onReceivedHttpError,
+              shouldOverrideUrlLoading: controller.onShouldOverrideUrlLoading,
+              onCreateWindow: controller.onCreateWindow,
+              onConsoleMessage: (webController, consoleMessage) {
+                debugPrint('JS Console: ${consoleMessage.message}');
+              },
             ),
-            onWebViewCreated: controller.onWebViewCreated,
-            onLoadStart: controller.onLoadStart,
-            onLoadStop: controller.onLoadStop,
-            onProgressChanged: controller.onProgressChanged,
-            onReceivedError: controller.onReceivedError,
-            onReceivedHttpError: controller.onReceivedHttpError,
-            onConsoleMessage: (webController, consoleMessage) {
-              debugPrint('JS Console: ${consoleMessage.message}');
-            },
           ),
         Align(
           alignment: Alignment.topCenter,

@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class WebViewLoadingOverlay extends StatelessWidget {
-  const WebViewLoadingOverlay({
-    required this.visible,
-    super.key,
-  });
+  const WebViewLoadingOverlay({required this.visible, super.key});
 
   static const Color splashBackground = Color(0xFF0DA84A);
 
@@ -40,10 +37,7 @@ class WebViewLoadingOverlay extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: SvgPicture.asset(
-                    'assets/icons/brand_logo.svg',
-                    fit: BoxFit.contain,
-                  ),
+                  child: SvgPicture.asset('assets/icons/brand_logo.svg', fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -68,10 +62,7 @@ class WebViewLoadingOverlay extends StatelessWidget {
                 const SizedBox(
                   width: 28,
                   height: 28,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.6,
-                  ),
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.6),
                 ),
               ],
             ),

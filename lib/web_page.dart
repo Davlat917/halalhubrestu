@@ -65,16 +65,14 @@ class _WebViewPageState extends State<WebViewPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: SafeArea(
-          child: ListenableBuilder(
-            listenable: _controller,
-            builder: (context, _) {
-              return WebViewBody(
-                controller: _controller,
-                onRetry: _handleRetry,
-              );
-            },
-          ),
+        body: ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) {
+            return WebViewBody(
+              controller: _controller,
+              onRetry: _handleRetry,
+            );
+          },
         ),
       ),
     );
