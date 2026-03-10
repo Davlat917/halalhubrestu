@@ -28,6 +28,7 @@ class WebViewPageController extends ChangeNotifier {
   bool _isConnected = true;
   bool _isCheckingConnection = true;
   bool _isRetrying = false;
+  bool _showInitialOverlay = true;
 
   PullToRefreshController? pullToRefreshController;
 
@@ -36,6 +37,7 @@ class WebViewPageController extends ChangeNotifier {
   bool get isCheckingConnection => _isCheckingConnection;
   bool get isRetrying => _isRetrying;
   bool get showNotInternetPage => !_isConnected || _errorMessage != null;
+  bool get showInitialOverlay => _showInitialOverlay;
 
   void initialize() {
     pullToRefreshController = PullToRefreshController(
@@ -70,6 +72,7 @@ class WebViewPageController extends ChangeNotifier {
       _hasMainFrameError = true;
       _errorMessage = 'Internet mavjud emas';
       _progress = 0;
+      _showInitialOverlay = false;
       notifyListeners();
       return;
     }
@@ -116,10 +119,12 @@ class WebViewPageController extends ChangeNotifier {
     if (loadedSuccessfully) {
       _hasMainFrameError = false;
       _errorMessage = null;
+      _showInitialOverlay = false;
     } else {
       _hasMainFrameError = true;
       _errorMessage = 'Sahifa ochilmadi';
       _progress = 0;
+      _showInitialOverlay = false;
     }
 
     notifyListeners();
@@ -166,6 +171,7 @@ class WebViewPageController extends ChangeNotifier {
     if (!_hasMainFrameError) {
       _errorMessage = null;
     }
+    _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
       _reloadCompleter!.complete(true);
@@ -203,6 +209,7 @@ class WebViewPageController extends ChangeNotifier {
     _hasMainFrameError = true;
     _errorMessage = error.description;
     _progress = 0;
+    _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
       _reloadCompleter!.complete(false);
@@ -225,6 +232,7 @@ class WebViewPageController extends ChangeNotifier {
     _hasMainFrameError = true;
     _errorMessage = 'HTTP ${errorResponse.statusCode} xatolik yuz berdi.';
     _progress = 0;
+    _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
       _reloadCompleter!.complete(false);

@@ -41,13 +41,13 @@ flutter_icons:
 flutter_native_splash:
   android: true
   ios: true
-  color: "#FFFFFF"
-  color_dark: "#000000"
+  color: "#0DA84A"
+  color_dark: "#0DA84A"
   image: assets/icon/splash_small_icon.png # 640x640
   android_12:
     image: assets/icon/splash_small_icon.png
-    color: "#FFFFFF"
-    color_dark: "#000000"
+    color: "#0DA84A"
+    color_dark: "#0DA84A"
   #   icon_background_color: "#0DA84A"
 
 flutter:
@@ -72,4 +72,3 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
-

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:halal_hub_resto/controllers/web_view_page_controller.dart';
 import 'package:halal_hub_resto/widgets/not_internet_page.dart';
+import 'package:halal_hub_resto/widgets/web_view_loading_overlay.dart';
 import 'package:halal_hub_resto/widgets/webview_progress_bar.dart';
 
 class WebViewBody extends StatelessWidget {
@@ -49,6 +50,7 @@ class WebViewBody extends StatelessWidget {
             onRetry: onRetry,
             isLoading: controller.isRetrying,
           ),
+        WebViewLoadingOverlay(visible: controller.showInitialOverlay),
       ],
     );
   }
