@@ -51,7 +51,7 @@ class WebViewLoadingOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Halol taomlar dunyosi',
+                  'World of Halal Food',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,

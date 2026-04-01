@@ -5,13 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:halal_hub_resto/device_registration_service.dart';
 import 'package:halal_hub_resto/push_notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-enum RecoveryResult {
-  success,
-  noInternet,
-  failedToLoad,
-}
+enum RecoveryResult { success, noInternet, failedToLoad }
 
 class WebViewPageController extends ChangeNotifier {
   WebViewPageController();
@@ -40,7 +37,10 @@ class WebViewPageController extends ChangeNotifier {
   bool get showNotInternetPage => !_isConnected || _errorMessage != null;
   bool get showInitialOverlay => _showInitialOverlay;
 
+
+
   void initialize() {
+    _requestLocationPermission();
     pullToRefreshController = PullToRefreshController(
       settings: PullToRefreshSettings(color: Colors.green.shade700),
       onRefresh: _handlePullToRefresh,
@@ -50,6 +50,10 @@ class WebViewPageController extends ChangeNotifier {
     _internetTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       unawaited(checkInternet());
     });
+  }
+
+  Future<void> _requestLocationPermission() async {
+    await Permission.locationWhenInUse.request();
   }
 
   @override
@@ -71,7 +75,7 @@ class WebViewPageController extends ChangeNotifier {
 
     if (!hasInternet) {
       _hasMainFrameError = true;
-      _errorMessage = 'Internet mavjud emas';
+      _errorMessage = 'Internet unavailable';
       _progress = 0;
       _showInitialOverlay = false;
       notifyListeners();
@@ -98,7 +102,7 @@ class WebViewPageController extends ChangeNotifier {
       _isConnected = false;
       _isRetrying = false;
       _hasMainFrameError = true;
-      _errorMessage = 'Internet mavjud emas';
+      _errorMessage = 'Internet unavailable';
       _progress = 0;
       notifyListeners();
       return RecoveryResult.noInternet;
@@ -123,7 +127,7 @@ class WebViewPageController extends ChangeNotifier {
       _showInitialOverlay = false;
     } else {
       _hasMainFrameError = true;
-      _errorMessage = 'Sahifa ochilmadi';
+      _errorMessage = 'Unable to open page';
       _progress = 0;
       _showInitialOverlay = false;
     }
@@ -164,10 +168,7 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<NavigationActionPolicy> onShouldOverrideUrlLoading(
-    InAppWebViewController controller,
-    NavigationAction action,
-  ) async {
+  Future<NavigationActionPolicy> onShouldOverrideUrlLoading(InAppWebViewController controller, NavigationAction action) async {
     final uri = action.request.url?.uriValue;
     if (uri == null) {
       return NavigationActionPolicy.ALLOW;
@@ -181,10 +182,7 @@ class WebViewPageController extends ChangeNotifier {
     return NavigationActionPolicy.ALLOW;
   }
 
-  Future<bool> onCreateWindow(
-    InAppWebViewController controller,
-    CreateWindowAction action,
-  ) async {
+  Future<bool> onCreateWindow(InAppWebViewController controller, CreateWindowAction action) async {
     final uri = action.request.url?.uriValue;
     if (uri != null && _isGoogleAuthUrl(uri)) {
       await _launchExternal(uri);
@@ -230,11 +228,7 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onReceivedError(
-    InAppWebViewController controller,
-    WebResourceRequest request,
-    WebResourceError error,
-  ) {
+  void onReceivedError(InAppWebViewController controller, WebResourceRequest request, WebResourceError error) {
     if (!(request.isForMainFrame ?? false)) {
       return;
     }
@@ -253,11 +247,7 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void onReceivedHttpError(
-    InAppWebViewController controller,
-    WebResourceRequest request,
-    WebResourceResponse errorResponse,
-  ) {
+  void onReceivedHttpError(InAppWebViewController controller, WebResourceRequest request, WebResourceResponse errorResponse) {
     if (!(request.isForMainFrame ?? false)) {
       return;
     }
@@ -265,7 +255,7 @@ class WebViewPageController extends ChangeNotifier {
     pullToRefreshController?.endRefreshing();
     _isConnected = false;
     _hasMainFrameError = true;
-    _errorMessage = 'HTTP ${errorResponse.statusCode} xatolik yuz berdi.';
+    _errorMessage = 'HTTP ${errorResponse.statusCode} error occurred.';
     _progress = 0;
     _showInitialOverlay = false;
 
@@ -277,18 +267,19 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   Future<void> _reloadWebView() async {
-    if (_webViewController == null) {
-      return;
-    }
+    if (_webViewController == null) return;
 
     _hasMainFrameError = false;
     _errorMessage = null;
     _progress = 0.15;
     notifyListeners();
 
-    await _webViewController!.loadUrl(
-      urlRequest: URLRequest(url: WebUri(initialUrl)),
-    );
+    final currentUrl = await _webViewController!.getUrl();
+    if (currentUrl != null) {
+      await _webViewController!.reload(); // ← faqat reload
+    } else {
+      await _webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(initialUrl)));
+    }
   }
 
   Future<void> _readAccessTokenFromWebView() async {

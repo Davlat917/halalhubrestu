@@ -29,13 +29,13 @@ class NotInternetPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                "Internet mavjud emas",
+                "Internet unavailable",
                 style: theme.textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                "Tarmoqni tekshirib, qayta urinib ko'ring.",
+                "Check the network and try again.",
                 style: theme.textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -49,7 +49,7 @@ class NotInternetPage extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.refresh_rounded),
-                label: Text(isLoading ? "Tekshirilmoqda..." : "Qayta urinish"),
+                label: Text(isLoading ? "Checking..." : "Try again"),
               ),
             ],
           ),

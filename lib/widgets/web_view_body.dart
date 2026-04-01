@@ -6,11 +6,7 @@ import 'package:halal_hub_resto/widgets/web_view_loading_overlay.dart';
 import 'package:halal_hub_resto/widgets/webview_progress_bar.dart';
 
 class WebViewBody extends StatelessWidget {
-  const WebViewBody({
-    required this.controller,
-    required this.onRetry,
-    super.key,
-  });
+  const WebViewBody({required this.controller, required this.onRetry, super.key});
 
   final WebViewPageController controller;
   final VoidCallback onRetry;
@@ -27,6 +23,13 @@ class WebViewBody extends StatelessWidget {
               initialSettings: InAppWebViewSettings(
                 javaScriptEnabled: true,
                 javaScriptCanOpenWindowsAutomatically: true,
+                useHybridComposition: true,
+                domStorageEnabled: true,
+                databaseEnabled: true,
+                cacheEnabled: true,
+                thirdPartyCookiesEnabled: true,
+                clearCache: false,
+                clearSessionCache: false,
                 allowsBackForwardNavigationGestures: true,
                 mediaPlaybackRequiresUserGesture: false,
                 supportZoom: false,
@@ -34,6 +37,8 @@ class WebViewBody extends StatelessWidget {
                 transparentBackground: false,
                 disableDefaultErrorPage: true,
                 useShouldOverrideUrlLoading: true,
+                geolocationEnabled: true, // ← QO'SHING
+                allowUniversalAccessFromFileURLs: true, // ← QO'SHING
               ),
               onWebViewCreated: controller.onWebViewCreated,
               onLoadStart: controller.onLoadStart,
@@ -46,17 +51,16 @@ class WebViewBody extends StatelessWidget {
               onConsoleMessage: (webController, consoleMessage) {
                 debugPrint('JS Console: ${consoleMessage.message}');
               },
+              onGeolocationPermissionsShowPrompt: (controller, origin) async {
+                return GeolocationPermissionShowPromptResponse(origin: origin, allow: true, retain: true);
+              },
             ),
           ),
         Align(
           alignment: Alignment.topCenter,
           child: WebViewProgressBar(progress: controller.progress),
         ),
-        if (controller.showNotInternetPage)
-          NotInternetPage(
-            onRetry: onRetry,
-            isLoading: controller.isRetrying,
-          ),
+        if (controller.showNotInternetPage) NotInternetPage(onRetry: onRetry, isLoading: controller.isRetrying),
         WebViewLoadingOverlay(visible: controller.showInitialOverlay),
       ],
     );

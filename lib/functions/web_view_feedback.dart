@@ -12,16 +12,16 @@ Future<bool> showExitDialog(BuildContext context) async {
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text('Ilovadan chiqilsinmi?'),
-        content: const Text('Orqaga qaytish uchun sahifalar qolmadi. Ilovani yopishni xohlaysizmi?'),
+        title: const Text('Exit app?'),
+        content: const Text('No pages left to go back. Do you want to close the app?'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Bekor qilish'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Chiqish'),
+            child: const Text('Exit'),
           ),
         ],
       );

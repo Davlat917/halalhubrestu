@@ -36,9 +36,9 @@ class _WebViewPageState extends State<WebViewPage> {
       case RecoveryResult.success:
         return;
       case RecoveryResult.noInternet:
-        await showWebViewFailureSnackBar(context, "Internet hali mavjud emas");
+        await showWebViewFailureSnackBar(context, "Internet not available yet");
       case RecoveryResult.failedToLoad:
-        await showWebViewFailureSnackBar(context, "Sahifani ochib bo'lmadi. Qayta urinib ko'ring.");
+        await showWebViewFailureSnackBar(context, "Failed to open page. Please try again.");
     }
   }
 
