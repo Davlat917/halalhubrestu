@@ -20,6 +20,7 @@ class WebViewBody extends StatelessWidget {
             child: InAppWebView(
               initialUrlRequest: URLRequest(url: WebUri(WebViewPageController.initialUrl)),
               pullToRefreshController: controller.pullToRefreshController,
+              onUpdateVisitedHistory: controller.onUpdateVisitedHistory,
               initialSettings: InAppWebViewSettings(
                 javaScriptEnabled: true,
                 javaScriptCanOpenWindowsAutomatically: true,

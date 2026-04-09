@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class DeviceRegistrationService {
-  static const String _deviceRegisterUrl = 'https://infonexuz.uz/api/v1/core/devices/';
+  static const String _deviceRegisterUrl = 'https://backend-api.wehalalhub.com/api/v1/core/devices/';
 
   static String? _accessToken;
   static String? _lastSyncedFcmToken;
@@ -14,8 +14,14 @@ class DeviceRegistrationService {
     if (normalizedToken == null || normalizedToken.isEmpty || normalizedToken == 'Token topilmadi') {
       return;
     }
+    // Token o'zgarmagan bo'lsa sync qilma
+    if (_accessToken == normalizedToken) {
+      debugPrint('⏭️ [TOKEN] Token o\'zgarmagan → skip');
+      return;
+    }
 
     _accessToken = normalizedToken;
+    debugPrint('✅ [TOKEN] Yangi token saqlandi');
   }
 
   static Future<void> syncDeviceToken(String? fcmToken) async {
@@ -36,11 +42,12 @@ class DeviceRegistrationService {
         headers: <String, String>{
           'accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $accessToken',
+          'Authorization': 'Bearer $accessToken', //
         },
-        body: jsonEncode(<String, String>{'token': token}),
+        body: jsonEncode(
+          <String, String>{'token': token}, //
+        ),
       );
-
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _lastSyncedFcmToken = token;
         debugPrint('FCM token backendga yuborildi');

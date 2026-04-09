@@ -28,6 +28,8 @@ class WebViewPageController extends ChangeNotifier {
   bool _isRetrying = false;
   bool _showInitialOverlay = true;
 
+  bool _pageFullyLoaded = false;
+
   PullToRefreshController? pullToRefreshController;
 
   String? get errorMessage => _errorMessage;
@@ -38,8 +40,26 @@ class WebViewPageController extends ChangeNotifier {
   bool get showInitialOverlay => _showInitialOverlay;
 
 
+  void onUpdateVisitedHistory(InAppWebViewController controller, WebUri? url, bool? isReload) {
+  final urlStr = url?.toString() ?? '';
+  final isAuthPage = urlStr.contains('/auth/') || urlStr.contains('/login');
+
+  if (isAuthPage || urlStr.isEmpty) return;
+
+  // Faqat SPA navigatsiyasida (onLoadStop bo'lib o'tgan bo'lsa)
+  if (!_pageFullyLoaded) {
+    debugPrint('⏭️ [HISTORY] Sahifa hali yuklanmadi → skip ($urlStr)');
+    return;
+  }
+
+  debugPrint('📍 [HISTORY] SPA navigatsiya → token o\'qiladi: $urlStr');
+  Future.delayed(const Duration(milliseconds: 500), () {
+    _readAccessTokenFromWebView();
+  });
+}
 
   void initialize() {
+    debugPrint('🟢 [INIT] WebViewPageController initialize boshlandi');
     _requestLocationPermission();
     pullToRefreshController = PullToRefreshController(
       settings: PullToRefreshSettings(color: Colors.green.shade700),
@@ -53,22 +73,27 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   Future<void> _requestLocationPermission() async {
-    await Permission.locationWhenInUse.request();
+    final status = await Permission.locationWhenInUse.request();
+    debugPrint('📍 [PERMISSION] Location permission: $status');
   }
 
   @override
   void dispose() {
+    debugPrint('🔴 [DISPOSE] WebViewPageController dispose');
     _internetTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _handlePullToRefresh() async {
+    debugPrint('🔄 [PULL_REFRESH] Pull to refresh boshlandi');
     await attemptRecovery(showFailureFeedback: false);
   }
 
   Future<void> checkInternet() async {
     final hasInternet = await _hasInternetAccess();
     final previousConnection = _isConnected;
+
+    debugPrint('🌐 [INTERNET] Tekshirildi → hasInternet=$hasInternet | previousConnection=$previousConnection');
 
     _isConnected = hasInternet;
     _isCheckingConnection = false;
@@ -78,6 +103,7 @@ class WebViewPageController extends ChangeNotifier {
       _errorMessage = 'Internet unavailable';
       _progress = 0;
       _showInitialOverlay = false;
+      debugPrint('❌ [INTERNET] Internet yo\'q → error set qilindi');
       notifyListeners();
       return;
     }
@@ -85,12 +111,16 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
 
     if (!previousConnection) {
+      debugPrint('🔁 [INTERNET] Avval yo\'q edi, endi bor → attemptRecovery');
       await attemptRecovery(showFailureFeedback: false);
     }
   }
 
   Future<RecoveryResult> attemptRecovery({required bool showFailureFeedback}) async {
+    debugPrint('🔁 [RECOVERY] attemptRecovery boshlandi | isRetrying=$_isRetrying');
+
     if (_isRetrying) {
+      debugPrint('⚠️ [RECOVERY] Allaqachon retry qilinmoqda, skip');
       return RecoveryResult.failedToLoad;
     }
 
@@ -98,12 +128,15 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
 
     final hasInternet = await _hasInternetAccess();
+    debugPrint('🌐 [RECOVERY] Internet tekshirildi → $hasInternet');
+
     if (!hasInternet) {
       _isConnected = false;
       _isRetrying = false;
       _hasMainFrameError = true;
       _errorMessage = 'Internet unavailable';
       _progress = 0;
+      debugPrint('❌ [RECOVERY] Internet yo\'q → noInternet qaytdi');
       notifyListeners();
       return RecoveryResult.noInternet;
     }
@@ -113,8 +146,11 @@ class WebViewPageController extends ChangeNotifier {
 
     bool loadedSuccessfully = false;
     try {
+      debugPrint('⏳ [RECOVERY] 12 soniya timeout bilan reload kutilmoqda...');
       loadedSuccessfully = await _reloadCompleter!.future.timeout(const Duration(seconds: 12));
-    } catch (_) {
+      debugPrint('✅ [RECOVERY] Reload natijasi: $loadedSuccessfully');
+    } catch (e) {
+      debugPrint('❌ [RECOVERY] Timeout yoki xato: $e');
       loadedSuccessfully = false;
     }
 
@@ -125,11 +161,13 @@ class WebViewPageController extends ChangeNotifier {
       _hasMainFrameError = false;
       _errorMessage = null;
       _showInitialOverlay = false;
+      debugPrint('✅ [RECOVERY] Muvaffaqiyatli yuklandi');
     } else {
       _hasMainFrameError = true;
       _errorMessage = 'Unable to open page';
       _progress = 0;
       _showInitialOverlay = false;
+      debugPrint('❌ [RECOVERY] Yuklanmadi → failedToLoad');
     }
 
     notifyListeners();
@@ -137,23 +175,38 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   Future<bool> handleBackNavigation() async {
-    if (await _webViewController?.canGoBack() ?? false) {
+    final canGoBack = await _webViewController?.canGoBack() ?? false;
+    debugPrint('🔙 [BACK] canGoBack=$canGoBack');
+    if (canGoBack) {
       await _webViewController?.goBack();
       return false;
     }
-
     return true;
   }
 
   void onWebViewCreated(InAppWebViewController controller) {
     _webViewController = controller;
+    debugPrint('🟢 [WEBVIEW] WebView yaratildi');
+
     controller.addJavaScriptHandler(
       handlerName: 'sendToken',
       callback: (args) {
+        debugPrint('📨 [JS_HANDLER] sendToken chaqirildi | args: $args');
+
         if (args.isNotEmpty) {
           final accessToken = args[0] as String?;
-          DeviceRegistrationService.setAccessToken(accessToken);
-          DeviceRegistrationService.syncDeviceToken(PushNotificationHelper.fcmToken);
+          final preview = accessToken != null && accessToken.length > 10 ? accessToken.substring(0, 10) : accessToken;
+          debugPrint('🔑 [TOKEN] Qabul qilindi → "$preview..."');
+
+          if (accessToken != null && accessToken.isNotEmpty && accessToken != 'Token topilmadi') {
+            debugPrint('✅ [TOKEN] Valid token → setAccessToken + syncDeviceToken');
+            DeviceRegistrationService.setAccessToken(accessToken);
+            DeviceRegistrationService.syncDeviceToken(PushNotificationHelper.fcmToken);
+          } else {
+            debugPrint('⚠️ [TOKEN] Token bo\'sh yoki "Token topilmadi" → skip');
+          }
+        } else {
+          debugPrint('⚠️ [JS_HANDLER] args bo\'sh keldi');
         }
 
         return <String, String>{'status': 'ok'};
@@ -162,6 +215,8 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   void onLoadStart(InAppWebViewController controller, WebUri? url) {
+    debugPrint('🔵 [LOAD_START] URL: $url');
+    _pageFullyLoaded = false; 
     _hasMainFrameError = false;
     _errorMessage = null;
     _progress = 0.15;
@@ -170,11 +225,12 @@ class WebViewPageController extends ChangeNotifier {
 
   Future<NavigationActionPolicy> onShouldOverrideUrlLoading(InAppWebViewController controller, NavigationAction action) async {
     final uri = action.request.url?.uriValue;
-    if (uri == null) {
-      return NavigationActionPolicy.ALLOW;
-    }
+    debugPrint('🔀 [NAV] shouldOverrideUrlLoading → $uri | isMainFrame=${action.isForMainFrame}');
+
+    if (uri == null) return NavigationActionPolicy.ALLOW;
 
     if (_isGoogleAuthUrl(uri)) {
+      debugPrint('🔐 [NAV] Google Auth URL → tashqi brauzerda ochiladi');
       final launched = await _launchExternal(uri);
       return launched ? NavigationActionPolicy.CANCEL : NavigationActionPolicy.ALLOW;
     }
@@ -184,12 +240,16 @@ class WebViewPageController extends ChangeNotifier {
 
   Future<bool> onCreateWindow(InAppWebViewController controller, CreateWindowAction action) async {
     final uri = action.request.url?.uriValue;
+    debugPrint('🪟 [WINDOW] onCreateWindow → $uri');
+
     if (uri != null && _isGoogleAuthUrl(uri)) {
+      debugPrint('🔐 [WINDOW] Google Auth → tashqi ochiladi');
       await _launchExternal(uri);
       return false;
     }
 
     if (action.request.url != null) {
+      debugPrint('🪟 [WINDOW] Ichki webviewda yuklanadi');
       await controller.loadUrl(urlRequest: action.request);
     }
 
@@ -197,6 +257,11 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   Future<void> onLoadStop(InAppWebViewController controller, WebUri? url) async {
+     _pageFullyLoaded = true;
+    final urlStr = url?.toString() ?? '';
+    debugPrint('🟢 [LOAD_STOP] URL: $urlStr');
+    debugPrint('   └─ hasMainFrameError=$_hasMainFrameError | isConnected=$_isConnected');
+
     pullToRefreshController?.endRefreshing();
 
     _isConnected = true;
@@ -207,29 +272,45 @@ class WebViewPageController extends ChangeNotifier {
     _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
+      debugPrint('✅ [LOAD_STOP] reloadCompleter(true) yakunlandi');
       _reloadCompleter!.complete(true);
     }
 
     notifyListeners();
 
     if (_hasMainFrameError) {
+      debugPrint('⚠️ [LOAD_STOP] hasMainFrameError=true → token o\'qilmaydi');
       return;
     }
 
+    // Auth sahifasida token o'qima
+    final isAuthPage = urlStr.contains('/auth/') || urlStr.contains('/login');
+    debugPrint('   └─ isAuthPage=$isAuthPage');
+
+    if (isAuthPage) {
+      debugPrint('🔒 [LOAD_STOP] Login sahifasi → token o\'qilmaydi');
+      return;
+    }
+
+    debugPrint('🔑 [LOAD_STOP] Token o\'qish boshlandi...');
     await _readAccessTokenFromWebView();
   }
 
   void onProgressChanged(InAppWebViewController controller, int progress) {
+    debugPrint('📊 [PROGRESS] $progress%');
     if (progress == 100) {
       pullToRefreshController?.endRefreshing();
     }
-
     _progress = progress / 100;
     notifyListeners();
   }
 
   void onReceivedError(InAppWebViewController controller, WebResourceRequest request, WebResourceError error) {
-    if (!(request.isForMainFrame ?? false)) {
+    final isMain = request.isForMainFrame ?? false;
+    debugPrint('❌ [ERROR] isMainFrame=$isMain | code=${error.type} | desc=${error.description} | url=${request.url}');
+
+    if (!isMain) {
+      debugPrint('   └─ Sub-frame xatosi → ignore');
       return;
     }
 
@@ -241,6 +322,7 @@ class WebViewPageController extends ChangeNotifier {
     _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
+      debugPrint('❌ [ERROR] reloadCompleter(false) yakunlandi');
       _reloadCompleter!.complete(false);
     }
 
@@ -248,7 +330,11 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   void onReceivedHttpError(InAppWebViewController controller, WebResourceRequest request, WebResourceResponse errorResponse) {
-    if (!(request.isForMainFrame ?? false)) {
+    final isMain = request.isForMainFrame ?? false;
+    debugPrint('❌ [HTTP_ERROR] isMainFrame=$isMain | status=${errorResponse.statusCode} | url=${request.url}');
+
+    if (!isMain) {
+      debugPrint('   └─ Sub-frame HTTP xatosi → ignore');
       return;
     }
 
@@ -260,6 +346,7 @@ class WebViewPageController extends ChangeNotifier {
     _showInitialOverlay = false;
 
     if (_reloadCompleter != null && !_reloadCompleter!.isCompleted) {
+      debugPrint('❌ [HTTP_ERROR] reloadCompleter(false) yakunlandi');
       _reloadCompleter!.complete(false);
     }
 
@@ -267,7 +354,11 @@ class WebViewPageController extends ChangeNotifier {
   }
 
   Future<void> _reloadWebView() async {
-    if (_webViewController == null) return;
+    debugPrint('🔄 [RELOAD] _reloadWebView boshlandi');
+    if (_webViewController == null) {
+      debugPrint('⚠️ [RELOAD] WebViewController null → skip');
+      return;
+    }
 
     _hasMainFrameError = false;
     _errorMessage = null;
@@ -275,62 +366,85 @@ class WebViewPageController extends ChangeNotifier {
     notifyListeners();
 
     final currentUrl = await _webViewController!.getUrl();
+    debugPrint('🔄 [RELOAD] Hozirgi URL: $currentUrl');
+
     if (currentUrl != null) {
-      await _webViewController!.reload(); // ← faqat reload
+      debugPrint('🔄 [RELOAD] reload() chaqirildi');
+      await _webViewController!.reload();
     } else {
+      debugPrint('🔄 [RELOAD] URL yo\'q → initialUrl yuklanadi');
       await _webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(initialUrl)));
     }
   }
 
   Future<void> _readAccessTokenFromWebView() async {
+    debugPrint('🔑 [TOKEN_READ] _readAccessTokenFromWebView boshlandi');
+
     if (_webViewController == null) {
+      debugPrint('⚠️ [TOKEN_READ] WebViewController null → skip');
       return;
     }
 
     try {
       final currentUrl = await _webViewController!.getUrl();
       final host = currentUrl?.host;
+      debugPrint('🔑 [TOKEN_READ] Hozirgi URL: $currentUrl | host: $host');
+
       if (host == null || !host.contains('wehalalhub.com')) {
+        debugPrint('⚠️ [TOKEN_READ] Host mos kelmaydi → skip');
         return;
       }
 
+      // localStorage dagi barcha kalitlarni dump qilamiz
+      debugPrint('🔑 [TOKEN_READ] localStorage dump boshlandi...');
       await _webViewController!.evaluateJavascript(
         source: '''
-          const access = window.localStorage.getItem('access');
+        (function() {
+          console.log("=== localStorage DUMP ===");
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            var val = localStorage.getItem(key);
+            var preview = val ? val.substring(0, 40) : "null";
+            console.log("  [" + i + "] " + key + " = " + preview);
+          }
+          console.log("=== localStorage COUNT: " + localStorage.length + " ===");
+
+          var access = localStorage.getItem('access');
+          console.log("'access' kaliti: " + access);
           window.flutter_inappwebview.callHandler('sendToken', access ?? 'Token topilmadi');
+        })();
         ''',
       );
+      debugPrint('🔑 [TOKEN_READ] JS evaluateJavascript chaqirildi');
     } catch (e) {
-      debugPrint("Token olishda xato: $e");
+      debugPrint('❌ [TOKEN_READ] Xato: $e');
     }
   }
 
   Future<bool> _hasInternetAccess() async {
     try {
       final result = await InternetAddress.lookup(_host);
-      return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
-    } catch (_) {
+      final ok = result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+      return ok;
+    } catch (e) {
+      debugPrint('❌ [INTERNET_CHECK] lookup xato: $e');
       return false;
     }
   }
 
   bool _isGoogleAuthUrl(Uri uri) {
     final host = uri.host.toLowerCase();
-    if (host == 'accounts.google.com' || host == 'oauth2.googleapis.com') {
-      return true;
-    }
-
-    if (host.endsWith('.google.com') && uri.path.contains('o/oauth2')) {
-      return true;
-    }
-
+    if (host == 'accounts.google.com' || host == 'oauth2.googleapis.com') return true;
+    if (host.endsWith('.google.com') && uri.path.contains('o/oauth2')) return true;
     return false;
   }
 
   Future<bool> _launchExternal(Uri uri) async {
+    debugPrint('🌍 [EXTERNAL] Tashqi brauzerda ochladi: $uri');
     try {
       return await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ [EXTERNAL] launchUrl xato: $e');
       return false;
     }
   }
