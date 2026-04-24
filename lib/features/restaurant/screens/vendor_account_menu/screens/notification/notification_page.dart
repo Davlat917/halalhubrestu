@@ -6,6 +6,7 @@ import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/bloc/notification_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/bloc/notification_event.dart';
@@ -50,13 +51,13 @@ class _NotificationScaffold extends StatelessWidget {
         scrolledUnderElevation: 0,
         backgroundColor: StaticColors.white,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: StaticColors.black,
-            size: 20,
+        leading: Align(
+          alignment: Alignment.center,
+          child: CircleBtnWidget(
+            bgColor: StaticColors.white,
+            iconColor: StaticColors.black,
+            onPress: () => context.router.maybePop(),
           ),
-          onPressed: () => context.router.maybePop(),
         ),
         title: Text(
           TranslationKeys.notificationsTitle.tr(context: context),

@@ -36,35 +36,7 @@ class CategoryUpdateSection extends StatelessWidget {
                 ),
               ),
               const Divider(height: 20),
-              Container(
-                height: context.wOf(50, w).clamp(44.0, 50.0),
-                padding: EdgeInsets.symmetric(horizontal: context.wOf(12, w)),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6F6F6),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: StaticColors.cE2E2E2),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        TranslationKeys.updateSelectCategory.tr(
-                          context: context,
-                        ),
-                        style: AppTextStyle.regular14(
-                          context,
-                          color: StaticColors.cBDC1C6,
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: StaticColors.c9AA0A6,
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: context.wOf(10, w)),
+              const SizedBox(height: 4),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,

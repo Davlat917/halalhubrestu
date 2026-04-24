@@ -90,7 +90,11 @@ class _AgreeTermsWidgetState extends State<AgreeTermsWidget> {
     if (openedInApp || !mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Could not open the link.')),
+      SnackBar(
+        content: Text(
+          TranslationKeys.commonCouldNotOpenLink.tr(context: context),
+        ),
+      ),
     );
   }
 

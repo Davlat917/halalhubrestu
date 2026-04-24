@@ -24,6 +24,7 @@ class AddProductFormSection extends StatelessWidget {
     required this.onToggleIngredient,
     required this.onChangeAvailability,
     this.initialImageUrls = const [],
+    this.showSelectionSummaryFields = true,
   });
 
   final GlobalKey<FormState> formKey;
@@ -43,6 +44,7 @@ class AddProductFormSection extends StatelessWidget {
   final void Function(int id, bool selected) onToggleIngredient;
   final ValueChanged<bool> onChangeAvailability;
   final List<String> initialImageUrls;
+  final bool showSelectionSummaryFields;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +89,7 @@ class AddProductFormSection extends StatelessWidget {
                         onToggleCategory: onToggleCategory,
                         onToggleIngredient: onToggleIngredient,
                         onChangeAvailability: onChangeAvailability,
+                        showSelectionSummaryFields: showSelectionSummaryFields,
                       ),
                     ),
                   ],
@@ -115,6 +118,7 @@ class AddProductFormSection extends StatelessWidget {
                       onToggleCategory: onToggleCategory,
                       onToggleIngredient: onToggleIngredient,
                       onChangeAvailability: onChangeAvailability,
+                      showSelectionSummaryFields: showSelectionSummaryFields,
                     ),
                   ],
                 ),

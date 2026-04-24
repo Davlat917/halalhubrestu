@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
-import 'package:halalhub_restaurant/core/widgets/feedback/global_feedback_dialog.dart';
+import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/core/widgets/shimmer_item.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
@@ -80,6 +80,7 @@ class _AddProductFormBody extends StatefulWidget {
 class _AddProductBodyState extends State<_AddProductFormBody>
     with AddProductFormMixin {
   final ImagePicker _picker = ImagePicker();
+  final Display _display = getIt<Display>();
 
   String? _buildDiscountsJson() {
     final primary = nonEmptyOrNull(discountController.text);
@@ -104,13 +105,23 @@ class _AddProductBodyState extends State<_AddProductFormBody>
 
   Future<void> _submit() async {
     final bloc = context.read<AddProductBloc>();
+    final state = bloc.state;
     if (bloc.state.images.isEmpty) {
-      showGlobalFailureFeedback(
-        context,
-        title: TranslationKeys.productImageRequiredTitle.tr(context: context),
-        message: TranslationKeys.productImageRequiredMessage.tr(
-          context: context,
-        ),
+      _display.warning(
+        TranslationKeys.productImageRequiredMessage.tr(context: context),
+        TranslationKeys.productImageRequiredTitle.tr(context: context),
+      );
+      return;
+    }
+    if (state.selectedIngredientIds.isEmpty) {
+      _display.warning(
+        TranslationKeys.productIngredientRequired.tr(context: context),
+      );
+      return;
+    }
+    if (state.selectedCategoryIds.isEmpty) {
+      _display.warning(
+        TranslationKeys.productCategoryRequired.tr(context: context),
       );
       return;
     }
@@ -133,18 +144,17 @@ class _AddProductBodyState extends State<_AddProductFormBody>
     if (!mounted) return;
     final blocState = context.read<AddProductBloc>().state;
     if (blocState.success) {
-      showGlobalSuccessFeedback(
-        context,
-        title: TranslationKeys.productAddedTitle.tr(context: context),
-        message: TranslationKeys.productAddedMessage.tr(context: context),
+      _display.success(
+        TranslationKeys.productAddedMessage.tr(context: context),
+        TranslationKeys.productAddedTitle.tr(context: context),
       );
+      formKey.currentState?.reset();
       clearInputs();
       context.read<AddProductBloc>().clearFormState();
     } else if (blocState.errorMessage != null) {
-      showGlobalFailureFeedback(
-        context,
-        title: TranslationKeys.productAddFailedTitle.tr(context: context),
-        message: blocState.errorMessage!,
+      _display.error(
+        blocState.errorMessage!,
+        TranslationKeys.productAddFailedTitle.tr(context: context),
       );
     }
   }
@@ -202,6 +212,7 @@ class _AddProductBodyState extends State<_AddProductFormBody>
           },
           onChangeAvailability: (value) =>
               context.read<AddProductBloc>().setAvailability(value),
+          showSelectionSummaryFields: false,
         );
       },
     );

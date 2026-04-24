@@ -46,13 +46,13 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
     required this.controller,
     required this.scanning,
     required this.onScan,
-    required this.onConnectManual,
+    required this.onManualChanged,
   });
 
   final TextEditingController controller;
   final bool scanning;
   final VoidCallback onScan;
-  final VoidCallback onConnectManual;
+  final ValueChanged<String> onManualChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -73,19 +73,11 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
       textStyle: buttonTextStyle, //
     );
 
-    Widget manualButton() => CustomButton(
-      label: TranslationKeys.printerManualConnect.tr(context: context),
-      type: ButtonType.outlined,
-      onPressed: scanning ? null : onConnectManual,
-      isDisabled: scanning,
-      height: buttonHeight,
-      textStyle: buttonTextStyle, //
-    );
-
     return Column(
       children: [
         CommonTextField(
           controller: controller,
+          onChanged: onManualChanged,
           keyboardType: TextInputType.number,
           inputFormatter: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
@@ -100,16 +92,8 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
         const SizedBox(height: 12),
         if (stackedButtons) ...[
           scanButton(),
-          const SizedBox(height: 10),
-          manualButton(),
         ] else
-          Row(
-            children: [
-              Expanded(child: scanButton()),
-              const SizedBox(width: 12),
-              Expanded(child: manualButton()),
-            ],
-          ),
+          scanButton(),
       ],
     );
   }

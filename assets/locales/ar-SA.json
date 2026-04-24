@@ -13,7 +13,8 @@
     "somethingWentWrongTryAgain": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
     "ok": "حسنًا",
     "successTitle": "تم التنفيذ بنجاح",
-    "certificate": "شهادة"
+    "certificate": "شهادة",
+    "couldNotOpenLink": "تعذر فتح الرابط."
   },
   "account": {
     "title": "الحساب",
@@ -183,7 +184,24 @@
     "menuDisconnect": "قطع الاتصال",
     "connected": "متصل",
     "statusConnectedHost": "الطابعة: {host}",
-    "ipHint": "192.168.1.50"
+    "ipHint": "192.168.1.50",
+    "sendOrdersTo": "إرسال الطلبات إلى:",
+    "optionTablet": "الجهاز اللوحي",
+    "optionClover": "Clover",
+    "cloverComingSoonMessage": "تكامل Clover API قريبًا",
+    "wifiIpNotDetected": "تعذر اكتشاف عنوان WiFi. تحقق على جهاز حقيقي أو أدخل IP يدويًا.",
+    "searchingNetwork": "جارٍ فحص الشبكة (المنفذ {port})…",
+    "notFoundHint": "لم يتم العثور على الطابعة. أدخل IP يدويًا أو تحقق من اتصال الطابعة بالـ WiFi.",
+    "foundCount": "تم العثور على {count} جهاز.",
+    "checkingHost": "جارٍ التحقق من {host}…",
+    "connectFailedHost": "تعذر الاتصال بـ {host}.",
+    "connectedHost": "تم الاتصال: {host}",
+    "enterIp": "يرجى إدخال عنوان IP.",
+    "connectOrEnterIpFirst": "قم بتوصيل الطابعة أولاً أو أدخل عنوان IP.",
+    "sendingTest": "جارٍ إرسال إيصال الاختبار…",
+    "testSent": "تم إرسال إيصال الاختبار. تحقق من الطابعة.",
+    "sendFailed": "فشل الإرسال. تحقق من IP والمنفذ ({port}) والـ WiFi.",
+    "savedRemoved": "تمت إزالة الطابعة المحفوظة."
   },
   "product": {
     "editTitle": "تعديل المنتج",

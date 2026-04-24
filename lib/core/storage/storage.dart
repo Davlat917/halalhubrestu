@@ -36,4 +36,8 @@ class Storage {
   /// EPSON / boshqa ESC/POS WiFi printer — RAW TCP host (masalan `192.168.1.50`).
   BaseStorage<String> get receiptPrinterHost =>
       BaseStorage(_box, 'receiptPrinterHost');
+
+  /// UI tanlovi: `tablet` yoki `clover`.
+  BaseStorage<String> get receiptPrinterType =>
+      BaseStorage(_box, 'receiptPrinterType');
 }

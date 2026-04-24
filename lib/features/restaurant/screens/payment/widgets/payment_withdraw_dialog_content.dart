@@ -130,6 +130,12 @@ class _PaymentWithdrawDialogContentState
                 width: 18,
                 height: 18,
               ),
+              suffixPressed: () {
+                _controller.text = widget.maxBalanceLabel.replaceAll('\$', '').trim();
+                _controller.selection = TextSelection.collapsed(
+                  offset: _controller.text.length,
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),

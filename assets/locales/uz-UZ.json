@@ -13,7 +13,8 @@
     "somethingWentWrongTryAgain": "Nimadir xato ketdi. Iltimos, qayta urinib ko‘ring.",
     "ok": "OK",
     "successTitle": "Muvaffaqiyatli bajarildi",
-    "certificate": "sertifikat"
+    "certificate": "sertifikat",
+    "couldNotOpenLink": "Havolani ochib bo‘lmadi."
   },
   "account": {
     "title": "Hisob",
@@ -183,7 +184,24 @@
     "menuDisconnect": "Uzish",
     "connected": "Ulangan",
     "statusConnectedHost": "Printer: {host}",
-    "ipHint": "192.168.1.50"
+    "ipHint": "192.168.1.50",
+    "sendOrdersTo": "Buyurtmalarni yuborish:",
+    "optionTablet": "Tablet",
+    "optionClover": "Clover",
+    "cloverComingSoonMessage": "Clover API integratsiyasi tez kunda",
+    "wifiIpNotDetected": "WiFi manzili aniqlanmadi. Haqiqiy qurilmada tekshiring yoki IP ni qo'lda kiriting.",
+    "searchingNetwork": "Tarmoq qidirilmoqda (port {port})…",
+    "notFoundHint": "Printer topilmadi. IP ni qo'lda kiriting yoki printer WiFi ga ulanganini tekshiring.",
+    "foundCount": "{count} ta qurilma topildi.",
+    "checkingHost": "{host} tekshirilmoqda…",
+    "connectFailedHost": "{host} ga ulanib bo'lmadi.",
+    "connectedHost": "Ulandi: {host}",
+    "enterIp": "IP manzilni kiriting.",
+    "connectOrEnterIpFirst": "Avval printerga ulaning yoki IP maydoniga manzil yozing.",
+    "sendingTest": "Test chek yuborilmoqda…",
+    "testSent": "Test chek yuborildi. Printerdan chiqishini tekshiring.",
+    "sendFailed": "Yuborishda xato. IP, port ({port}) va WiFi ni tekshiring.",
+    "savedRemoved": "Saqlangan printer o'chirildi."
   },
   "product": {
     "editTitle": "Mahsulotni tahrirlash",

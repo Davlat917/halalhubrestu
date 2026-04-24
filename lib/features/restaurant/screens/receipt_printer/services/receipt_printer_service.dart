@@ -30,6 +30,22 @@ class ReceiptPrinterService {
 
   Stream<String?> watchSavedHost() => _storage.receiptPrinterHost.watch();
 
+  String get selectedPrinterType {
+    final type = _storage.receiptPrinterType.call()?.trim().toLowerCase();
+    if (type == 'tablet' || type == 'clover') return type!;
+    // Backward compatibility: eski buildlarda host bo'lsa Clover deb ko'rsatamiz.
+    final host = savedHost?.trim();
+    return (host != null && host.isNotEmpty) ? 'clover' : 'tablet';
+  }
+
+  Stream<String?> watchSelectedPrinterType() => _storage.receiptPrinterType.watch();
+
+  Future<void> setSelectedPrinterType(String type) async {
+    final normalized = type.trim().toLowerCase();
+    if (normalized != 'tablet' && normalized != 'clover') return;
+    await _storage.receiptPrinterType.set(normalized);
+  }
+
   Future<void> savePrinterHost(String host) async {
     final trimmed = host.trim();
     if (trimmed.isEmpty) return;

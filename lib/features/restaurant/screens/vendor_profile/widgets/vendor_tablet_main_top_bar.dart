@@ -31,7 +31,7 @@ class VendorTabletMainTopBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             const SizedBox(width: 4),
-            ReceiptPrinterShellMenu(iconSize: context.wOf(10, w), showStatusLabel: true),
+            const ReceiptPrinterShellMenu(iconSize: 24, showStatusLabel: true),
             const SizedBox(width: 10),
             Flexible(
               child: InkWell(

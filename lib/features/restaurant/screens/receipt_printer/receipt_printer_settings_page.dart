@@ -5,6 +5,7 @@ import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/extensions/size_extension.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/mixins/receipt_printer_settings_mixin.dart';
@@ -55,13 +56,13 @@ class _ReceiptPrinterSettingsScaffoldState
         scrolledUnderElevation: 0,
         backgroundColor: StaticColors.backgroundColor,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: StaticColors.black,
-            size: 20,
+        leading: Align(
+          alignment: Alignment.center,
+          child: CircleBtnWidget(
+            bgColor: StaticColors.white,
+            iconColor: StaticColors.black,
+            onPress: () => context.router.maybePop(),
           ),
-          onPressed: () => context.router.maybePop(),
         ),
         title: Text(
           TranslationKeys.printerSettingsTitle.tr(context: context),
@@ -85,7 +86,7 @@ class _ReceiptPrinterSettingsScaffoldState
                 controller: manualController,
                 scanning: state.scanning,
                 onScan: onScan,
-                onConnectManual: connectManual, //
+                onManualChanged: onManualInputChanged,
               ),
               const SizedBox(height: 12),
               ReceiptPrinterStatusSection(status: state.status),
@@ -98,8 +99,28 @@ class _ReceiptPrinterSettingsScaffoldState
               ReceiptPrinterFoundDevicesSection(
                 found: state.found,
                 scanning: state.scanning,
-                onTap: connectTo,
+                onTap: selectFoundHost,
               ),
+              if ((state.selectedHost ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                CustomButton(
+                  label: TranslationKeys.printerManualConnect.tr(
+                    context: context,
+                  ),
+                  onPressed: state.scanning
+                      ? null
+                      : () => confirmConnectAndFinish(context),
+                  height: context
+                      .wOf(50, MediaQuery.sizeOf(context).width)
+                      .clamp(44.0, 50.0),
+                  textStyle: AppTextStyle.regular14(
+                    context,
+                    size: context
+                        .spOf(14, MediaQuery.sizeOf(context).width)
+                        .clamp(13.0, 14.0),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               CustomButton(
                 label: TranslationKeys.printerRemoveSaved.tr(context: context),

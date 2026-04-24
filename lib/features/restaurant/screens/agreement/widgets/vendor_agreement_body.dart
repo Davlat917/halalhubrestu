@@ -56,7 +56,7 @@ class VendorAgreementBody extends StatelessWidget {
     final isSignSection = selected.stepNumber > backendMaxStep;
     final canSubmitSign = _allSectionsAccepted(agreement) && (agreement.signedAt == null || agreement.signedAt!.isEmpty);
     final isSigned = agreement.signedAt != null && agreement.signedAt!.isNotEmpty;
-    final hasDownload = isSigned;
+    final hasDownload = isSigned && (agreement.signedPdfUrl?.trim().isNotEmpty ?? false);
 
     final agreeEnabled = selected.stepNumber == agreement.currentStep && canAcceptCurrent && !isSignSection;
 
@@ -112,6 +112,7 @@ class VendorAgreementBody extends StatelessWidget {
     );
 
     if (isSigned) {
+      final fileName = _resolveSignedFileName();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -120,6 +121,35 @@ class VendorAgreementBody extends StatelessWidget {
             style: AppTextStyle.medium14(context, color: StaticColors.primary),
           ),
           if (hasDownload) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: StaticColors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: StaticColors.cE2E2E2),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.insert_drive_file_rounded,
+                    color: StaticColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      fileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.medium14(
+                        context,
+                        color: StaticColors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: _isMobile ? double.infinity : 180,
@@ -154,6 +184,17 @@ class VendorAgreementBody extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _resolveSignedFileName() {
+    final rawUrl = agreement.signedPdfUrl?.trim();
+    if (rawUrl == null || rawUrl.isEmpty) return 'agreement.pdf';
+    final uri = Uri.tryParse(rawUrl);
+    final lastSegment = (uri?.pathSegments.isNotEmpty ?? false)
+        ? uri!.pathSegments.last
+        : rawUrl.split('/').last;
+    final normalized = Uri.decodeComponent(lastSegment).trim();
+    return normalized.isEmpty ? 'agreement.pdf' : normalized;
   }
 
   Widget _buildAgreeSection(BuildContext context, bool agreeEnabled) {

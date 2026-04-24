@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
+import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
-import 'package:halalhub_restaurant/core/widgets/feedback/global_feedback_dialog.dart';
+import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
+import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/bloc/add_product_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/mixins/add_product_form_mixin.dart';
@@ -53,7 +55,18 @@ class EditProductPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: StaticColors.cF8F8F8,
       appBar: AppBar(
-        title: Text(TranslationKeys.editProductTitle.tr(context: context)),
+        leading: Align(
+          alignment: Alignment.center,
+          child: CircleBtnWidget(
+            bgColor: StaticColors.white,
+            iconColor: StaticColors.black,
+            onPress: () => context.router.maybePop(),
+          ),
+        ),
+        title: Text(
+          TranslationKeys.editProductTitle.tr(context: context),
+          style: AppTextStyle.semibold18(context, size: 16),
+        ),
       ),
       body: BlocProvider(
         create: (_) =>
@@ -116,6 +129,7 @@ class _EditProductBody extends StatefulWidget {
 class _EditProductBodyState extends State<_EditProductBody>
     with AddProductFormMixin {
   final ImagePicker _picker = ImagePicker();
+  final Display _display = getIt<Display>();
   bool _seededInitialSelection = false;
   late final List<String> _editableInitialImageUrls;
   late final List<int> _editableInitialImageIds;
@@ -164,6 +178,19 @@ class _EditProductBodyState extends State<_EditProductBody>
 
   Future<void> _submit() async {
     final bloc = context.read<AddProductBloc>();
+    final state = bloc.state;
+    if (state.selectedIngredientIds.isEmpty) {
+      _display.warning(
+        TranslationKeys.productIngredientRequired.tr(context: context),
+      );
+      return;
+    }
+    if (state.selectedCategoryIds.isEmpty) {
+      _display.warning(
+        TranslationKeys.productCategoryRequired.tr(context: context),
+      );
+      return;
+    }
     if (!formKey.currentState!.validate()) return;
     final preparationMinutes = parsePreparationTimeMinutes(
       preparationController.text,
@@ -186,17 +213,11 @@ class _EditProductBodyState extends State<_EditProductBody>
     if (!mounted) return;
     final blocState = context.read<AddProductBloc>().state;
     if (blocState.success) {
-      showGlobalSuccessFeedback(
-        context,
-        title: TranslationKeys.productUpdatedTitle.tr(context: context),
-        message: TranslationKeys.productUpdatedMessage.tr(context: context),
-      );
-      context.router.maybePop();
+      context.router.maybePop(true);
     } else if (blocState.errorMessage != null) {
-      showGlobalFailureFeedback(
-        context,
-        title: TranslationKeys.productUpdateFailedTitle.tr(context: context),
-        message: blocState.errorMessage!,
+      _display.error(
+        blocState.errorMessage!,
+        TranslationKeys.productUpdateFailedTitle.tr(context: context),
       );
     }
   }
@@ -286,6 +307,7 @@ class _EditProductBodyState extends State<_EditProductBody>
           },
           onChangeAvailability: (value) =>
               context.read<AddProductBloc>().setAvailability(value),
+          showSelectionSummaryFields: false,
         );
       },
     );

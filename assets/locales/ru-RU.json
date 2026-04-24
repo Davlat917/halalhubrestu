@@ -13,7 +13,8 @@
     "somethingWentWrongTryAgain": "Что-то пошло не так. Пожалуйста, попробуйте снова.",
     "ok": "OK",
     "successTitle": "Успешно выполнено",
-    "certificate": "сертификат"
+    "certificate": "сертификат",
+    "couldNotOpenLink": "Не удалось открыть ссылку."
   },
   "account": {
     "title": "Аккаунт",
@@ -183,7 +184,24 @@
     "menuDisconnect": "Отключить",
     "connected": "Подключен",
     "statusConnectedHost": "Принтер: {host}",
-    "ipHint": "192.168.1.50"
+    "ipHint": "192.168.1.50",
+    "sendOrdersTo": "Отправлять заказы на:",
+    "optionTablet": "Планшет",
+    "optionClover": "Clover",
+    "cloverComingSoonMessage": "Интеграция Clover API скоро будет доступна",
+    "wifiIpNotDetected": "WiFi-адрес не определён. Проверьте на реальном устройстве или введите IP вручную.",
+    "searchingNetwork": "Идёт поиск в сети (порт {port})…",
+    "notFoundHint": "Принтер не найден. Введите IP вручную или проверьте подключение принтера к WiFi.",
+    "foundCount": "Найдено устройств: {count}.",
+    "checkingHost": "Проверка {host}…",
+    "connectFailedHost": "Не удалось подключиться к {host}.",
+    "connectedHost": "Подключено: {host}",
+    "enterIp": "Введите IP-адрес.",
+    "connectOrEnterIpFirst": "Сначала подключите принтер или введите IP-адрес.",
+    "sendingTest": "Отправка тестового чека…",
+    "testSent": "Тестовый чек отправлен. Проверьте печать.",
+    "sendFailed": "Ошибка отправки. Проверьте IP, порт ({port}) и WiFi.",
+    "savedRemoved": "Сохранённый принтер удалён."
   },
   "product": {
     "editTitle": "Редактировать товар",

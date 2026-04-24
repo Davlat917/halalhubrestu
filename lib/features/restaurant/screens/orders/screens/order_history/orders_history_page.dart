@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/order_history/order_history_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/screens/order_history/bloc/order_history_bloc.dart';
@@ -59,9 +60,13 @@ class _OrdersHistoryScaffold extends StatelessWidget {
         scrolledUnderElevation: 0,
         backgroundColor: StaticColors.white,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: StaticColors.black, size: 20),
-          onPressed: () => context.router.maybePop(),
+        leading: Align(
+          alignment: Alignment.center,
+          child: CircleBtnWidget(
+            bgColor: StaticColors.white,
+            iconColor: StaticColors.black,
+            onPress: () => context.router.maybePop(),
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

@@ -176,6 +176,13 @@ class _CommonTextFieldState extends State<CommonTextField> {
 
     return TextFormField(
       scrollPadding: widget.scrollPadding ?? EdgeInsets.all(context.size16),
+      maxLength: widget.maxLength,
+      buildCounter: (
+        BuildContext context, {
+        required int currentLength,
+        required bool isFocused,
+        required int? maxLength,
+      }) => null,
       textCapitalization: widget.upperCaseInput ? TextCapitalization.characters : TextCapitalization.sentences,
       validator: widget.validator,
       focusNode: widget.focusNode,

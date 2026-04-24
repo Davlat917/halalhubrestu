@@ -22,110 +22,189 @@ class ReceiptPrinterShellMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = getIt<ReceiptPrinterService>();
     return StreamBuilder<String?>(
-      stream: service.watchSavedHost(),
-      initialData: service.savedHost,
-      builder: (context, snap) {
-        final host = snap.data;
-        final connected = host != null && host.isNotEmpty;
+      stream: service.watchSelectedPrinterType(),
+      initialData: service.selectedPrinterType,
+      builder: (context, typeSnap) {
+        final selectedType = (typeSnap.data ?? 'tablet').toLowerCase();
+        final selectedLabel = selectedType == 'clover'
+            ? TranslationKeys.printerOptionClover.tr(context: context)
+            : TranslationKeys.printerOptionTablet.tr(context: context);
+        final isCloverSelected = selectedType == 'clover';
+        final selectedIcon = isCloverSelected
+            ? Icons.energy_savings_leaf_rounded
+            : Icons.tablet_mac_rounded;
+        final resolvedIconSize = iconSize.clamp(14.0, 18.0).toDouble();
         return PopupMenuButton<String>(
           tooltip: TranslationKeys.printerTooltip.tr(context: context),
+          color: StaticColors.white,
           padding: EdgeInsets.zero,
-          offset: const Offset(0, 40),
+          offset: const Offset(0, 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           onSelected: (action) async {
-            if (action == 'settings') {
+            if (action == 'clover') {
+              await service.setSelectedPrinterType('clover');
+              await showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: StaticColors.white,
+                  title: Text(TranslationKeys.comingSoon.tr(context: ctx)),
+                  content: Text(
+                    TranslationKeys.printerCloverComingSoonMessage.tr(
+                      context: ctx,
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text(TranslationKeys.commonOk.tr(context: ctx)),
+                    ),
+                  ],
+                ),
+              );
+            } else if (action == 'tablet') {
+              await service.setSelectedPrinterType('tablet');
               await context.router.push(const ReceiptPrinterSettingsRoute());
             } else if (action == 'disconnect') {
               await service.clearSavedPrinter();
+              await service.setSelectedPrinterType('tablet');
             }
           },
           itemBuilder: (context) => [
             PopupMenuItem<String>(
               enabled: false,
-              value: '_',
-              child: Text(
-                connected
-                    ? TranslationKeys.printerStatusConnectedHost.tr(
-                        context: context,
-                        namedArgs: {'host': host},
-                      )
-                    : TranslationKeys.printerDisconnected.tr(context: context),
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: StaticColors.black,
-                  fontWeight: FontWeight.w600,
-                ),
+              height: 42,
+              value: '_current',
+              child: _PrinterMenuRow(
+                icon: selectedIcon,
+                title: selectedLabel,
+                selected: true,
               ),
             ),
-            const PopupMenuDivider(),
             PopupMenuItem(
-              value: 'settings',
-              child: Text(
-                TranslationKeys.printerMenuSettings.tr(context: context),
+              value: 'tablet',
+              height: 42,
+              child: _PrinterMenuRow(
+                icon: Icons.tablet_mac_rounded,
+                title: TranslationKeys.printerOptionTablet.tr(context: context),
+                selected: !isCloverSelected,
               ),
             ),
-            if (connected)
+            PopupMenuItem(
+              value: 'clover',
+              height: 42,
+              child: _PrinterMenuRow(
+                icon: Icons.settings_input_component_rounded,
+                title: TranslationKeys.printerOptionClover.tr(context: context),
+                selected: isCloverSelected,
+              ),
+            ),
+            if (isCloverSelected) ...[
+              const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'disconnect',
                 child: Text(
                   TranslationKeys.printerMenuDisconnect.tr(context: context),
                 ),
               ),
+            ],
           ],
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      Icons.print_outlined,
-                      size: iconSize,
-                      color: StaticColors.c666666,
+                if (showStatusLabel) ...[
+                  Text(
+                    TranslationKeys.printerSendOrdersTo.tr(context: context),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: StaticColors.black,
                     ),
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: connected
-                              ? StaticColors.primary
-                              : StaticColors.cE2E2E2,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: StaticColors.white,
-                            width: 1,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: StaticColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: StaticColors.cE2E2E2),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        selectedIcon,
+                        size: resolvedIconSize,
+                        color: StaticColors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 130),
+                        child: Text(
+                          selectedLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: StaticColors.black,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                if (showStatusLabel) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    connected
-                        ? TranslationKeys.printerConnected.tr(context: context)
-                        : TranslationKeys.printerDisconnected.tr(
-                            context: context,
-                          ),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: connected
-                          ? StaticColors.primary
-                          : StaticColors.c666666,
-                      fontWeight: FontWeight.w600,
-                    ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 16,
+                        color: StaticColors.black,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _PrinterMenuRow extends StatelessWidget {
+  const _PrinterMenuRow({
+    required this.icon,
+    required this.title,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: selected ? StaticColors.black : StaticColors.c666666,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: selected ? StaticColors.black : StaticColors.c666666,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

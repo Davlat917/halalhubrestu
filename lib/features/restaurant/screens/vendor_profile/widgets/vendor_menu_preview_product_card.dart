@@ -6,24 +6,41 @@ import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_product/vendor_product_model.dart';
 
 class VendorMenuPreviewProductCard extends StatelessWidget {
-  const VendorMenuPreviewProductCard({super.key, required this.product, required this.onEditTap});
+  const VendorMenuPreviewProductCard({
+    super.key,
+    required this.product,
+    required this.onEditTap,
+  });
 
   final VendorProductModel product;
   final VoidCallback onEditTap;
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = product.images.isNotEmpty ? product.images.first.imageUrl : null;
-    final discount = product.discounts.isNotEmpty ? product.discounts.first : null;
+    final imageUrl = product.images.isNotEmpty
+        ? product.images.first.imageUrl
+        : null;
+    final discount = product.discounts.isNotEmpty
+        ? product.discounts.first
+        : null;
     final discountBadgeText = _resolveDiscountBadgeText(discount);
-    final price = product.finalPrice?.toStringAsFixed(2) ?? product.price ?? '-';
+    final price =
+        product.finalPrice?.toStringAsFixed(2) ?? product.price ?? '-';
     final size = MediaQuery.sizeOf(context);
     final isMobile = size.shortestSide < 600;
-    final isTabletLandscape = size.shortestSide >= 600 && MediaQuery.orientationOf(context) == Orientation.landscape;
+    final isTabletLandscape =
+        size.shortestSide >= 600 &&
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     final oldPrice = _resolveOldPriceText();
 
     if (isMobile) {
-      return _mobileCard(context, imageUrl: imageUrl, discountBadgeText: discountBadgeText, price: price, oldPrice: oldPrice);
+      return _mobileCard(
+        context,
+        imageUrl: imageUrl,
+        discountBadgeText: discountBadgeText,
+        price: price,
+        oldPrice: oldPrice,
+      );
     }
 
     return Container(
@@ -37,29 +54,48 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
         children: [
           Expanded(
             flex: 11,
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Container(
-                    width: double.infinity,
-                    color: StaticColors.cF4F4F4,
-                    child: imageUrl == null || imageUrl.isEmpty
-                        ? const Icon(Icons.image_not_supported_outlined, color: StaticColors.c9AA0A6)
-                        : Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_outlined, color: StaticColors.c9AA0A6),
-                          ),
+            child: LayoutBuilder(
+              builder: (context, constraints) => Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      color: StaticColors.cF4F4F4,
+                      child: imageUrl == null || imageUrl.isEmpty
+                          ? const Icon(
+                              Icons.image_not_supported_outlined,
+                              color: StaticColors.c9AA0A6,
+                            )
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.broken_image_outlined,
+                                    color: StaticColors.c9AA0A6,
+                                  ),
+                            ),
+                    ),
                   ),
-                ),
-                if (discountBadgeText != null)
-                  Positioned(
-                    left: 8,
-                    top: 8,
-                    child: _DiscountBadge(text: discountBadgeText, color: StaticColors.cFF4E4E),
-                  ),
-              ],
+                  if (discountBadgeText != null)
+                    Positioned(
+                      left: 6,
+                      top: 6,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: constraints.maxWidth * 0.8,
+                        ),
+                        child: _DiscountBadge(
+                          text: discountBadgeText,
+                          color: StaticColors.cFF4E4E,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Expanded(
@@ -77,7 +113,11 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                             product.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.medium16(context, color: StaticColors.black),
+                            style: AppTextStyle.medium16(
+                              context,
+                              size: 14,
+                              color: StaticColors.black,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -85,7 +125,10 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                           '$price \$',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyle.medium16(context, color: StaticColors.primary),
+                          style: AppTextStyle.medium16(
+                            context,
+                            color: StaticColors.primary,
+                          ),
                         ),
                       ],
                     )
@@ -94,14 +137,21 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                       '$price \$',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.medium16(context, color: StaticColors.primary),
+                      style: AppTextStyle.medium16(
+                        context,
+                        color: StaticColors.primary,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.medium16(context, color: StaticColors.black),
+                      style: AppTextStyle.medium16(
+                        context,
+                        size: 14,
+                        color: StaticColors.black,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 4),
@@ -109,7 +159,10 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                     product.description ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.regular12(context, color: StaticColors.c9AA0A6),
+                    style: AppTextStyle.regular12(
+                      context,
+                      color: StaticColors.c9AA0A6,
+                    ),
                   ),
                   const Spacer(),
                   const SizedBox(height: 6),
@@ -119,7 +172,12 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                       onTap: onEditTap,
                       child: Text(
                         TranslationKeys.editProductTitle.tr(context: context),
-                        style: AppTextStyle.regular14(context, color: StaticColors.primary, decoration: TextDecoration.underline, decorationColor: StaticColors.primary),
+                        style: AppTextStyle.regular14(
+                          context,
+                          color: StaticColors.primary,
+                          decoration: TextDecoration.underline,
+                          decorationColor: StaticColors.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -140,7 +198,10 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
     required String? oldPrice, //
   }) {
     return Container(
-      decoration: BoxDecoration(color: StaticColors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: StaticColors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
       padding: const EdgeInsets.all(10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,31 +209,50 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
           SizedBox(
             width: 120,
             height: 120,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    color: StaticColors.cF4F4F4,
-                    width: 120,
-                    height: 120,
-                    child: imageUrl == null || imageUrl.isEmpty
-                        ? const Icon(Icons.image_not_supported_outlined, color: StaticColors.c9AA0A6)
-                        : Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image_outlined, color: StaticColors.c9AA0A6),
+            child: LayoutBuilder(
+              builder: (context, constraints) => Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      color: StaticColors.cF4F4F4,
+                      width: 120,
+                      height: 120,
+                      child: imageUrl == null || imageUrl.isEmpty
+                          ? const Icon(
+                              Icons.image_not_supported_outlined,
+                              color: StaticColors.c9AA0A6,
+                            )
+                          : Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    Icons.broken_image_outlined,
+                                    color: StaticColors.c9AA0A6,
+                                  ),
+                            ),
+                    ),
+                  ),
+                  if (discountBadgeText != null)
+                    Positioned(
+                      left: 6,
+                      top: 6,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: constraints.maxWidth * 0.8,
+                        ),
+                        child: IntrinsicWidth(
+                          child: _DiscountBadge(
+                            text: discountBadgeText,
+                            color: const Color(0xFFFF8A1E),
                           ),
-                  ),
-                ),
-                if (discountBadgeText != null)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    child: _DiscountBadge(text: discountBadgeText, color: const Color(0xFFFF8A1E)),
-                  ),
-              ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -188,7 +268,7 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.medium16(
                       context,
-                      size: 14,
+                      size: 13,
                       color: StaticColors.black,
                     ),
                   ),
@@ -270,8 +350,12 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
     if (discount == null) return null;
     final percent = discount.percent ?? 0;
     if (percent != 0) {
-      final formattedPercent = percent % 1 == 0 ? percent.toStringAsFixed(0) : percent.toString();
-      return TranslationKeys.productPercentOff.tr(namedArgs: {'percent': formattedPercent});
+      final formattedPercent = percent % 1 == 0
+          ? percent.toStringAsFixed(0)
+          : percent.toString();
+      return TranslationKeys.productPercentOff.tr(
+        namedArgs: {'percent': formattedPercent},
+      );
     }
     final title = discount.title?.trim();
     if (title != null && title.isNotEmpty) {
@@ -301,11 +385,19 @@ class _DiscountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 26,
+      height: 22,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: Alignment.center,
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-      child: Text(text, style: AppTextStyle.regular14(context, color: StaticColors.white)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyle.regular10(context, color: StaticColors.white),
+      ),
     );
   }
 }

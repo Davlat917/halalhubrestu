@@ -101,7 +101,7 @@ class _VendorMenuPreviewSectionState extends State<VendorMenuPreviewSection> {
         ? product.discounts.first
         : null;
 
-    await menuContext.router.push(
+    final updated = await menuContext.router.push<bool>(
       EditProductRoute(
         vendorId: vendorId,
         productId: product.id,
@@ -125,6 +125,13 @@ class _VendorMenuPreviewSectionState extends State<VendorMenuPreviewSection> {
         initialDiscountPercent: firstDiscount?.percent,
       ),
     );
+
+    if (updated == true && mounted) {
+      setState(() {
+        _groupsFuture = _loadGroups();
+        _didScheduleDefaultCategorySelection = false;
+      });
+    }
 
     if (!menuContext.mounted) return;
     if (outerBefore == null && innerBefore == null) return;

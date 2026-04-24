@@ -13,7 +13,8 @@
     "somethingWentWrongTryAgain": "Something went wrong. Please try again.",
     "ok": "OK",
     "successTitle": "Completed successfully",
-    "certificate": "certificate"
+    "certificate": "certificate",
+    "couldNotOpenLink": "Could not open the link."
   },
   "account": {
     "title": "Account",
@@ -183,7 +184,24 @@
     "menuDisconnect": "Disconnect",
     "connected": "Connected",
     "statusConnectedHost": "Printer: {host}",
-    "ipHint": "192.168.1.50"
+    "ipHint": "192.168.1.50",
+    "sendOrdersTo": "Send orders to:",
+    "optionTablet": "Tablet",
+    "optionClover": "Clover",
+    "cloverComingSoonMessage": "Clover API integration coming soon",
+    "wifiIpNotDetected": "WiFi address not detected. Check on a real device or enter IP manually.",
+    "searchingNetwork": "Scanning network (port {port})…",
+    "notFoundHint": "Printer not found. Enter IP manually or check printer WiFi connection.",
+    "foundCount": "{count} devices found.",
+    "checkingHost": "Checking {host}…",
+    "connectFailedHost": "Could not connect to {host}.",
+    "connectedHost": "Connected: {host}",
+    "enterIp": "Please enter IP address.",
+    "connectOrEnterIpFirst": "Connect a printer first or enter an IP address.",
+    "sendingTest": "Sending test receipt…",
+    "testSent": "Test receipt sent. Check printer output.",
+    "sendFailed": "Failed to send. Check IP, port ({port}) and WiFi.",
+    "savedRemoved": "Saved printer removed."
   },
   "product": {
     "editTitle": "Edit product",

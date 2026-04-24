@@ -9,6 +9,7 @@ abstract final class TranslationKeys {
   static const upload = 'common.upload';
   static const browseFile = 'common.browseFile';
   static const commonCertificate = 'common.certificate';
+  static const commonCouldNotOpenLink = 'common.couldNotOpenLink';
 
   // Account menu
   static const accountTitle = 'account.title';
@@ -134,6 +135,23 @@ abstract final class TranslationKeys {
   static const printerConnected = 'printer.connected';
   static const printerStatusConnectedHost = 'printer.statusConnectedHost';
   static const printerIpHint = 'printer.ipHint';
+  static const printerSendOrdersTo = 'printer.sendOrdersTo';
+  static const printerOptionTablet = 'printer.optionTablet';
+  static const printerOptionClover = 'printer.optionClover';
+  static const printerCloverComingSoonMessage = 'printer.cloverComingSoonMessage';
+  static const printerWifiIpNotDetected = 'printer.wifiIpNotDetected';
+  static const printerSearchingNetwork = 'printer.searchingNetwork';
+  static const printerNotFoundHint = 'printer.notFoundHint';
+  static const printerFoundCount = 'printer.foundCount';
+  static const printerCheckingHost = 'printer.checkingHost';
+  static const printerConnectFailedHost = 'printer.connectFailedHost';
+  static const printerConnectedHost = 'printer.connectedHost';
+  static const printerEnterIp = 'printer.enterIp';
+  static const printerConnectOrEnterIpFirst = 'printer.connectOrEnterIpFirst';
+  static const printerSendingTest = 'printer.sendingTest';
+  static const printerTestSent = 'printer.testSent';
+  static const printerSendFailed = 'printer.sendFailed';
+  static const printerSavedRemoved = 'printer.savedRemoved';
 
   // Product
   static const editProductTitle = 'product.editTitle';

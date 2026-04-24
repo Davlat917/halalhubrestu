@@ -32,8 +32,8 @@ PreferredSizeWidget vendorMobileAppBar({required BuildContext context, required 
       Padding(
         padding: EdgeInsets.only(right: context.wOf(2, w)),
         child: ReceiptPrinterShellMenu(
-          iconSize: context.wOf(30, w),
-          showStatusLabel: true,
+          iconSize: 20,
+          showStatusLabel: false,
         ),
       ),
       Padding(
