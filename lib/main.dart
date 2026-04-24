@@ -15,8 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'HalalHub Restu',
-      home: const WebViewPage(), //
+      title: 'HalalHub Restaurant',
+      home: const WebViewPage(),
     );
   }
 }

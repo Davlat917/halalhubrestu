@@ -38,7 +38,10 @@ class _WebViewPageState extends State<WebViewPage> {
       case RecoveryResult.noInternet:
         await showWebViewFailureSnackBar(context, "Internet not available yet");
       case RecoveryResult.failedToLoad:
-        await showWebViewFailureSnackBar(context, "Failed to open page. Please try again.");
+        await showWebViewFailureSnackBar(
+          context,
+          "Failed to open page. Please try again.",
+        );
     }
   }
 
@@ -68,10 +71,7 @@ class _WebViewPageState extends State<WebViewPage> {
         body: ListenableBuilder(
           listenable: _controller,
           builder: (context, _) {
-            return WebViewBody(
-              controller: _controller,
-              onRetry: _handleRetry,
-            );
+            return WebViewBody(controller: _controller, onRetry: _handleRetry);
           },
         ),
       ),

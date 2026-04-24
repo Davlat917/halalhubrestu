@@ -70,4 +70,6 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
+    // Referenced by Flutter embedding (deferred components). Satisfies R8 when minify is on.
+    implementation("com.google.android.play:core:1.10.3")
 }

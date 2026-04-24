@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:halal_hub_resto/controllers/web_view_page_controller.dart';
@@ -38,8 +39,8 @@ class WebViewBody extends StatelessWidget {
                 transparentBackground: false,
                 disableDefaultErrorPage: true,
                 useShouldOverrideUrlLoading: true,
-                geolocationEnabled: true, // ← QO'SHING
-                allowUniversalAccessFromFileURLs: true, // ← QO'SHING
+                geolocationEnabled: true,
+                allowUniversalAccessFromFileURLs: true,
               ),
               onWebViewCreated: controller.onWebViewCreated,
               onLoadStart: controller.onLoadStart,
@@ -50,7 +51,9 @@ class WebViewBody extends StatelessWidget {
               shouldOverrideUrlLoading: controller.onShouldOverrideUrlLoading,
               onCreateWindow: controller.onCreateWindow,
               onConsoleMessage: (webController, consoleMessage) {
-                debugPrint('JS Console: ${consoleMessage.message}');
+                if (kDebugMode) {
+                  debugPrint('JS Console: ${consoleMessage.message}');
+                }
               },
               onGeolocationPermissionsShowPrompt: (controller, origin) async {
                 return GeolocationPermissionShowPromptResponse(origin: origin, allow: true, retain: true);
