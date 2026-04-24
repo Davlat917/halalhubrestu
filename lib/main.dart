@@ -1,24 +1,82 @@
+import 'dart:async';
+
+// import 'package:device_preview/device_preview.dart';
+// import 'package:flutter/foundation.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:halal_hub_resto/push_notification_service.dart';
-import 'package:halal_hub_resto/web_page.dart';
+import 'package:flutter/services.dart';
+import 'package:halalhub_restaurant/app/app.dart';
+import 'package:halalhub_restaurant/core/bootstrap/app_bootstrap.dart';
+import 'package:halalhub_restaurant/core/di/injection.dart';
+import 'package:halalhub_restaurant/core/storage/storage.dart';
+import 'package:halalhub_restaurant/features/restaurant/services/push_notification_service.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await PushNotificationHelper.initialized();
-  runApp(const MyApp());
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  binding.deferFirstFrame();
+  debugPrint('[main] deferFirstFrame enabled');
+
+  await AppBootstrap.initialize();
+  await configureDependencies();
+
+  // FCM ni ilovani bloklamasdan ishga tushiramiz.
+  // Xato yuz bersa log chiqaramiz, ilovani crash qilmaymiz.
+  unawaited(
+    PushNotificationService.initialize().catchError(
+      (Object e, StackTrace st) =>
+          debugPrint('[main] PushNotificationService error: $e\n$st'),
+    ),
+  );
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  runApp(
+    const _Root(), //
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _Root extends StatelessWidget {
+  const _Root();
+
+  static const Locale _enLocale = Locale('en', 'US');
+  static const Locale _uzLocale = Locale('uz', 'UZ');
+  static const Locale _arLocale = Locale('ar', 'SA');
+  static const Locale _ruLocale = Locale('ru', 'RU');
+
+  Locale _resolveStartLocale() {
+    final code = getIt<Storage>().languageCode.call()?.trim().toLowerCase();
+    switch (code) {
+      case 'en':
+        return _enLocale;
+      case 'ar':
+        return _arLocale;
+      case 'ru':
+        return _ruLocale;
+      case 'uz':
+      default:
+        return _uzLocale;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'HalalHub Restaurant',
-      home: const WebViewPage(),
+    final startLocale = _resolveStartLocale();
+    return EasyLocalization(
+      supportedLocales: const [_enLocale, _uzLocale, _arLocale, _ruLocale],
+      path: 'assets/locales',
+      startLocale: startLocale,
+      fallbackLocale: _uzLocale,
+      saveLocale: true,
+      child: const App(), //
+      // child: DevicePreview(
+      //   enabled: kDebugMode,
+      //   builder: (_) {
+      //     return const App();
+      //   },
+      // ),
     );
   }
 }
-
-

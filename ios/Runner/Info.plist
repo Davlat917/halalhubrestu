@@ -29,8 +29,14 @@
 		<string>This app uses camera for uploading images.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>This app allows selecting photos to upload.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>This app saves selected media when needed.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app uses microphone while recording videos.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app uses your location to improve services.</string>
+		<key>GMSApiKey</key>
+		<string>$(MAPS_API_KEY)</string>
 		<!-- Push Notification -->
 		<key>UIBackgroundModes</key>
 		<array>

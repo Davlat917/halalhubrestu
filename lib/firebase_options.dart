@@ -40,16 +40,6 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBEUALpxv-NUQv41a3wYNlLFhpna3JUkdQ',
-    appId: '1:810092682000:web:9c4e9b657309afdf876395',
-    messagingSenderId: '810092682000',
-    projectId: 'halalhubmobile',
-    authDomain: 'halalhubmobile.firebaseapp.com',
-    storageBucket: 'halalhubmobile.firebasestorage.app',
-    measurementId: 'G-1SD309XKMB',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAWh0pSOiMJh3qdBNuotjf4hem_fZONTMo',
     appId: '1:810092682000:android:27a23abdfcd0dc12876395',
@@ -69,6 +59,16 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.infonex.halalhubrestu',
   );
 
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBEUALpxv-NUQv41a3wYNlLFhpna3JUkdQ',
+    appId: '1:810092682000:web:9c4e9b657309afdf876395',
+    messagingSenderId: '810092682000',
+    projectId: 'halalhubmobile',
+    authDomain: 'halalhubmobile.firebaseapp.com',
+    storageBucket: 'halalhubmobile.firebasestorage.app',
+    measurementId: 'G-1SD309XKMB',
+  );
+
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDx4IlZWzq-iYwn91F-kd5sQAQ-2GxVjTw',
     appId: '1:810092682000:ios:0d37f7143246f647876395',
@@ -82,11 +82,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyBEUALpxv-NUQv41a3wYNlLFhpna3JUkdQ',
-    appId: '1:810092682000:web:bec66ded7fa097c4876395',
+    appId: '1:810092682000:web:fe78bb160357bf47876395',
     messagingSenderId: '810092682000',
     projectId: 'halalhubmobile',
     authDomain: 'halalhubmobile.firebaseapp.com',
     storageBucket: 'halalhubmobile.firebasestorage.app',
-    measurementId: 'G-T4V6JYGK98',
+    measurementId: 'G-T9W9XDXKLF',
   );
+
 }
