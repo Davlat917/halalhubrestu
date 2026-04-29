@@ -18,7 +18,7 @@ class SupportChatRepositoryImpl implements SupportChatRepository {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
 
-  static const _wsBase = 'wss://infonexuz.uz/ws/faq/me/';
+  static const _wsBase = 'wss://backend-api.wehalalhub.com/ws/faq/me/';
 
   @override
   Stream<ServiceSupportChatModel> get inbound => _controller.stream;

@@ -103,9 +103,23 @@ class _LanguagePickerSheetState extends State<LanguagePickerSheet> {
   void initState() {
     super.initState();
     final saved = getIt<Storage>().languageCode.call();
-    _selectedCode = saved?.trim().isNotEmpty == true
-        ? saved!.trim()
-        : LanguagePickerSheet.storageKeyDefault;
+    _selectedCode = _resolveInitialLanguageCode(saved);
+  }
+
+  String _resolveInitialLanguageCode(String? savedCode) {
+    final normalizedSaved = savedCode?.trim().toLowerCase();
+    if (normalizedSaved != null &&
+        normalizedSaved.isNotEmpty &&
+        LanguagePickerSheet._options.any((option) => option.code == normalizedSaved)) {
+      return normalizedSaved;
+    }
+
+    final deviceLanguageCode = WidgetsBinding.instance.platformDispatcher.locale.languageCode.toLowerCase();
+    if (LanguagePickerSheet._options.any((option) => option.code == deviceLanguageCode)) {
+      return deviceLanguageCode;
+    }
+
+    return LanguagePickerSheet.storageKeyDefault;
   }
 
   Future<void> _select(_LanguageOption option) async {
