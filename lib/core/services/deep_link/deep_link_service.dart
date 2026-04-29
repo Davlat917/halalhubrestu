@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:app_links/app_links.dart';
 import 'package:halalhub_restaurant/core/router/app_router.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
 /// Deep link service — app_links + auto_route
@@ -19,6 +19,10 @@ class DeepLinkService {
   final AppLinks _appLinks;
   StreamSubscription<Uri>? _subscription;
 
+  void _log(String message) {
+    if (kDebugMode) debugPrint('[DeepLink] $message');
+  }
+
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   Future<void> init(AppRouter router) async {
@@ -29,7 +33,10 @@ class DeepLinkService {
     }
 
     // 2. Ilova ochiq bo'lganida kelgan link (warm start)
-    _subscription = _appLinks.uriLinkStream.listen((uri) => _handleLink(router, uri), onError: (err) => debugPrint('[DeepLink] Error: $err'));
+    _subscription = _appLinks.uriLinkStream.listen(
+      (uri) => _handleLink(router, uri),
+      onError: (err) => _log('Error: $err'),
+    );
   }
 
   // ─── Dispose ──────────────────────────────────────────────────────────────
@@ -42,11 +49,11 @@ class DeepLinkService {
   // ─── Handler ──────────────────────────────────────────────────────────────
 
   void _handleLink(AppRouter router, Uri uri) {
-    debugPrint('[DeepLink] uri: $uri');
-    debugPrint('[DeepLink] scheme: ${uri.scheme}');
-    debugPrint('[DeepLink] host: ${uri.host}');
-    debugPrint('[DeepLink] segments: ${uri.pathSegments}');
-    debugPrint('[DeepLink] params: ${uri.queryParameters}');
+    _log('uri: $uri');
+    _log('scheme: ${uri.scheme}');
+    _log('host: ${uri.host}');
+    _log('segments: ${uri.pathSegments}');
+    _log('params: ${uri.queryParameters}');
 
     final segments = uri.pathSegments;
     if (segments.isEmpty) return;
@@ -57,7 +64,7 @@ class DeepLinkService {
         // router.push(AllComponentsRoute(id: id)); // ← faqat shu
         break;
       default:
-        debugPrint('[DeepLink] Unknown: ${segments.first}');
+        _log('Unknown: ${segments.first}');
     }
   }
 }

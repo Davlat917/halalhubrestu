@@ -1,4 +1,5 @@
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:halalhub_restaurant/gen/assets.gen.dart';
 
@@ -13,24 +14,28 @@ class AppStartPage extends StatefulWidget {
 }
 
 class _AppStartPageState extends State<AppStartPage> {
+  void _log(String message) {
+    if (kDebugMode) debugPrint('[AppStartPage] $message');
+  }
+
   @override
   void initState() {
     super.initState();
-    debugPrint('[AppStartPage] initState');
+    _log('initState');
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('[AppStartPage] first frame rendered');
+      _log('first frame rendered');
     });
   }
 
   @override
   void dispose() {
-    debugPrint('[AppStartPage] dispose');
+    _log('dispose');
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[AppStartPage] build');
+    _log('build');
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(

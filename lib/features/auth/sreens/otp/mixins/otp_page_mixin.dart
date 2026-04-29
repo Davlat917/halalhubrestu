@@ -63,7 +63,7 @@ mixin OtpPageMixin on State<OtpPageBody> {
       }
       if (successFromAction == AuthPendingAction.verifyOtp) {
         if (widget.flow == OtpFlow.account) {
-          navigateAfterRegistrationToCreateRestaurant();
+          navigateAfterLoginCheckingVendor();
         }
         return;
       }

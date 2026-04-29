@@ -176,10 +176,11 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
                               onPressed: state.submitting || state.loading
                                   ? null
                                   : () {
-                                      if (_validate(state)) {
-                                        context
-                                            .read<UpdateRestaurantCubit>()
-                                            .submit();
+                                      final cubit = context
+                                          .read<UpdateRestaurantCubit>();
+                                      final latestState = cubit.state;
+                                      if (_validate(latestState)) {
+                                        cubit.submit();
                                       }
                                     },
                             );

@@ -27,31 +27,26 @@ class VendorAccountMenuPage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         leading: Align(
           alignment: Alignment.center,
-          child: CircleBtnWidget(
-            bgColor: StaticColors.white,
-            iconColor: StaticColors.black,
-            onPress: () => context.router.maybePop(),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+            child: CircleBtnWidget(
+              iconColor: StaticColors.black,
+              bgColor: StaticColors.backgroundColor,
+              onPress: () => context.router.maybePop(), //
+            ),
           ),
         ),
-        title: Text(
-          TranslationKeys.accountTitle.tr(context: context),
-          style: AppTextStyle.semibold18(context),
-        ),
-        centerTitle: false,
+        title: Text(TranslationKeys.accountTitle.tr(context: context), style: AppTextStyle.semibold18(context)),
+        centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         children: [
           VendorAccountMenuGeneralSection(
-            onSupportTap: (context) =>
-                context.router.push(const SupportChatRoute()),
+            onSupportTap: (context) => context.router.push(const SupportChatRoute()),
             onUsageTap: VendorAccountMenuHandlers.showComingSoon, //
           ),
-          VendorAccountMenuPreferencesSection(
-            onNotificationTap: (context) =>
-                context.router.push(const NotificationRoute()),
-            onLanguageTap: VendorAccountMenuHandlers.showLanguagePicker,
-          ),
+          VendorAccountMenuPreferencesSection(onNotificationTap: (context) => context.router.push(const NotificationRoute()), onLanguageTap: VendorAccountMenuHandlers.showLanguagePicker),
           const VendorAccountMenuDestructiveSection(),
         ],
       ),

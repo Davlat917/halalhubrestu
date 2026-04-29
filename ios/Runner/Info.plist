@@ -10,6 +10,8 @@
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleName</key>
 		<string>halal_hub_resto</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
 		<string>$(FLUTTER_BUILD_NAME)</string>
 		<key>CFBundleVersion</key>
@@ -35,6 +37,8 @@
 		<string>This app uses microphone while recording videos.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app uses your location to improve services.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app may use your location to improve delivery and map-related services while the app is running.</string>
 		<key>GMSApiKey</key>
 		<string>$(MAPS_API_KEY)</string>
 		<!-- Push Notification -->

@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/extensions/size_extension.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/auth/bloc/auth_bloc.dart';
@@ -244,7 +246,9 @@ class _OtpPageBodyState extends State<OtpPageBody> with OtpPageMixin {
           builder: (context, constraints) {
             return OtpVerificationCard(
               emailOrPhone: widget.emailOrPhone,
-              headline: widget.flow == OtpFlow.passwordReset ? 'Reset password' : 'Email verification',
+              headline: widget.flow == OtpFlow.passwordReset
+                  ? TranslationKeys.resetPassword.tr(context: context)
+                  : TranslationKeys.otpEmailVerification.tr(context: context),
               availableHeight: widget.availableHeight ?? constraints.maxHeight,
               availableWidth: widget.availableWidth ?? constraints.maxWidth,
               buttonHeight: widget.buttonHeight,

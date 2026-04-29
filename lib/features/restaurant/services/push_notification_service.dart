@@ -16,8 +16,8 @@ import 'package:halalhub_restaurant/core/di/injection.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  debugPrint('[FCM] backgroundHandler: ${message.data}');
-  debugPrint('[FCM] title: ${message.notification?.title}');
+  if (kDebugMode) debugPrint('[FCM] backgroundHandler: ${message.data}');
+  if (kDebugMode) debugPrint('[FCM] title: ${message.notification?.title}');
 }
 
 @pragma('vm:entry-point')
@@ -30,7 +30,7 @@ void _logNotificationResponse(String tag, NotificationResponse response) {
           NotificationResponseType.selectedNotification
       ? 'selectedNotification'
       : 'selectedNotificationAction';
-  debugPrint('$tag type=$type | payload=${response.payload}');
+  if (kDebugMode) debugPrint('$tag type=$type | payload=${response.payload}');
 }
 
 // ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ class LocalNotificationService {
         payload: jsonEncode(message.data),
       );
     } catch (e) {
-      debugPrint('[LocalNotif] show error: $e');
+      if (kDebugMode) debugPrint('[LocalNotif] show error: $e');
     }
   }
 }
@@ -101,7 +101,9 @@ class PushNotificationService {
 
   static String fcmToken = '';
 
-  static void _log(String msg) => debugPrint('$_tag $msg');
+  static void _log(String msg) {
+    if (kDebugMode) debugPrint('$_tag $msg');
+  }
 
   // -------------------------------------------------------------------------
   // Public API

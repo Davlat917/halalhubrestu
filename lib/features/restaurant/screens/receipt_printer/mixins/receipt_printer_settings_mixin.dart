@@ -13,6 +13,7 @@ class ReceiptPrinterSettingsVm {
     this.wifiIp,
     this.status,
     this.selectedHost,
+    this.connectingHost,
   });
 
   final bool scanning;
@@ -21,6 +22,7 @@ class ReceiptPrinterSettingsVm {
   final String? wifiIp;
   final String? status;
   final String? selectedHost;
+  final String? connectingHost;
 
   ReceiptPrinterSettingsVm copyWith({
     bool? scanning,
@@ -29,6 +31,7 @@ class ReceiptPrinterSettingsVm {
     String? wifiIp,
     String? status,
     String? selectedHost,
+    String? connectingHost,
     bool clearStatus = false,
   }) {
     return ReceiptPrinterSettingsVm(
@@ -38,6 +41,7 @@ class ReceiptPrinterSettingsVm {
       wifiIp: wifiIp ?? this.wifiIp,
       status: clearStatus ? null : (status ?? this.status),
       selectedHost: selectedHost ?? this.selectedHost,
+      connectingHost: connectingHost ?? this.connectingHost,
     );
   }
 }
@@ -50,10 +54,13 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
   );
 
   Future<void> initReceiptPrinterSettings() async {
-    final saved = service.savedHost;
+    final saved = service.savedHost?.trim();
     if (saved != null && saved.isNotEmpty) {
       manualController.text = saved;
-      vm.value = vm.value.copyWith(selectedHost: saved);
+      vm.value = vm.value.copyWith(selectedHost: saved, clearStatus: true);
+    } else {
+      manualController.clear();
+      vm.value = vm.value.copyWith(selectedHost: null, clearStatus: true);
     }
     await loadWifiIp();
   }
@@ -74,6 +81,7 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
     vm.value = vm.value.copyWith(
       scanning: true,
       found: const [],
+      selectedHost: null,
       status: TranslationKeys.printerSearchingNetwork.tr(
         context: context,
         namedArgs: {'port': '${ReceiptPrinterService.defaultRawPort}'},
@@ -137,9 +145,29 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
-  void selectFoundHost(String host) {
+  void selectFoundHost(String host) async {
+    final router = context.router;
+    if (vm.value.connectingHost != null) return;
     manualController.text = host;
-    vm.value = vm.value.copyWith(selectedHost: host, clearStatus: true);
+    vm.value = vm.value.copyWith(
+      selectedHost: host,
+      connectingHost: host,
+      clearStatus: true,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    final ok = await connectTo(host);
+    if (!mounted || !ok) {
+      if (mounted) {
+        vm.value = vm.value.copyWith(connectingHost: null);
+      }
+      return;
+    }
+    await service.setSelectedPrinterType('tablet');
+    if (!mounted) return;
+    vm.value = vm.value.copyWith(connectingHost: null);
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) return;
+    router.pop(true);
   }
 
   Future<void> confirmConnectAndFinish(BuildContext context) async {
@@ -151,9 +179,9 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
       return;
     }
     final ok = await connectTo(host);
-    if (!mounted || !ok) return;
+    if (!context.mounted || !ok) return;
     await service.setSelectedPrinterType('tablet');
-    if (!mounted) return;
+    if (!context.mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -173,7 +201,7 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
       ),
     );
     if (!context.mounted) return;
-    context.router.maybePop(true);
+    context.router.pop(true);
   }
 
   Future<void> connectManual() async {

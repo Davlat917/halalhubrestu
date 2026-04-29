@@ -14,7 +14,8 @@
     "ok": "OK",
     "successTitle": "Muvaffaqiyatli bajarildi",
     "certificate": "sertifikat",
-    "couldNotOpenLink": "Havolani ochib bo‘lmadi."
+    "couldNotOpenLink": "Havolani ochib bo‘lmadi.",
+    "search": "Qidirish"
   },
   "account": {
     "title": "Hisob",
@@ -51,7 +52,8 @@
     "title": "HalalHub Yordam",
     "online": "online",
     "connectionFailed": "Ulanish muvaffaqiyatsiz",
-    "startConversation": "Suhbatni boshlang"
+    "startConversation": "Suhbatni boshlang",
+    "typePlaceholder": "Yozing..."
   },
   "logout": {
     "confirmTitle": "Akkountdan chiqilsinmi?",
@@ -189,6 +191,7 @@
     "optionTablet": "Tablet",
     "optionClover": "Clover",
     "cloverComingSoonMessage": "Clover API integratsiyasi tez kunda",
+    "providerComingSoonMessage": "{label} ilovada hali mavjud emas.",
     "wifiIpNotDetected": "WiFi manzili aniqlanmadi. Haqiqiy qurilmada tekshiring yoki IP ni qo'lda kiriting.",
     "searchingNetwork": "Tarmoq qidirilmoqda (port {port})…",
     "notFoundHint": "Printer topilmadi. IP ni qo'lda kiriting yoki printer WiFi ga ulanganini tekshiring.",
@@ -201,7 +204,12 @@
     "sendingTest": "Test chek yuborilmoqda…",
     "testSent": "Test chek yuborildi. Printerdan chiqishini tekshiring.",
     "sendFailed": "Yuborishda xato. IP, port ({port}) va WiFi ni tekshiring.",
-    "savedRemoved": "Saqlangan printer o'chirildi."
+    "savedRemoved": "Saqlangan printer o'chirildi.",
+    "cloverConnectFailed": "Clover ga kirishni boshlab bo'lmadi. Qayta urinib ko'ring.",
+    "cloverOpenBrowserFailed": "Brauzerni ochib bo'lmadi. Havolani qo'lda oching.",
+    "vendorNotFound": "Vendor id topilmadi.",
+    "selectProviderFailed": "Provider tanlab bo'lmadi.",
+    "networkCount": "{count} ta tarmoq"
   },
   "product": {
     "editTitle": "Mahsulotni tahrirlash",
@@ -455,7 +463,8 @@
     "menuView": "Menyu ko‘rinishi",
     "aboutRestaurant": "Restoran haqida",
     "todayClosed": "Bugun yopiq",
-    "todayHours": "Bugun {from} — {to}"
+    "todayHours": "Bugun {from} — {to}",
+    "vendorFallback": "Vendor"
   },
   "notInternet": {
     "title": "Voy!",

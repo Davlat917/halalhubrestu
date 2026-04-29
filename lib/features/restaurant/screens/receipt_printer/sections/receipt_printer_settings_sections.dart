@@ -126,45 +126,211 @@ class ReceiptPrinterFoundDevicesSection extends StatelessWidget {
     super.key,
     required this.found,
     required this.scanning,
+    required this.selectedHost,
+    required this.connectingHost,
     required this.onTap,
   });
 
   final List<String> found;
   final bool scanning;
+  final String? selectedHost;
+  final String? connectingHost;
   final ValueChanged<String> onTap;
 
   @override
   Widget build(BuildContext context) {
+    final selected = selectedHost?.trim();
     if (found.isEmpty && !scanning) {
-      return Text(
-        TranslationKeys.printerNoSearchResult.tr(context: context),
-        style: AppTextStyle.regular14(context, color: StaticColors.c666666),
+      if (selected != null && selected.isNotEmpty) {
+        return _NetworkCard(
+          ip: selected,
+          selected: true,
+          connecting: false,
+          onTap: () => onTap(selected),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+    if (scanning && found.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: StaticColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: StaticColors.cE2E2E2),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                TranslationKeys.printerSearchingNetwork.tr(
+                  context: context,
+                  namedArgs: {'port': '${ReceiptPrinterService.defaultRawPort}'},
+                ),
+                style: AppTextStyle.regular14(context, color: StaticColors.c666666),
+              ),
+            ),
+          ],
+        ),
       );
     }
+
     return Column(
       children: [
         for (final ip in found)
-          Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(ip, style: AppTextStyle.medium14(context)),
-              subtitle: Text(
-                TranslationKeys.printerPort.tr(
-                  context: context,
-                  namedArgs: {
-                    'port': '${ReceiptPrinterService.defaultRawPort}',
-                  },
-                ),
-                style: AppTextStyle.regular12(context),
-              ),
-              trailing: const Icon(
-                Icons.link_rounded,
-                color: StaticColors.primary,
-              ),
-              onTap: () => onTap(ip),
-            ),
+          _NetworkCard(
+            ip: ip,
+            selected: selected == ip,
+            connecting: connectingHost == ip,
+            onTap: connectingHost == null ? () => onTap(ip) : null,
           ),
       ],
+    );
+  }
+}
+
+class ReceiptPrinterWifiHeaderSection extends StatelessWidget {
+  const ReceiptPrinterWifiHeaderSection({
+    super.key,
+    required this.networkCount,
+  });
+
+  final int networkCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('WiFi', style: AppTextStyle.semibold24(context, color: StaticColors.black)),
+              const SizedBox(height: 2),
+              Text(
+                TranslationKeys.printerNetworkCount.tr(
+                  context: context,
+                  namedArgs: {'count': '$networkCount'},
+                ),
+                style: AppTextStyle.regular14(context, color: StaticColors.c666666),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NetworkCard extends StatelessWidget {
+  const _NetworkCard({
+    required this.ip,
+    required this.selected,
+    required this.connecting,
+    required this.onTap,
+  });
+
+  final String ip;
+  final bool selected;
+  final bool connecting;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: selected
+            ? const LinearGradient(
+                colors: [StaticColors.primary, Color(0xFF32BC66)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              )
+            : null,
+        color: selected ? null : StaticColors.white,
+        border: selected ? null : Border.all(color: StaticColors.cE2E2E2),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ip,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyle.semibold18(
+                          context,
+                          color: selected ? StaticColors.white : StaticColors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        connecting
+                            ? TranslationKeys.printerCheckingHost.tr(
+                                context: context,
+                                namedArgs: {'host': ip},
+                              )
+                            : selected
+                            ? TranslationKeys.printerConnected.tr(context: context)
+                            : TranslationKeys.printerPort.tr(
+                                context: context,
+                                namedArgs: {
+                                  'port': '${ReceiptPrinterService.defaultRawPort}',
+                                },
+                              ),
+                        style: AppTextStyle.regular12(
+                          context,
+                          color: selected
+                              ? StaticColors.white.withValues(alpha: 0.9)
+                              : StaticColors.c666666,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: connecting
+                      ? const SizedBox(
+                          key: ValueKey('loading'),
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(StaticColors.white),
+                          ),
+                        )
+                      : Icon(
+                          selected ? Icons.check_rounded : Icons.wifi_rounded,
+                          key: ValueKey(selected ? 'check' : 'wifi'),
+                          color: selected ? StaticColors.white : StaticColors.primary,
+                          size: 24,
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

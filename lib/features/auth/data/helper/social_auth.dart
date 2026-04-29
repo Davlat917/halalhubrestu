@@ -111,11 +111,11 @@ class SocialAuth {
       userData['accessToken'] = accessToken;
       userData['email'] = account.email;
       userData['displayName'] = account.displayName;
-      debugPrint('✅ [Google] OK ${account.email}');
+      if (kDebugMode) debugPrint('✅ [Google] OK ${account.email}');
     } on TimeoutException {
       userData['errorMessage'] = TranslationKeys.authRequestTimedOut.tr();
     } on GoogleSignInException catch (e) {
-      debugPrint('❌ [Google] ${e.code} — ${e.description}');
+      if (kDebugMode) debugPrint('❌ [Google] ${e.code} — ${e.description}');
       userData['errorMessage'] = switch (e.code) {
         GoogleSignInExceptionCode.canceled =>
           TranslationKeys.authSignInCancelled.tr(),
@@ -126,7 +126,7 @@ class SocialAuth {
         ),
       };
     } catch (e, st) {
-      debugPrint('❌ [Google] $e\n$st');
+      if (kDebugMode) debugPrint('❌ [Google] $e\n$st');
       userData['errorMessage'] = TranslationKeys.authErrorPrefix.tr(
         namedArgs: {'error': '$e'},
       );
@@ -190,7 +190,7 @@ class SocialAuth {
         try {
           await authRepo.updateRole();
         } catch (e) {
-          debugPrint('updateRole: $e');
+          if (kDebugMode) debugPrint('updateRole: $e');
         }
       } catch (e) {
         userData['errorMessage'] = TranslationKeys.authCouldNotCompleteSignIn
@@ -211,7 +211,7 @@ class SocialAuth {
       userData['errorMessage'] = TranslationKeys.authErrorPrefix.tr(
         namedArgs: {'error': '$error'},
       );
-      debugPrint('❌ [Apple] $error');
+      if (kDebugMode) debugPrint('❌ [Apple] $error');
     }
 
     return userData;

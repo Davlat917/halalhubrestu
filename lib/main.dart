@@ -1,7 +1,7 @@
 import 'dart:async';
 
 // import 'package:device_preview/device_preview.dart';
-// import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +14,7 @@ import 'package:halalhub_restaurant/features/restaurant/services/push_notificati
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
   binding.deferFirstFrame();
-  debugPrint('[main] deferFirstFrame enabled');
+  if (kDebugMode) debugPrint('[main] deferFirstFrame enabled');
 
   await AppBootstrap.initialize();
   await configureDependencies();
@@ -24,7 +24,7 @@ Future<void> main() async {
   unawaited(
     PushNotificationService.initialize().catchError(
       (Object e, StackTrace st) =>
-          debugPrint('[main] PushNotificationService error: $e\n$st'),
+          kDebugMode ? debugPrint('[main] PushNotificationService error: $e\n$st') : null,
     ),
   );
 

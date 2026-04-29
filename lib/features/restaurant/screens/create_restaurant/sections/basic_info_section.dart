@@ -272,7 +272,11 @@ class BasicInfoSection extends StatelessWidget {
                   ),
                   keyboardType: TextInputType.phone,
                   mask: '+1 (###) ###-####',
-                  validator: validateUsPhone,
+                  validator: (v) {
+                    final raw = v?.trim() ?? '';
+                    if (raw.isEmpty) return null;
+                    return validateUsPhone(v);
+                  },
                 ),
               ),
             ],

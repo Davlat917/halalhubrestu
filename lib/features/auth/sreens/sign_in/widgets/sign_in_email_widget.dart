@@ -71,7 +71,12 @@ class _SignInEmailWidgetState extends State<SignInEmailWidget>
                   availableWidth: aW,
                   hint: TranslationKeys.authPassword.tr(context: context),
                   obscureText: true,
-                  validator: validatePassword,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return TranslationKeys.validationPasswordRequired.tr(context: context);
+                    }
+                    return null;
+                  },
                 ),
               ),
               CustomButton(

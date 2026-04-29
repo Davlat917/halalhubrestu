@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/storage/storage.dart';
 import 'package:injectable/injectable.dart';
@@ -17,6 +18,18 @@ class ReceiptPrinterService {
   final Storage _storage;
   final Dio _dio;
   final Logger _logger;
+
+  void _logDebug(String message, {StackTrace? stackTrace}) {
+    if (kDebugMode) _logger.d(message, stackTrace: stackTrace);
+  }
+
+  void _logInfo(String message) {
+    if (kDebugMode) _logger.i(message);
+  }
+
+  void _logWarn(String message, {StackTrace? stackTrace}) {
+    if (kDebugMode) _logger.w(message, stackTrace: stackTrace);
+  }
 
   static const int defaultRawPort = 9100;
 
@@ -32,7 +45,7 @@ class ReceiptPrinterService {
 
   String get selectedPrinterType {
     final type = _storage.receiptPrinterType.call()?.trim().toLowerCase();
-    if (type == 'tablet' || type == 'clover') return type!;
+    if (type != null && type.isNotEmpty) return type;
     // Backward compatibility: eski buildlarda host bo'lsa Clover deb ko'rsatamiz.
     final host = savedHost?.trim();
     return (host != null && host.isNotEmpty) ? 'clover' : 'tablet';
@@ -42,7 +55,7 @@ class ReceiptPrinterService {
 
   Future<void> setSelectedPrinterType(String type) async {
     final normalized = type.trim().toLowerCase();
-    if (normalized != 'tablet' && normalized != 'clover') return;
+    if (normalized.isEmpty) return;
     await _storage.receiptPrinterType.set(normalized);
   }
 
@@ -67,7 +80,7 @@ class ReceiptPrinterService {
       socket = await Socket.connect(h, port, timeout: timeout);
       return true;
     } catch (e, st) {
-      _logger.d(
+      _logDebug(
         'Receipt printer probe failed for $h:$port — $e',
         stackTrace: st,
       );
@@ -106,7 +119,7 @@ class ReceiptPrinterService {
       }
       return fallback;
     } catch (e, st) {
-      _logger.w('Lokal IPv4 olishda xato: $e', stackTrace: st);
+      _logWarn('Lokal IPv4 olishda xato: $e', stackTrace: st);
       return null;
     }
   }
@@ -128,7 +141,7 @@ class ReceiptPrinterService {
   }) async {
     final wifiIp = await currentWifiIpv4();
     if (wifiIp == null) {
-      _logger.i(
+      _logInfo(
         'Receipt printer discover: WiFi IP topilmadi (simulator yoki ruxsat).',
       );
       return const [];
@@ -176,7 +189,7 @@ class ReceiptPrinterService {
       );
       _cachedHeaderAt = now;
     } catch (e, st) {
-      _logger.d('Vendor header olishda xato: $e', stackTrace: st);
+      _logDebug('Vendor header olishda xato: $e', stackTrace: st);
     }
   }
 
@@ -191,10 +204,10 @@ class ReceiptPrinterService {
       final enriched = await _enrichOrderPayload(raw);
       final data = _buildNewOrderEscPosPayload(enriched);
       final ok = await _sendEscPos(data, host: h);
-      if (ok) _logger.i('Yangi zakaz cheki yuborildi: $h');
+      if (ok) _logInfo('Yangi zakaz cheki yuborildi: $h');
       return ok;
     } catch (e, st) {
-      _logger.w('Zakaz cheki chop etishda xato: $e', stackTrace: st);
+      _logWarn('Zakaz cheki chop etishda xato: $e', stackTrace: st);
       return false;
     }
   }
@@ -234,7 +247,7 @@ class ReceiptPrinterService {
         merged.addAll(matched);
       }
     } catch (e, st) {
-      _logger.d('Order payload enrich xato: $e', stackTrace: st);
+      _logDebug('Order payload enrich xato: $e', stackTrace: st);
     }
     return merged;
   }
@@ -248,16 +261,16 @@ class ReceiptPrinterService {
   }) async {
     final h = (host ?? savedHost)?.trim();
     if (h == null || h.isEmpty) {
-      _logger.w('printTestReceipt: printer host yo‘q');
+      _logWarn('printTestReceipt: printer host yo‘q');
       return false;
     }
     try {
       final data = _buildTestEscPosPayload(h, port);
       final ok = await _sendEscPos(data, host: h, port: port);
-      if (ok) _logger.i('Test chek yuborildi: $h:$port');
+      if (ok) _logInfo('Test chek yuborildi: $h:$port');
       return ok;
     } catch (e, st) {
-      _logger.w('Test chek chop etishda xato: $e', stackTrace: st);
+      _logWarn('Test chek chop etishda xato: $e', stackTrace: st);
       return false;
     }
   }
@@ -273,7 +286,7 @@ class ReceiptPrinterService {
         final ok = await _sendEscPosWithRetries(data, host: host, port: port);
         if (!done.isCompleted) done.complete(ok);
       } catch (e, st) {
-        _logger.w('ESC/POS yuborishda xato: $e', stackTrace: st);
+        _logWarn('ESC/POS yuborishda xato: $e', stackTrace: st);
         if (!done.isCompleted) done.complete(false);
       }
     });
@@ -299,11 +312,11 @@ class ReceiptPrinterService {
         timeout: _connectTimeout,
       );
       if (ok) return true;
-      _logger.d(
+      _logDebug(
         'Printer ulanmadi (${attempt + 1}/$_connectAttempts): $host:$port',
       );
     }
-    _logger.w(
+    _logWarn(
       'ESC/POS: $_connectAttempts marta urinishdan keyin muvaffaqiyatsiz — $host:$port '
       '(WiFi, printer yoqilishi, AP client isolation yoki boshqa portni tekshiring).',
     );
@@ -326,7 +339,7 @@ class ReceiptPrinterService {
       socket = null;
       return true;
     } catch (e, st) {
-      _logger.d('ESC/POS bir martalik xato: $e', stackTrace: st);
+      _logDebug('ESC/POS bir martalik xato: $e', stackTrace: st);
       try {
         socket?.destroy();
       } catch (_) {}

@@ -14,7 +14,8 @@
     "ok": "OK",
     "successTitle": "Успешно выполнено",
     "certificate": "сертификат",
-    "couldNotOpenLink": "Не удалось открыть ссылку."
+    "couldNotOpenLink": "Не удалось открыть ссылку.",
+    "search": "Поиск"
   },
   "account": {
     "title": "Аккаунт",
@@ -51,7 +52,8 @@
     "title": "Поддержка HalalHub",
     "online": "онлайн",
     "connectionFailed": "Ошибка подключения",
-    "startConversation": "Начните разговор"
+    "startConversation": "Начните разговор",
+    "typePlaceholder": "Введите текст..."
   },
   "logout": {
     "confirmTitle": "Выйти из аккаунта?",
@@ -189,6 +191,7 @@
     "optionTablet": "Планшет",
     "optionClover": "Clover",
     "cloverComingSoonMessage": "Интеграция Clover API скоро будет доступна",
+    "providerComingSoonMessage": "{label} пока недоступен в приложении.",
     "wifiIpNotDetected": "WiFi-адрес не определён. Проверьте на реальном устройстве или введите IP вручную.",
     "searchingNetwork": "Идёт поиск в сети (порт {port})…",
     "notFoundHint": "Принтер не найден. Введите IP вручную или проверьте подключение принтера к WiFi.",
@@ -201,7 +204,12 @@
     "sendingTest": "Отправка тестового чека…",
     "testSent": "Тестовый чек отправлен. Проверьте печать.",
     "sendFailed": "Ошибка отправки. Проверьте IP, порт ({port}) и WiFi.",
-    "savedRemoved": "Сохранённый принтер удалён."
+    "savedRemoved": "Сохранённый принтер удалён.",
+    "cloverConnectFailed": "Не удалось начать вход в Clover. Попробуйте снова.",
+    "cloverOpenBrowserFailed": "Не удалось открыть браузер. Откройте ссылку вручную.",
+    "vendorNotFound": "Vendor id не найден.",
+    "selectProviderFailed": "Не удалось выбрать провайдера.",
+    "networkCount": "{count} сеть"
   },
   "product": {
     "editTitle": "Редактировать товар",
@@ -455,7 +463,8 @@
     "menuView": "Вид меню",
     "aboutRestaurant": "О ресторане",
     "todayClosed": "Сегодня закрыто",
-    "todayHours": "Сегодня {from} — {to}"
+    "todayHours": "Сегодня {from} — {to}",
+    "vendorFallback": "Vendor"
   },
   "notInternet": {
     "title": "Упс!",

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 
@@ -37,7 +39,7 @@ class SupportChatInputSection extends StatelessWidget {
                 textCapitalization: TextCapitalization.sentences,
                 style: AppTextStyle.regular14(context, color: StaticColors.black),
                 decoration: InputDecoration(
-                  hintText: 'Type...',
+                  hintText: TranslationKeys.supportTypePlaceholder.tr(context: context),
                   hintStyle: AppTextStyle.regular14(context, color: StaticColors.cBDC1C6),
                   prefixIcon: Icon(Icons.emoji_emotions_outlined, color: StaticColors.c666666.withValues(alpha: 0.7), size: 22),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),

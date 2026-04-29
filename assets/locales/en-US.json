@@ -14,7 +14,8 @@
     "ok": "OK",
     "successTitle": "Completed successfully",
     "certificate": "certificate",
-    "couldNotOpenLink": "Could not open the link."
+    "couldNotOpenLink": "Could not open the link.",
+    "search": "Search"
   },
   "account": {
     "title": "Account",
@@ -51,7 +52,8 @@
     "title": "HalalHub Support",
     "online": "online",
     "connectionFailed": "Connection failed",
-    "startConversation": "Start the conversation"
+    "startConversation": "Start the conversation",
+    "typePlaceholder": "Type..."
   },
   "logout": {
     "confirmTitle": "Log out account?",
@@ -189,6 +191,7 @@
     "optionTablet": "Tablet",
     "optionClover": "Clover",
     "cloverComingSoonMessage": "Clover API integration coming soon",
+    "providerComingSoonMessage": "{label} is not available in the app yet.",
     "wifiIpNotDetected": "WiFi address not detected. Check on a real device or enter IP manually.",
     "searchingNetwork": "Scanning network (port {port})…",
     "notFoundHint": "Printer not found. Enter IP manually or check printer WiFi connection.",
@@ -201,7 +204,12 @@
     "sendingTest": "Sending test receipt…",
     "testSent": "Test receipt sent. Check printer output.",
     "sendFailed": "Failed to send. Check IP, port ({port}) and WiFi.",
-    "savedRemoved": "Saved printer removed."
+    "savedRemoved": "Saved printer removed.",
+    "cloverConnectFailed": "Could not start Clover sign-in. Try again.",
+    "cloverOpenBrowserFailed": "Could not open the browser. Open the link manually from notifications or settings.",
+    "vendorNotFound": "Vendor id not found.",
+    "selectProviderFailed": "Failed to select provider.",
+    "networkCount": "{count} network"
   },
   "product": {
     "editTitle": "Edit product",
@@ -455,7 +463,8 @@
     "menuView": "Menu view",
     "aboutRestaurant": "About restaurant",
     "todayClosed": "Closed today",
-    "todayHours": "Today {from} — {to}"
+    "todayHours": "Today {from} — {to}",
+    "vendorFallback": "Vendor"
   },
   "notInternet": {
     "title": "Whoops!",

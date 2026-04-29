@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -17,7 +17,7 @@ class BaseStorage<T> {
       try {
         return List.from(value) as T;
       } catch (e) {
-        debugPrint("Storage Cast Error: $e");
+        if (kDebugMode) debugPrint("Storage Cast Error: $e");
         return null;
       }
     }

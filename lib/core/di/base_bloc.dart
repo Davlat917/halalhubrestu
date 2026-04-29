@@ -1,5 +1,5 @@
 import 'package:halalhub_restaurant/core/network/network_exception.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 abstract class BaseBloc<E, S> extends Bloc<E, S> {
@@ -41,6 +41,8 @@ abstract class BaseBloc<E, S> extends Bloc<E, S> {
   }
 
   void _logError(NetworkException e) {
-    debugPrint("BaseBloc Error: ${e.message} | Code: ${e.statusCode}");
+    if (kDebugMode) {
+      debugPrint("BaseBloc Error: ${e.message} | Code: ${e.statusCode}");
+    }
   }
 }

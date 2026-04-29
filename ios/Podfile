@@ -45,6 +45,11 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2'  # 1=iPhone, 2=iPad
+      if ['Release', 'Profile'].include?(config.name)
+        # App Store upload uchun barcha pod frameworklar dSYM bilan arxivlansin.
+        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+        config.build_settings['GCC_GENERATE_DEBUGGING_SYMBOLS'] = 'YES'
+      end
     end
   end
 end

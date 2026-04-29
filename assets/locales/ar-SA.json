@@ -14,7 +14,8 @@
     "ok": "حسنًا",
     "successTitle": "تم التنفيذ بنجاح",
     "certificate": "شهادة",
-    "couldNotOpenLink": "تعذر فتح الرابط."
+    "couldNotOpenLink": "تعذر فتح الرابط.",
+    "search": "بحث"
   },
   "account": {
     "title": "الحساب",
@@ -51,7 +52,8 @@
     "title": "دعم HalalHub",
     "online": "متصل",
     "connectionFailed": "فشل الاتصال",
-    "startConversation": "ابدأ المحادثة"
+    "startConversation": "ابدأ المحادثة",
+    "typePlaceholder": "اكتب..."
   },
   "logout": {
     "confirmTitle": "تسجيل الخروج من الحساب؟",
@@ -189,6 +191,7 @@
     "optionTablet": "الجهاز اللوحي",
     "optionClover": "Clover",
     "cloverComingSoonMessage": "تكامل Clover API قريبًا",
+    "providerComingSoonMessage": "{label} غير متوفر في التطبيق بعد.",
     "wifiIpNotDetected": "تعذر اكتشاف عنوان WiFi. تحقق على جهاز حقيقي أو أدخل IP يدويًا.",
     "searchingNetwork": "جارٍ فحص الشبكة (المنفذ {port})…",
     "notFoundHint": "لم يتم العثور على الطابعة. أدخل IP يدويًا أو تحقق من اتصال الطابعة بالـ WiFi.",
@@ -201,7 +204,12 @@
     "sendingTest": "جارٍ إرسال إيصال الاختبار…",
     "testSent": "تم إرسال إيصال الاختبار. تحقق من الطابعة.",
     "sendFailed": "فشل الإرسال. تحقق من IP والمنفذ ({port}) والـ WiFi.",
-    "savedRemoved": "تمت إزالة الطابعة المحفوظة."
+    "savedRemoved": "تمت إزالة الطابعة المحفوظة.",
+    "cloverConnectFailed": "تعذر بدء تسجيل الدخول إلى Clover. حاول مرة أخرى.",
+    "cloverOpenBrowserFailed": "تعذر فتح المتصفح. افتح الرابط يدويًا.",
+    "vendorNotFound": "لم يتم العثور على Vendor id.",
+    "selectProviderFailed": "تعذر اختيار المزود.",
+    "networkCount": "{count} شبكة"
   },
   "product": {
     "editTitle": "تعديل المنتج",
@@ -455,7 +463,8 @@
     "menuView": "عرض القائمة",
     "aboutRestaurant": "حول المطعم",
     "todayClosed": "مغلق اليوم",
-    "todayHours": "اليوم {from} — {to}"
+    "todayHours": "اليوم {from} — {to}",
+    "vendorFallback": "Vendor"
   },
   "notInternet": {
     "title": "عذرًا!",

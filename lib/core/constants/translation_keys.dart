@@ -40,6 +40,7 @@ abstract final class TranslationKeys {
   static const supportTitle = 'support.title';
   static const supportOnline = 'support.online';
   static const supportConnectionFailed = 'support.connectionFailed';
+  static const supportTypePlaceholder = 'support.typePlaceholder';
 
   // Delete account
   static const deleteAccountTitle = 'deleteAccount.title';
@@ -139,6 +140,7 @@ abstract final class TranslationKeys {
   static const printerOptionTablet = 'printer.optionTablet';
   static const printerOptionClover = 'printer.optionClover';
   static const printerCloverComingSoonMessage = 'printer.cloverComingSoonMessage';
+  static const printerProviderComingSoonMessage = 'printer.providerComingSoonMessage';
   static const printerWifiIpNotDetected = 'printer.wifiIpNotDetected';
   static const printerSearchingNetwork = 'printer.searchingNetwork';
   static const printerNotFoundHint = 'printer.notFoundHint';
@@ -152,6 +154,11 @@ abstract final class TranslationKeys {
   static const printerTestSent = 'printer.testSent';
   static const printerSendFailed = 'printer.sendFailed';
   static const printerSavedRemoved = 'printer.savedRemoved';
+  static const printerCloverConnectFailed = 'printer.cloverConnectFailed';
+  static const printerCloverOpenBrowserFailed = 'printer.cloverOpenBrowserFailed';
+  static const printerVendorNotFound = 'printer.vendorNotFound';
+  static const printerSelectProviderFailed = 'printer.selectProviderFailed';
+  static const printerNetworkCount = 'printer.networkCount';
 
   // Product
   static const editProductTitle = 'product.editTitle';
@@ -498,6 +505,10 @@ abstract final class TranslationKeys {
   static const vendorProfileAboutRestaurant = 'vendorProfile.aboutRestaurant';
   static const vendorProfileTodayClosed = 'vendorProfile.todayClosed';
   static const vendorProfileTodayHours = 'vendorProfile.todayHours';
+  static const vendorProfileVendorFallback = 'vendorProfile.vendorFallback';
+
+  // Common
+  static const commonSearch = 'common.search';
   static const agreementTitle = 'agreement.title';
 
   // Update restaurant tabs

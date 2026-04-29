@@ -24,8 +24,7 @@ class SupportChatPage extends StatefulWidget {
   State<SupportChatPage> createState() => _SupportChatPageState();
 }
 
-class _SupportChatPageState extends State<SupportChatPage>
-    with SupportChatPageMixin {
+class _SupportChatPageState extends State<SupportChatPage> with SupportChatPageMixin {
   @override
   void initState() {
     super.initState();
@@ -41,9 +40,7 @@ class _SupportChatPageState extends State<SupportChatPage>
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          SupportChatBloc(getIt<SupportChatRepository>())
-            ..add(const SupportChatStarted()),
+      create: (_) => SupportChatBloc(getIt<SupportChatRepository>())..add(const SupportChatStarted()),
       child: BlocListener<SupportChatBloc, SupportChatState>(
         listenWhen: (p, c) => p.messages.length != c.messages.length,
         listener: (_, _) => supportChatScrollToBottom(),
@@ -56,13 +53,16 @@ class _SupportChatPageState extends State<SupportChatPage>
             surfaceTintColor: Colors.transparent,
             leading: Align(
               alignment: Alignment.center,
-              child: CircleBtnWidget(
-                bgColor: StaticColors.white,
-                iconColor: StaticColors.black,
-                onPress: () => onSupportChatBack(context),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+                child: CircleBtnWidget(
+                  bgColor: StaticColors.backgroundColor,
+                  iconColor: StaticColors.black,
+                  onPress: () => onSupportChatBack(context), //
+                ),
               ),
             ),
-            titleSpacing: 8,
+            titleSpacing: 18,
             title: Row(
               children: [
                 const SupportChatAppBarLogo(),
@@ -72,17 +72,10 @@ class _SupportChatPageState extends State<SupportChatPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        TranslationKeys.supportTitle.tr(context: context),
-                        style: AppTextStyle.semibold18(context, size: 16),
-                      ),
+                      Text(TranslationKeys.supportTitle.tr(context: context), style: AppTextStyle.semibold18(context, size: 16)),
                       Text(
                         TranslationKeys.supportOnline.tr(context: context),
-                        style: AppTextStyle.medium14(
-                          context,
-                          size: 12,
-                          color: StaticColors.primary,
-                        ),
+                        style: AppTextStyle.medium14(context, size: 12, color: StaticColors.primary),
                       ),
                     ],
                   ),
@@ -93,12 +86,9 @@ class _SupportChatPageState extends State<SupportChatPage>
           body: BlocBuilder<SupportChatBloc, SupportChatState>(
             builder: (context, state) {
               if (state.status == SupportChatStatus.connecting) {
-                return const Center(
-                  child: CircularProgressIndicator.adaptive(),
-                );
+                return const Center(child: CircularProgressIndicator.adaptive());
               }
-              if (state.status == SupportChatStatus.failure &&
-                  state.messages.isEmpty) {
+              if (state.status == SupportChatStatus.failure && state.messages.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -106,22 +96,14 @@ class _SupportChatPageState extends State<SupportChatPage>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          state.errorMessage ??
-                              TranslationKeys.supportConnectionFailed.tr(
-                                context: context,
-                              ),
+                          state.errorMessage ?? TranslationKeys.supportConnectionFailed.tr(context: context),
                           textAlign: TextAlign.center,
-                          style: AppTextStyle.regular14(
-                            context,
-                            color: StaticColors.c666666,
-                          ),
+                          style: AppTextStyle.regular14(context, color: StaticColors.c666666),
                         ),
                         const SizedBox(height: 16),
                         FilledButton(
                           onPressed: () => onSupportChatRetry(context),
-                          child: Text(
-                            TranslationKeys.retry.tr(context: context),
-                          ),
+                          child: Text(TranslationKeys.retry.tr(context: context)),
                         ),
                       ],
                     ),
@@ -131,16 +113,9 @@ class _SupportChatPageState extends State<SupportChatPage>
               return Column(
                 children: [
                   Expanded(
-                    child: SupportChatMessagesBodySection(
-                      messages: state.messages,
-                      scrollController: supportChatScrollController,
-                    ),
+                    child: SupportChatMessagesBodySection(messages: state.messages, scrollController: supportChatScrollController),
                   ),
-                  SupportChatInputSection(
-                    controller: supportChatTextController,
-                    enabled: state.status == SupportChatStatus.ready,
-                    onSend: () => onSupportChatSend(context),
-                  ),
+                  SupportChatInputSection(controller: supportChatTextController, enabled: state.status == SupportChatStatus.ready, onSend: () => onSupportChatSend(context)),
                 ],
               );
             },

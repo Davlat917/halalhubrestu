@@ -61,22 +61,18 @@ class CreateRestaurantPage extends ResponsiveSection {
   Widget? buildTabletLandscape(BuildContext context) => BlocProvider(
     create: (_) => getIt<RestaurantBloc>(),
     child: Scaffold(
-      body: CreateRestaurantBody(
-        isTablet: true,
-        compact: true,
-        isEdit: isEdit,
-      ), //
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     getIt<Storage>().token.delete();
+      //   },
+      // ),
+      body: CreateRestaurantBody(isTablet: true, compact: true, isEdit: isEdit), //
     ),
   );
 }
 
 class CreateRestaurantBody extends StatefulWidget {
-  const CreateRestaurantBody({
-    super.key,
-    this.isTablet = false,
-    this.compact = false,
-    this.isEdit = false,
-  });
+  const CreateRestaurantBody({super.key, this.isTablet = false, this.compact = false, this.isEdit = false});
 
   final bool isTablet;
   final bool compact;
@@ -86,20 +82,8 @@ class CreateRestaurantBody extends StatefulWidget {
   State<CreateRestaurantBody> createState() => _CreateRestaurantBodyState();
 }
 
-class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
-    with
-        ValidationMixin,
-        RestaurantActionMixin<CreateRestaurantBody>,
-        CreateRestaurantBlocListenerMixin {
-  static const _days = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+class _CreateRestaurantBodyState extends State<CreateRestaurantBody> with ValidationMixin, RestaurantActionMixin<CreateRestaurantBody>, CreateRestaurantBlocListenerMixin {
+  static const _days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   final _mapService = getIt<RestaurantMapService>();
   final _display = getIt<Display>();
   bool _loadingInitialVendor = false;
@@ -145,9 +129,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
       _applyVendorData(vendor);
     } catch (_) {
       if (!mounted) return;
-      _display.error(
-        TranslationKeys.createRestaurantLoadEditFailed.tr(context: context),
-      );
+      _display.error(TranslationKeys.createRestaurantLoadEditFailed.tr(context: context));
     } finally {
       if (mounted) {
         setState(() => _loadingInitialVendor = false);
@@ -217,14 +199,10 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
   @override
   Widget build(BuildContext context) {
     if (_loadingInitialVendor) {
-      return const Center(
-        child: CircularProgressIndicator(color: StaticColors.primary),
-      );
+      return const Center(child: CircularProgressIndicator(color: StaticColors.primary));
     }
     final width = MediaQuery.sizeOf(context).width;
-    final cardWidth = widget.isTablet
-        ? (widget.compact ? width * 0.84 : width * 0.72)
-        : width;
+    final cardWidth = widget.isTablet ? (widget.compact ? width * 0.84 : width * 0.72) : width;
     final outerPadding = EdgeInsets.all(context.wOf(12, cardWidth));
     return BlocConsumer<RestaurantBloc, RestaurantState>(
       listener: (context, state) {
@@ -237,8 +215,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: cardWidth),
-            child:
-                state is RestaurantPendingApproval || _showPendingFromVendorStatus
+            child: state is RestaurantPendingApproval || _showPendingFromVendorStatus
                 ? RefreshIndicator(
                     onRefresh: () => _onRefreshVendorApproval(context),
                     child: LayoutBuilder(
@@ -247,9 +224,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: outerPadding,
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight,
-                            ),
+                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
                             child: _pendingApprovalView(cardWidth),
                           ),
                         );
@@ -269,17 +244,8 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.isEdit
-                                ? TranslationKeys.createRestaurantUpdateTitle
-                                      .tr(context: context)
-                                : TranslationKeys.createRestaurantTitle.tr(
-                                    context: context,
-                                  ),
-                            style: AppTextStyle.semibold24(
-                              context,
-                              aW: cardWidth,
-                              color: StaticColors.black,
-                            ),
+                            widget.isEdit ? TranslationKeys.createRestaurantUpdateTitle.tr(context: context) : TranslationKeys.createRestaurantTitle.tr(context: context),
+                            style: AppTextStyle.semibold24(context, aW: cardWidth, color: StaticColors.black),
                           ),
                           SizedBox(height: context.wOf(14, cardWidth)),
                           RestaurantStepIndicator(
@@ -287,18 +253,14 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
                             completedSteps: completedSteps,
                             availableWidth: cardWidth,
                             onStepTap: (i) {
-                              if (i <= currentStep ||
-                                  completedSteps.take(i).every((e) => e)) {
+                              if (i <= currentStep || completedSteps.take(i).every((e) => e)) {
                                 setState(() => currentStep = i);
                               }
                             },
                           ),
                           SizedBox(height: context.wOf(14, cardWidth)),
                           _stepView(cardWidth),
-                          if (widget.isEdit) ...[
-                            SizedBox(height: context.wOf(18, cardWidth)),
-                            _updateButton(context, cardWidth),
-                          ],
+                          if (widget.isEdit) ...[SizedBox(height: context.wOf(18, cardWidth)), _updateButton(context, cardWidth)],
                         ],
                       ),
                     ),
@@ -355,10 +317,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
     return Center(
       child: Container(
         width: width > 700 ? width * 0.55 : width,
-        padding: EdgeInsets.symmetric(
-          vertical: context.wOf(28, width),
-          horizontal: context.wOf(16, width),
-        ),
+        padding: EdgeInsets.symmetric(vertical: context.wOf(28, width), horizontal: context.wOf(16, width)),
         decoration: BoxDecoration(
           color: StaticColors.white,
           borderRadius: BorderRadius.circular(10),
@@ -370,44 +329,25 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
             Container(
               width: context.wOf(40, width),
               height: context.wOf(40, width),
-              decoration: BoxDecoration(
-                color: StaticColors.cEAF8EF,
-                borderRadius: BorderRadius.circular(10),
-              ),
+              decoration: BoxDecoration(color: StaticColors.cEAF8EF, borderRadius: BorderRadius.circular(10)),
               child: const PendingApprovalSpinner(),
             ),
             SizedBox(height: context.wOf(14, width)),
             Text(
               TranslationKeys.createRestaurantPleaseWait.tr(context: context),
-              style: AppTextStyle.medium20(
-                context,
-                aW: width,
-                color: StaticColors.primary,
-              ),
+              style: AppTextStyle.medium20(context, aW: width, color: StaticColors.primary),
             ),
             SizedBox(height: context.wOf(8, width)),
             Text(
-              TranslationKeys.createRestaurantWaitForApproval.tr(
-                context: context,
-              ),
+              TranslationKeys.createRestaurantWaitForApproval.tr(context: context),
               textAlign: TextAlign.center,
-              style: AppTextStyle.regular14(
-                context,
-                aW: width,
-                color: StaticColors.c9AA0A6,
-              ),
+              style: AppTextStyle.regular14(context, aW: width, color: StaticColors.c9AA0A6),
             ),
             SizedBox(height: context.wOf(16, width)),
             Text(
-              TranslationKeys.createRestaurantPullToRefreshStatus.tr(
-                context: context,
-              ),
+              TranslationKeys.createRestaurantPullToRefreshStatus.tr(context: context),
               textAlign: TextAlign.center,
-              style: AppTextStyle.regular12(
-                context,
-                aW: width,
-                color: StaticColors.cBDC1C6,
-              ),
+              style: AppTextStyle.regular12(context, aW: width, color: StaticColors.cBDC1C6),
             ),
           ],
         ),
@@ -439,13 +379,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
         validateEmail: validateEmail,
         validateRequired: validateRequired,
         validateUsPhone: validateUsPhone,
-        continueButton: widget.isEdit
-            ? const SizedBox.shrink()
-            : _nextButton(
-                context,
-                width,
-                TranslationKeys.createRestaurantContinue.tr(context: context),
-              ),
+        continueButton: widget.isEdit ? const SizedBox.shrink() : _nextButton(context, width, TranslationKeys.createRestaurantContinue.tr(context: context)),
       ),
       1 => DocumentsSection(
         availableWidth: width,
@@ -454,13 +388,7 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
         toggleHasCertificate: toggleHasCertificate,
         pickCertificates: pickCertificates,
         removeCertificateAt: removeCertificateAt,
-        continueButton: widget.isEdit
-            ? const SizedBox.shrink()
-            : _nextButton(
-                context,
-                width,
-                TranslationKeys.createRestaurantContinue.tr(context: context),
-              ),
+        continueButton: widget.isEdit ? const SizedBox.shrink() : _nextButton(context, width, TranslationKeys.createRestaurantContinue.tr(context: context)),
       ),
       2 => LocationSection(
         availableWidth: width,
@@ -473,17 +401,9 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
         zoomIn: zoomInMap,
         zoomOut: zoomOutMap,
         myLocationTap: () {
-          moveToCurrentLocation(
-            onError: (message) => _display.warning(message),
-          );
+          moveToCurrentLocation(onError: (message) => _display.warning(message));
         },
-        continueButton: widget.isEdit
-            ? const SizedBox.shrink()
-            : _nextButton(
-                context,
-                width,
-                TranslationKeys.createRestaurantContinue.tr(context: context),
-              ),
+        continueButton: widget.isEdit ? const SizedBox.shrink() : _nextButton(context, width, TranslationKeys.createRestaurantContinue.tr(context: context)),
       ),
       _ => WorkHoursSection(
         availableWidth: width,
@@ -494,63 +414,34 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
         toggleDay: (index, value) => toggleDay(index, value),
         onPickStart: (index) => pickDayTime(context, index, isStart: true),
         onPickEnd: (index) => pickDayTime(context, index, isStart: false),
-        completeButton: widget.isEdit
-            ? const SizedBox.shrink()
-            : _nextButton(
-                context,
-                width,
-                TranslationKeys.createRestaurantCompleteSetup.tr(
-                  context: context,
-                ),
-              ),
+        completeButton: widget.isEdit ? const SizedBox.shrink() : _nextButton(context, width, TranslationKeys.createRestaurantCompleteSetup.tr(context: context)),
       ),
     };
   }
 
   Widget _nextButton(BuildContext context, double width, String label) {
-    final isSubmitting =
-        context.watch<RestaurantBloc>().state is RestaurantLoading;
+    final isSubmitting = context.watch<RestaurantBloc>().state is RestaurantLoading;
     return SizedBox(
       width: double.infinity,
       child: CustomButton(
         label: label,
         isLoading: currentStep == 3 && isSubmitting,
-        textStyle: AppTextStyle.medium16(
-          context,
-          aW: width,
-          color: StaticColors.white,
-        ),
+        textStyle: AppTextStyle.medium16(context, aW: width, color: StaticColors.white),
         onPressed: isSubmitting
             ? null
             : () {
-                final hasProfile =
-                    profileImage != null ||
-                    (_existingProfileUrl ?? '').isNotEmpty;
-                final hasBanner =
-                    bannerImage != null ||
-                    (_existingBannerUrl ?? '').isNotEmpty;
-                final valid = currentStep == 0 && widget.isEdit
-                    ? (formKey.currentState?.validate() ?? false) &&
-                          hasProfile &&
-                          hasBanner
-                    : validateCurrentStep();
+                final hasProfile = profileImage != null || (_existingProfileUrl ?? '').isNotEmpty;
+                final hasBanner = bannerImage != null || (_existingBannerUrl ?? '').isNotEmpty;
+                final valid = currentStep == 0 && widget.isEdit ? (formKey.currentState?.validate() ?? false) && hasProfile && hasBanner : validateCurrentStep();
                 if (!valid) {
                   final formErr = firstFormError();
                   final msg =
                       formErr ??
                       switch (currentStep) {
-                        0 => TranslationKeys.createRestaurantFillRequired.tr(
-                          context: context,
-                        ),
-                        1 =>
-                          TranslationKeys.createRestaurantUploadOneCertificate
-                              .tr(context: context),
-                        2 => TranslationKeys.createRestaurantChooseLocation.tr(
-                          context: context,
-                        ),
-                        _ => TranslationKeys.createRestaurantOneDayOpen.tr(
-                          context: context,
-                        ),
+                        0 => TranslationKeys.createRestaurantFillRequired.tr(context: context),
+                        1 => TranslationKeys.createRestaurantUploadOneCertificate.tr(context: context),
+                        2 => TranslationKeys.createRestaurantChooseLocation.tr(context: context),
+                        _ => TranslationKeys.createRestaurantOneDayOpen.tr(context: context),
                       };
                   _display.warning(msg);
                   return;
@@ -567,66 +458,36 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
   }
 
   Widget _updateButton(BuildContext context, double width) {
-    final isSubmitting =
-        context.watch<RestaurantBloc>().state is RestaurantLoading;
+    final isSubmitting = context.watch<RestaurantBloc>().state is RestaurantLoading;
     return SizedBox(
       width: double.infinity,
       child: CustomButton(
         label: TranslationKeys.updateProfile.tr(context: context),
         isLoading: isSubmitting,
-        textStyle: AppTextStyle.medium16(
-          context,
-          aW: width,
-          color: StaticColors.white,
-        ),
+        textStyle: AppTextStyle.medium16(context, aW: width, color: StaticColors.white),
         onPressed: isSubmitting
             ? null
             : () {
-                final hasProfile =
-                    profileImage != null ||
-                    (_existingProfileUrl ?? '').isNotEmpty;
-                final hasBanner =
-                    bannerImage != null ||
-                    (_existingBannerUrl ?? '').isNotEmpty;
+                final hasProfile = profileImage != null || (_existingProfileUrl ?? '').isNotEmpty;
+                final hasBanner = bannerImage != null || (_existingBannerUrl ?? '').isNotEmpty;
                 if ((formKey.currentState?.validate() ?? false) == false) {
-                  _display.warning(
-                    firstFormError() ??
-                        TranslationKeys.createRestaurantFillFields.tr(
-                          context: context,
-                        ),
-                  );
+                  _display.warning(firstFormError() ?? TranslationKeys.createRestaurantFillFields.tr(context: context));
                   return;
                 }
                 if (!hasProfile || !hasBanner) {
-                  _display.warning(
-                    TranslationKeys.createRestaurantKeepProfileBanner.tr(
-                      context: context,
-                    ),
-                  );
+                  _display.warning(TranslationKeys.createRestaurantKeepProfileBanner.tr(context: context));
                   return;
                 }
                 if (!locationConfirmed) {
-                  _display.warning(
-                    TranslationKeys.createRestaurantChooseLocation.tr(
-                      context: context,
-                    ),
-                  );
+                  _display.warning(TranslationKeys.createRestaurantChooseLocation.tr(context: context));
                   return;
                 }
                 if (!openDays.any((e) => e)) {
-                  _display.warning(
-                    TranslationKeys.createRestaurantOneDayOpen.tr(
-                      context: context,
-                    ),
-                  );
+                  _display.warning(TranslationKeys.createRestaurantOneDayOpen.tr(context: context));
                   return;
                 }
                 if (hasCertificate && certificates.isEmpty) {
-                  _display.warning(
-                    TranslationKeys.createRestaurantUploadOneCertificate.tr(
-                      context: context,
-                    ),
-                  );
+                  _display.warning(TranslationKeys.createRestaurantUploadOneCertificate.tr(context: context));
                   return;
                 }
                 _submitVendor(context);
@@ -646,35 +507,13 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
       latitude: _formatCoordinate(selectedLatLng?.latitude),
       longitude: _formatCoordinate(selectedLatLng?.longitude),
       categories: const [],
-      workdays: List.generate(
-        _days.length,
-        (i) => Workday(
-          day: _days[i],
-          fromTime: _formatTime24(startTimes[i]),
-          toTime: _formatTime24(endTimes[i]),
-          status: openDays[i] ? 'Open' : 'Closed',
-        ),
-      ),
+      workdays: List.generate(_days.length, (i) => Workday(day: _days[i], fromTime: _formatTime24(startTimes[i]), toTime: _formatTime24(endTimes[i]), status: openDays[i] ? 'Open' : 'Closed')),
     );
 
     if (widget.isEdit) {
-      context.read<RestaurantBloc>().add(
-        VendorUpdateSubmitted(
-          payload: payload,
-          profileImage: profileImage,
-          bannerImage: bannerImage,
-          certificateFiles: certificates,
-        ),
-      );
+      context.read<RestaurantBloc>().add(VendorUpdateSubmitted(payload: payload, profileImage: profileImage, bannerImage: bannerImage, certificateFiles: certificates));
     } else {
-      context.read<RestaurantBloc>().add(
-        VendorCreateSubmitted(
-          payload: payload,
-          profileImage: profileImage,
-          bannerImage: bannerImage,
-          certificateFiles: certificates,
-        ),
-      );
+      context.read<RestaurantBloc>().add(VendorCreateSubmitted(payload: payload, profileImage: profileImage, bannerImage: bannerImage, certificateFiles: certificates));
     }
   }
 
@@ -687,8 +526,6 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody>
   String? _formatCoordinate(double? value) {
     if (value == null) return null;
     final fixed = value.toStringAsFixed(6);
-    return fixed.contains('.')
-        ? fixed.replaceFirst(RegExp(r'\.?0+$'), '')
-        : fixed;
+    return fixed.contains('.') ? fixed.replaceFirst(RegExp(r'\.?0+$'), '') : fixed;
   }
 }

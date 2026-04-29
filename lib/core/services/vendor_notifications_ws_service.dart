@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
@@ -64,7 +65,15 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
   AudioPlayer? _newOrderSoundPlayer;
   final Map<String, DateTime> _recentPrintedOrderKeys = <String, DateTime>{};
 
-  static const _wsBase = 'wss://infonexuz.uz/ws/notifications/vendor/';
+  void _logInfo(String message) {
+    if (kDebugMode) _logger.i(message);
+  }
+
+  void _logWarn(String message, {StackTrace? stackTrace}) {
+    if (kDebugMode) _logger.w(message, stackTrace: stackTrace);
+  }
+
+  static const _wsBase = 'wss://backend-api.wehalalhub.com/ws/notifications/vendor/';
   static final _newOrderAsset = AssetSource('sounds/new-order.mp3');
   static const Duration _printDedupWindow = Duration(seconds: 90);
 
@@ -126,16 +135,16 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
       _subscription = _channel!.stream.listen(
         _onData,
         onError: (Object e, StackTrace st) {
-          _logger.w('Vendor notifications WS error: $e');
+          _logWarn('Vendor notifications WS error: $e');
           _scheduleReconnect();
         },
         onDone: _scheduleReconnect,
         cancelOnError: false,
       );
       _retry = 0;
-      _logger.i('Vendor notifications WS connected');
+      _logInfo('Vendor notifications WS connected');
     } catch (e) {
-      _logger.w('Vendor notifications WS connect failed: $e');
+      _logWarn('Vendor notifications WS connect failed: $e');
       _scheduleReconnect();
     }
   }
@@ -150,7 +159,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
         if (id is num) return id.toInt();
       }
     } catch (e) {
-      _logger.w('Vendor notifications WS vendor id fetch failed: $e');
+      _logWarn('Vendor notifications WS vendor id fetch failed: $e');
     }
     return null;
   }
@@ -187,7 +196,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
       await _newOrderSoundPlayer!.stop();
       await _newOrderSoundPlayer!.play(_newOrderAsset);
     } catch (e) {
-      _logger.w('Vendor notifications new order sound failed: $e');
+      _logWarn('Vendor notifications new order sound failed: $e');
     }
   }
 
@@ -224,7 +233,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
         ),
       );
     } catch (e) {
-      _logger.w('Vendor notifications local show failed: $e');
+      _logWarn('Vendor notifications local show failed: $e');
     }
   }
 
@@ -254,7 +263,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     final now = DateTime.now();
     final lastPrintedAt = _recentPrintedOrderKeys[key];
     if (lastPrintedAt != null && now.difference(lastPrintedAt) < _printDedupWindow) {
-      _logger.i('Vendor WS duplicate order print skipped: $key');
+      _logInfo('Vendor WS duplicate order print skipped: $key');
       return false;
     }
     _recentPrintedOrderKeys[key] = now;

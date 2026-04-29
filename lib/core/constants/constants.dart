@@ -3,7 +3,8 @@ class Constants {
   static const mapApiKey = 'AIzaSyDvA7oUFBIZE_FkQ107PRJU7GH9V5BHBoE';
 
   // base url
-  static const baseUrl = 'https://infonexuz.uz';
+  // static const baseUrl = 'https://infonexuz.uz';
+  static const baseUrl = 'https://backend-api.wehalalhub.com';
   static const version = '/api/v1';
 
   // accaunts
@@ -67,4 +68,11 @@ class Constants {
   static const vendorsOrders = "/vendors/orders/";
   static String vendorsOrderDetailById(int id) => "/vendors/orders/vendor/$id/";
   static String vendorsOrderStatusById(int id) => "/vendors/orders/$id/status/";
+
+  /// Vendor POS integratsiyalari (tablet, Clover, Rezku, …).
+  static const deliveryVendorPosProviders = "/delivery/vendor/pos/providers/";
+  static const deliveryVendorPosSelect = "/delivery/vendor/pos/select/";
+
+  /// Clover OAuth boshlash (authorize_url qaytaradi).
+  static const deliveryCloverConnect = "/delivery/clover/connect/";
 }

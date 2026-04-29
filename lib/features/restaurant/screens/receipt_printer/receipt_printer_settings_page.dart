@@ -17,20 +17,35 @@ class ReceiptPrinterSettingsPage extends ResponsiveSection {
 
   @override
   Widget buildMobile(BuildContext context) =>
-      const _ReceiptPrinterSettingsScaffold(isTablet: false);
+      const _ReceiptPrinterSettingsScaffold(layout: _PrinterSettingsLayout.mobile);
 
   @override
   Widget buildTablet(BuildContext context) =>
-      const _ReceiptPrinterSettingsScaffold(isTablet: true);
+      const _ReceiptPrinterSettingsScaffold(layout: _PrinterSettingsLayout.tablet);
+
+  @override
+  Widget? buildMobileLandscape(BuildContext context) =>
+      const _ReceiptPrinterSettingsScaffold(layout: _PrinterSettingsLayout.mobileLandscape);
+
+  @override
+  Widget? buildTabletLandscape(BuildContext context) =>
+      const _ReceiptPrinterSettingsScaffold(layout: _PrinterSettingsLayout.tabletLandscape);
 
   @override
   Widget buildDesktop(BuildContext context) => buildTablet(context);
 }
 
-class _ReceiptPrinterSettingsScaffold extends StatefulWidget {
-  const _ReceiptPrinterSettingsScaffold({required this.isTablet});
+enum _PrinterSettingsLayout {
+  mobile,
+  mobileLandscape,
+  tablet,
+  tabletLandscape,
+}
 
-  final bool isTablet;
+class _ReceiptPrinterSettingsScaffold extends StatefulWidget {
+  const _ReceiptPrinterSettingsScaffold({required this.layout});
+
+  final _PrinterSettingsLayout layout;
 
   @override
   State<_ReceiptPrinterSettingsScaffold> createState() =>
@@ -48,7 +63,31 @@ class _ReceiptPrinterSettingsScaffoldState
 
   @override
   Widget build(BuildContext context) {
-    final pad = widget.isTablet ? 24.0 : 16.0;
+    final isTablet = widget.layout == _PrinterSettingsLayout.tablet ||
+        widget.layout == _PrinterSettingsLayout.tabletLandscape;
+    final pad = isTablet ? 24.0 : 16.0;
+    final width = MediaQuery.sizeOf(context).width;
+    final maxBodyWidth = isTablet ? 920.0 : 560.0;
+
+    Widget buildNetworks(ReceiptPrinterSettingsVm state) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ReceiptPrinterWifiHeaderSection(
+            networkCount: state.found.length,
+          ),
+          const SizedBox(height: 16),
+          ReceiptPrinterFoundDevicesSection(
+            found: state.found,
+            scanning: state.scanning,
+            selectedHost: state.selectedHost,
+            connectingHost: state.connectingHost,
+            onTap: selectFoundHost,
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       backgroundColor: StaticColors.white,
       appBar: AppBar(
@@ -65,7 +104,7 @@ class _ReceiptPrinterSettingsScaffoldState
           ),
         ),
         title: Text(
-          TranslationKeys.printerSettingsTitle.tr(context: context),
+          TranslationKeys.commonSearch.tr(context: context),
           style: AppTextStyle.semibold18(context),
         ),
         centerTitle: true,
@@ -77,66 +116,43 @@ class _ReceiptPrinterSettingsScaffoldState
       body: ValueListenableBuilder<ReceiptPrinterSettingsVm>(
         valueListenable: vm,
         builder: (context, state, _) {
-          return ListView(
-            padding: EdgeInsets.all(pad),
-            children: [
-              ReceiptPrinterIntroSection(wifiIp: state.wifiIp),
-              const SizedBox(height: 16),
-              ReceiptPrinterManualConnectSection(
-                controller: manualController,
-                scanning: state.scanning,
-                onScan: onScan,
-                onManualChanged: onManualInputChanged,
-              ),
-              const SizedBox(height: 12),
-              ReceiptPrinterStatusSection(status: state.status),
-              const SizedBox(height: 24),
-              Text(
-                TranslationKeys.printerFoundDevices.tr(context: context),
-                style: AppTextStyle.semibold16(context),
-              ),
-              const SizedBox(height: 8),
-              ReceiptPrinterFoundDevicesSection(
-                found: state.found,
-                scanning: state.scanning,
-                onTap: selectFoundHost,
-              ),
-              if ((state.selectedHost ?? '').trim().isNotEmpty) ...[
-                const SizedBox(height: 16),
-                CustomButton(
-                  label: TranslationKeys.printerManualConnect.tr(
-                    context: context,
-                  ),
-                  onPressed: state.scanning
-                      ? null
-                      : () => confirmConnectAndFinish(context),
-                  height: context
-                      .wOf(50, MediaQuery.sizeOf(context).width)
-                      .clamp(44.0, 50.0),
-                  textStyle: AppTextStyle.regular14(
-                    context,
-                    size: context
-                        .spOf(14, MediaQuery.sizeOf(context).width)
-                        .clamp(13.0, 14.0),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxBodyWidth),
+              child: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(pad, pad, pad, 20),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          children: [
+                            buildNetworks(state),
+                            if ((state.status ?? '').trim().isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              ReceiptPrinterStatusSection(status: state.status),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      CustomButton(
+                        label: TranslationKeys.printerSearchWifi.tr(context: context),
+                        onPressed: state.scanning ? null : onScan,
+                        isLoading: state.scanning,
+                        isDisabled: state.scanning,
+                        height: context.wOf(50, width).clamp(44.0, 50.0),
+                        textStyle: AppTextStyle.regular14(
+                          context,
+                          size: context.spOf(14, width).clamp(13.0, 14.0),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 24),
-              CustomButton(
-                label: TranslationKeys.printerRemoveSaved.tr(context: context),
-                type: ButtonType.outlined,
-                onPressed: clearSavedPrinter,
-                height: context
-                    .wOf(50, MediaQuery.sizeOf(context).width)
-                    .clamp(44.0, 50.0),
-                textStyle: AppTextStyle.regular14(
-                  context,
-                  size: context
-                      .spOf(14, MediaQuery.sizeOf(context).width)
-                      .clamp(13.0, 14.0),
-                ),
               ),
-            ],
+            ),
           );
         },
       ),

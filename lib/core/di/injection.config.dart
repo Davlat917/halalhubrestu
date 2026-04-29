@@ -52,6 +52,14 @@ import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orde
     as _i284;
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository_impl.dart'
     as _i980;
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/bloc/vendor_pos_providers_bloc.dart'
+    as _i283;
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/data/vendor_pos_providers_api.dart'
+    as _i1036;
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/data/vendor_pos_providers_repository.dart'
+    as _i391;
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/data/vendor_pos_providers_repository_impl.dart'
+    as _i8;
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/services/receipt_printer_service.dart'
     as _i865;
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/data/notifications_repository.dart'
@@ -109,6 +117,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i974.Logger>(),
       ),
     );
+    gh.lazySingleton<_i1036.VendorPosProvidersApi>(
+      () => _i1036.VendorPosProvidersApi(gh<_i361.Dio>()),
+    );
     gh.factory<_i284.OrdersRepository>(
       () => _i980.OrdersRepositoryImpl(gh<_i361.Dio>()),
     );
@@ -138,8 +149,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i38.RestaurantRepo>(
       () => _i270.RestaurantRepositoryImpl(gh<_i361.Dio>()),
     );
+    gh.factory<_i391.VendorPosProvidersRepository>(
+      () => _i8.VendorPosProvidersRepositoryImpl(
+        gh<_i1036.VendorPosProvidersApi>(),
+      ),
+    );
     gh.lazySingleton<_i200.SocialAuth>(
       () => _i200.SocialAuth(gh<_i533.AuthRepository>()),
+    );
+    gh.factory<_i283.VendorPosProvidersBloc>(
+      () => _i283.VendorPosProvidersBloc(
+        gh<_i391.VendorPosProvidersRepository>(),
+      ),
     );
     gh.factory<_i859.RestaurantBloc>(
       () => _i859.RestaurantBloc(gh<_i38.RestaurantRepo>()),

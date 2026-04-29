@@ -60,7 +60,7 @@ class VendorClipsBloc extends BaseBloc<VendorClipsEvent, VendorClipsState> {
         ),
       );
     } catch (e, st) {
-      debugPrint('VendorClips load more: $e\n$st');
+      if (kDebugMode) debugPrint('VendorClips load more: $e\n$st');
       emit(current.copyWith(isLoadingMore: false));
     }
   }

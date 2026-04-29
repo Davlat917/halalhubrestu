@@ -13,7 +13,7 @@ import 'package:halalhub_restaurant/features/restaurant/data/repositories/restau
 /// - token bor + vendor inactive/yoki yo'q => create/pending
 class StartupGuard extends AutoRouteGuard {
   void _log(String message) {
-    debugPrint('[StartupGuard] $message');
+    if (kDebugMode) debugPrint('[StartupGuard] $message');
   }
 
   @override

@@ -76,6 +76,10 @@ class $AssetsIconsGen {
   /// File path: assets/icons/clips_icon.svg
   SvgGenImage get clipsIcon => const SvgGenImage('assets/icons/clips_icon.svg');
 
+  /// File path: assets/icons/clover_icon.svg
+  SvgGenImage get cloverIcon =>
+      const SvgGenImage('assets/icons/clover_icon.svg');
+
   /// File path: assets/icons/delete_icon.svg
   SvgGenImage get deleteIcon =>
       const SvgGenImage('assets/icons/delete_icon.svg');
@@ -147,6 +151,9 @@ class $AssetsIconsGen {
   SvgGenImage get profileIcon =>
       const SvgGenImage('assets/icons/profile_icon.svg');
 
+  /// File path: assets/icons/rezku_icon.svg
+  SvgGenImage get rezkuIcon => const SvgGenImage('assets/icons/rezku_icon.svg');
+
   /// File path: assets/icons/search_icon.svg
   SvgGenImage get searchIcon =>
       const SvgGenImage('assets/icons/search_icon.svg');
@@ -184,6 +191,7 @@ class $AssetsIconsGen {
     changeStatusDown,
     changeStatusUp,
     clipsIcon,
+    cloverIcon,
     deleteIcon,
     detailIcon,
     edit,
@@ -202,6 +210,7 @@ class $AssetsIconsGen {
     paymentSummeryIcon5,
     productsIcon,
     profileIcon,
+    rezkuIcon,
     searchIcon,
     settingsIcon,
     supportIcon,
