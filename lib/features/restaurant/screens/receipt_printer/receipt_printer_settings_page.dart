@@ -2,11 +2,9 @@ import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
-import 'package:halalhub_restaurant/core/extensions/size_extension.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
-import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/mixins/receipt_printer_settings_mixin.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/sections/receipt_printer_settings_sections.dart';
@@ -66,7 +64,6 @@ class _ReceiptPrinterSettingsScaffoldState
     final isTablet = widget.layout == _PrinterSettingsLayout.tablet ||
         widget.layout == _PrinterSettingsLayout.tabletLandscape;
     final pad = isTablet ? 24.0 : 16.0;
-    final width = MediaQuery.sizeOf(context).width;
     final maxBodyWidth = isTablet ? 920.0 : 560.0;
 
     Widget buildNetworks(ReceiptPrinterSettingsVm state) {
@@ -128,24 +125,24 @@ class _ReceiptPrinterSettingsScaffoldState
                       Expanded(
                         child: ListView(
                           children: [
+                            ReceiptPrinterIntroSection(wifiIp: state.wifiIp),
+                            const SizedBox(height: 20),
+                            ReceiptPrinterManualConnectSection(
+                              controller: manualController,
+                              scanning: state.scanning,
+                              connectInProgress:
+                                  state.connectingHost != null,
+                              onManualConnect: connectManualAndFinish,
+                              onScan: onScan,
+                              onManualChanged: onManualInputChanged,
+                            ),
+                            const SizedBox(height: 24),
                             buildNetworks(state),
                             if ((state.status ?? '').trim().isNotEmpty) ...[
                               const SizedBox(height: 12),
                               ReceiptPrinterStatusSection(status: state.status),
                             ],
                           ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      CustomButton(
-                        label: TranslationKeys.printerSearchWifi.tr(context: context),
-                        onPressed: state.scanning ? null : onScan,
-                        isLoading: state.scanning,
-                        isDisabled: state.scanning,
-                        height: context.wOf(50, width).clamp(44.0, 50.0),
-                        textStyle: AppTextStyle.regular14(
-                          context,
-                          size: context.spOf(14, width).clamp(13.0, 14.0),
                         ),
                       ),
                     ],

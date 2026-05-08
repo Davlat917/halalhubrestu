@@ -177,7 +177,8 @@
     "intro": "EPSON termal printerlar odatda RAW TCP {port} portida ishlaydi. Printer va telefon/planshet bir xil WiFi tarmog'ida bo'lishi kerak.",
     "wifiIp": "Sizning WiFi IP: {ip}",
     "searchWifi": "WiFi tarmog'ida qidirish",
-    "manualConnect": "Qo'lda ulanish",
+    "manualConnect": "Qo'lda kiritish",
+    "connect": "Ulanish",
     "noSearchResult": "Hali qidiruv o'tkazilmagan yoki natija bo'sh.",
     "port": "Port {port}",
     "tooltip": "Chek printer",
@@ -249,7 +250,9 @@
     "updatedTitle": "Mahsulot yangilandi",
     "updatedMessage": "Mahsulot muvaffaqiyatli yangilandi",
     "updateFailedTitle": "Mahsulot yangilanmadi",
-    "percentOff": "{percent}% chegirma"
+    "percentOff": "{percent}% chegirma",
+    "unavailableBadge": "Mavjud emas",
+    "inMenuSwitch": "Menyuda"
   },
   "profile": {
     "editProfile": "Profilni tahrirlash",
@@ -314,7 +317,12 @@
     "empty": "Hali buyurtmalar yo‘q",
     "invalidHistoryResponse": "Buyurtmalar tarixi javobi noto‘g‘ri",
     "invalidOrdersResponse": "Buyurtmalar javobi noto‘g‘ri",
-    "invalidDetailResponse": "Buyurtma tafsiloti javobi noto‘g‘ri"
+    "invalidDetailResponse": "Buyurtma tafsiloti javobi noto‘g‘ri",
+    "newOrderDialogTitle": "Yangi buyurtma",
+    "newOrderDialogBody": "Buyurtma: {orderNumber}",
+    "newOrderDialogBodyNoNumber": "Yangi buyurtma keldi.",
+    "newOrderGoBack": "Orqaga",
+    "newOrderOpenOrders": "Buyurtmalarga o'tish"
   },
   "clips": {
     "title": "Kliplar",
@@ -374,7 +382,10 @@
     "tabBasic": "Asosiy",
     "tabDocuments": "Hujjatlar",
     "tabLocation": "Joylashuv",
-    "tabWorkHours": "Ish vaqti"
+    "tabWorkHours": "Ish vaqti",
+    "mapSearchHint": "Manzil yoki joy nomini qidiring",
+    "mapSearchNoResults": "Bu so'rov bo'yicha joy topilmadi.",
+    "mapSearchFailed": "Qidiruv amalga oshmadi. So'zni tekshiring yoki qayta urinib ko'ring."
   },
   "menu": {
     "products": "Mahsulotlar",

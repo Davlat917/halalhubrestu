@@ -20,6 +20,7 @@ import 'package:halalhub_restaurant/features/restaurant/screens/update_restauran
 import 'package:halalhub_restaurant/features/restaurant/screens/update_restaurant/widgets/update_restaurant_tab_bar.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/update_restaurant/widgets/update_restaurant_top_bar.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/create_restaurant/widgets/upload_pick_tile.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/repositories/maps_places_repo.dart';
 import 'package:halalhub_restaurant/features/restaurant/services/restaurant_map_service.dart';
 
 @RoutePage()
@@ -65,6 +66,7 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
     with UpdateRestaurantValidationMixin {
   final _formKey = GlobalKey<FormState>();
   final _mapService = getIt<RestaurantMapService>();
+  final _placesRepo = getIt<MapsPlacesRepo>();
 
   bool _validate(UpdateRestaurantState state) {
     if (!(_formKey.currentState?.validate() ?? false)) {
@@ -207,6 +209,7 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
       UpdateRestaurantTab.documents => const DocumentsUpdateSection(),
       UpdateRestaurantTab.location => LocationUpdateSection(
         mapService: _mapService,
+        placesRepo: _placesRepo,
       ),
       UpdateRestaurantTab.workHours => WorkHoursUpdateSection(
         pickTime: pickTime,
@@ -305,7 +308,10 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
                     showMediaRow: false, //
                   ),
                   const SizedBox(height: 14),
-                  LocationUpdateSection(mapService: _mapService),
+                  LocationUpdateSection(
+                    mapService: _mapService,
+                    placesRepo: _placesRepo,
+                  ),
                 ],
               ),
             ),

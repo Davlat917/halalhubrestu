@@ -25,6 +25,8 @@ import 'package:halalhub_restaurant/core/services/internet_connectivity_service.
     as _i136;
 import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart'
     as _i957;
+import 'package:halalhub_restaurant/core/services/vendor_shell_navigation_service.dart'
+    as _i632;
 import 'package:halalhub_restaurant/core/storage/storage.dart' as _i521;
 import 'package:halalhub_restaurant/core/widgets/display/display.dart' as _i958;
 import 'package:halalhub_restaurant/core/widgets/display/display_impl.dart'
@@ -40,6 +42,10 @@ import 'package:halalhub_restaurant/features/restaurant/bloc/restaurant_bloc.dar
     as _i859;
 import 'package:halalhub_restaurant/features/restaurant/bloc/vendor_profile/vendor_profile_bloc.dart'
     as _i426;
+import 'package:halalhub_restaurant/features/restaurant/data/repositories/maps_places_repo.dart'
+    as _i128;
+import 'package:halalhub_restaurant/features/restaurant/data/repositories/maps_places_repository_impl.dart'
+    as _i144;
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart'
     as _i38;
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repository_impl.dart'
@@ -90,6 +96,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i327.AppLinks>(() => appModule.appLinks);
     gh.lazySingleton<_i974.Logger>(() => appModule.logger);
     gh.lazySingleton<_i571.AppRouter>(() => appModule.appRouter);
+    gh.lazySingleton<_i632.VendorShellNavigationService>(
+      () => _i632.VendorShellNavigationService(),
+    );
     await gh.lazySingletonAsync<_i521.Storage>(
       () => _i521.Storage.create(),
       preResolve: true,
@@ -139,6 +148,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i974.Logger>(),
         gh<_i865.ReceiptPrinterService>(),
       ),
+    );
+    gh.factory<_i128.MapsPlacesRepo>(
+      () => _i144.MapsPlacesRepositoryImpl(gh<_i361.Dio>()),
     );
     gh.factory<_i533.AuthRepository>(
       () => _i549.AuthRepoImpl(

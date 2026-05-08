@@ -300,8 +300,8 @@ class $AssetsLocalesGen {
 class $AssetsSoundsGen {
   const $AssetsSoundsGen();
 
-  /// File path: assets/sounds/new-order.mp3
-  String get newOrder => 'assets/sounds/new-order.mp3';
+  /// File path: assets/sounds/new-order.wav
+  String get newOrder => 'assets/sounds/new-order.wav';
 
   /// List of all assets
   List<String> get values => [newOrder];

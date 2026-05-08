@@ -116,10 +116,12 @@ class _SignInCardSectionState extends State<SignInCardSection>
                             duration: const Duration(milliseconds: 300),
                             child: value == 0
                                 ? SignInEmailWidget(
+                                    key: const ValueKey('sign_in_email'),
                                     availableWidth: aW, //
                                     buttonHeight: widget.buttonHeight,
                                   )
                                 : SignInPhoneWidget(
+                                    key: const ValueKey('sign_in_phone'),
                                     availableWidth: aW, //
                                     buttonHeight: widget.buttonHeight,
                                   ),

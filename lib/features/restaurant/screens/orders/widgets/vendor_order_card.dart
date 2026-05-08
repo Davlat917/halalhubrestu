@@ -91,7 +91,7 @@ class VendorOrderCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(order.totalLabel, style: AppTextStyle.bold16(context)),
             const SizedBox(height: 14),
-            _actions(context),
+            _wrapWithDetailAside(context, _actions(context)),
           ],
         ),
       ),
@@ -162,8 +162,19 @@ class VendorOrderCard extends StatelessWidget {
     }
   }
 
+  Widget _wrapWithDetailAside(BuildContext context, Widget actions) {
+    if (onMore == null) return actions;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _detailAsideButton(context),
+        const SizedBox(width: 8),
+        Expanded(child: actions),
+      ],
+    );
+  }
+
   Widget _actions(BuildContext context) {
-    final more = _iconMoreButton(context);
     switch (order.status) {
       case VendorOrderStatus.completed:
       case VendorOrderStatus.delivered:
@@ -173,7 +184,6 @@ class VendorOrderCard extends StatelessWidget {
           foreground: OrderColors.success,
           icon: Icons.done_all_rounded,
           label: TranslationKeys.orderStatusDone.tr(context: context),
-          more: more,
         );
       case VendorOrderStatus.canceled:
         return _terminalStatusRow(
@@ -182,7 +192,6 @@ class VendorOrderCard extends StatelessWidget {
           foreground: OrderColors.danger,
           icon: Icons.block_rounded,
           label: TranslationKeys.orderStatusCancelled.tr(context: context),
-          more: more,
         );
       case VendorOrderStatus.deliveryFailed:
         return _terminalStatusRow(
@@ -191,7 +200,6 @@ class VendorOrderCard extends StatelessWidget {
           foreground: OrderColors.warningOrange,
           icon: Icons.error_outline_rounded,
           label: TranslationKeys.orderStatusDeliveryFailed.tr(context: context),
-          more: more,
         );
       case VendorOrderStatus.newOrder:
         return Row(
@@ -215,8 +223,6 @@ class VendorOrderCard extends StatelessWidget {
                 onTap: onCancel,
               ),
             ),
-            const SizedBox(width: 8),
-            more,
           ],
         );
       case VendorOrderStatus.accepted:
@@ -231,8 +237,6 @@ class VendorOrderCard extends StatelessWidget {
                 onTap: onReady,
               ),
             ),
-            const SizedBox(width: 8),
-            more,
           ],
         );
       case VendorOrderStatus.ready:
@@ -249,8 +253,6 @@ class VendorOrderCard extends StatelessWidget {
                 onTap: onCompleted,
               ),
             ),
-            const SizedBox(width: 8),
-            more,
           ],
         );
     }
@@ -262,42 +264,32 @@ class VendorOrderCard extends StatelessWidget {
     required Color foreground,
     required IconData icon,
     required String label,
-    required Widget more,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Material(
-            color: background,
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 22, color: foreground),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      label,
-                      style: AppTextStyle.semibold14(
-                        context,
-                        color: foreground,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: foreground),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                style: AppTextStyle.semibold14(
+                  context,
+                  color: foreground,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: 8),
-        more,
-      ],
+      ),
     );
   }
 
@@ -324,7 +316,7 @@ class VendorOrderCard extends StatelessWidget {
     );
   }
 
-  Widget _iconMoreButton(BuildContext context) {
+  Widget _detailAsideButton(BuildContext context) {
     return SizedBox(
       width: 48,
       height: 48,

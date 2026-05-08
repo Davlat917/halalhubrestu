@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/router/app_router.dart';
+import 'package:halalhub_restaurant/core/services/vendor_shell_navigation_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
@@ -35,7 +37,7 @@ class VendorProfileScaffold extends StatefulWidget with VendorProfileBlocMixin {
 }
 
 class _VendorProfileScaffoldState extends State<VendorProfileScaffold>
-    with VendorProfileBlocMixin {
+    with VendorProfileBlocMixin, AutoRouteAwareStateMixin<VendorProfileScaffold> {
   VendorNavItem _selectedNavItem = VendorNavItem.orders;
   bool _redirectingToPending = false;
   final Set<VendorNavItem> _initializedTabs = {};
@@ -44,6 +46,46 @@ class _VendorProfileScaffoldState extends State<VendorProfileScaffold>
   void initState() {
     super.initState();
     _ensureTabInitialized(VendorNavItem.orders);
+    // WS / dialog tekshiruvi birinchi frame dan oldin ham to‘g‘ri bo‘lsin (default tab — Orders).
+    final nav = getIt<VendorShellNavigationService>();
+    nav.setVendorShellCovered(false);
+    nav.setOrdersTabActive(_selectedNavItem == VendorNavItem.orders);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final nav = getIt<VendorShellNavigationService>();
+      nav.attachOpenOrdersTab(_switchToOrdersTab);
+      nav.setOrdersTabActive(_selectedNavItem == VendorNavItem.orders);
+    });
+  }
+
+  @override
+  void dispose() {
+    final nav = getIt<VendorShellNavigationService>();
+    nav.detachOpenOrdersTab();
+    nav.setOrdersTabActive(false);
+    nav.setVendorShellCovered(false);
+    super.dispose();
+  }
+
+  @override
+  void didPushNext() {
+    getIt<VendorShellNavigationService>().setVendorShellCovered(true);
+  }
+
+  @override
+  void didPopNext() {
+    getIt<VendorShellNavigationService>().setVendorShellCovered(false);
+  }
+
+  void _switchToOrdersTab() {
+    if (!mounted) return;
+    setState(() {
+      _selectedNavItem = VendorNavItem.orders;
+      _ensureTabInitialized(VendorNavItem.orders);
+    });
+    // Menyu orqali emas, dialogdan chaqirilganda `onNavItemSelected` ishlamaydi —
+    // shuning uchun `setOrdersTabActive` qo‘lda yangilanishi kerak.
+    getIt<VendorShellNavigationService>().setOrdersTabActive(true);
   }
 
   void _ensureTabInitialized(VendorNavItem item) {
@@ -95,6 +137,7 @@ class _VendorProfileScaffoldState extends State<VendorProfileScaffold>
               _selectedNavItem = item;
               _ensureTabInitialized(item);
             });
+            getIt<VendorShellNavigationService>().setOrdersTabActive(item == VendorNavItem.orders);
           },
           body: IndexedStack(
             index: _selectedNavItem.index,

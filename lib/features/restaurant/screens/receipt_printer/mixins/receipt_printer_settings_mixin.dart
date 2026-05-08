@@ -145,6 +145,39 @@ mixin ReceiptPrinterSettingsMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
+  Future<void> connectManualAndFinish() async {
+    final host = manualController.text.trim();
+    if (host.isEmpty) {
+      vm.value = vm.value.copyWith(
+        status: TranslationKeys.printerEnterIp.tr(context: context),
+      );
+      return;
+    }
+    final router = context.router;
+    if (vm.value.connectingHost != null) return;
+    vm.value = vm.value.copyWith(
+      selectedHost: host,
+      connectingHost: host,
+      clearStatus: true,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 280));
+    final ok = await connectTo(host);
+    if (!mounted) {
+      vm.value = vm.value.copyWith(connectingHost: null);
+      return;
+    }
+    if (!ok) {
+      vm.value = vm.value.copyWith(connectingHost: null);
+      return;
+    }
+    await service.setSelectedPrinterType('tablet');
+    if (!mounted) return;
+    vm.value = vm.value.copyWith(connectingHost: null);
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) return;
+    router.pop(true);
+  }
+
   void selectFoundHost(String host) async {
     final router = context.router;
     if (vm.value.connectingHost != null) return;

@@ -177,7 +177,8 @@
     "intro": "EPSON thermal printers usually work on RAW TCP port {port}. Printer and phone/tablet must be on the same WiFi network.",
     "wifiIp": "Your WiFi IP: {ip}",
     "searchWifi": "Search on WiFi network",
-    "manualConnect": "Manual connect",
+    "manualConnect": "Manual entry",
+    "connect": "Connect",
     "noSearchResult": "No search has been run yet or result is empty.",
     "port": "Port {port}",
     "tooltip": "Receipt printer",
@@ -249,7 +250,9 @@
     "updatedTitle": "Product updated",
     "updatedMessage": "Product updated successfully",
     "updateFailedTitle": "Product update failed",
-    "percentOff": "{percent}% off"
+    "percentOff": "{percent}% off",
+    "unavailableBadge": "Unavailable",
+    "inMenuSwitch": "On menu"
   },
   "profile": {
     "editProfile": "Edit profile",
@@ -314,7 +317,12 @@
     "empty": "No orders have been placed yet",
     "invalidHistoryResponse": "Invalid order history response",
     "invalidOrdersResponse": "Invalid orders response",
-    "invalidDetailResponse": "Invalid order detail response"
+    "invalidDetailResponse": "Invalid order detail response",
+    "newOrderDialogTitle": "New order",
+    "newOrderDialogBody": "Order: {orderNumber}",
+    "newOrderDialogBodyNoNumber": "You have a new order.",
+    "newOrderGoBack": "Back",
+    "newOrderOpenOrders": "Go to orders"
   },
   "clips": {
     "title": "Clips",
@@ -374,7 +382,10 @@
     "tabBasic": "Basic",
     "tabDocuments": "Documents",
     "tabLocation": "Location",
-    "tabWorkHours": "Work hours"
+    "tabWorkHours": "Work hours",
+    "mapSearchHint": "Search address or place on map",
+    "mapSearchNoResults": "No places found for this search.",
+    "mapSearchFailed": "Search failed. Check spelling or try again."
   },
   "menu": {
     "products": "Products",

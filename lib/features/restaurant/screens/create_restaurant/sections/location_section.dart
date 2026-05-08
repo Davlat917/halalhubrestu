@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:halalhub_restaurant/core/extensions/size_extension.dart';
-import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/features/restaurant/services/restaurant_map_service.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/create_restaurant/widgets/restaurant_common_widgets.dart';
 

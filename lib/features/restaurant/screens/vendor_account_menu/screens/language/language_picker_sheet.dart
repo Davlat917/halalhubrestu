@@ -113,12 +113,7 @@ class _LanguagePickerSheetState extends State<LanguagePickerSheet> {
         LanguagePickerSheet._options.any((option) => option.code == normalizedSaved)) {
       return normalizedSaved;
     }
-
-    final deviceLanguageCode = WidgetsBinding.instance.platformDispatcher.locale.languageCode.toLowerCase();
-    if (LanguagePickerSheet._options.any((option) => option.code == deviceLanguageCode)) {
-      return deviceLanguageCode;
-    }
-
+    // Storage bo'sh bo'lsa main.dart bilan bir xil: inglizcha (qurilma tiliga qaramay).
     return LanguagePickerSheet.storageKeyDefault;
   }
 

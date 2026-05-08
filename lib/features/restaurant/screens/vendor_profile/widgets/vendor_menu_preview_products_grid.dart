@@ -7,10 +7,13 @@ class VendorMenuPreviewProductsGrid extends StatelessWidget {
     super.key,
     required this.products,
     required this.onEditProduct,
+    required this.onSetProductAvailability,
   });
 
   final List<VendorProductModel> products;
   final ValueChanged<VendorProductModel> onEditProduct;
+  final Future<void> Function(VendorProductModel product, bool isAvailable)
+  onSetProductAvailability;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +29,11 @@ class VendorMenuPreviewProductsGrid extends StatelessWidget {
         childAspectRatio: _resolveCardAspectRatio(context),
       ),
       itemBuilder: (context, index) {
+        final p = products[index];
         return VendorMenuPreviewProductCard(
-          product: products[index],
-          onEditTap: () => onEditProduct(products[index]),
+          product: p,
+          onEditTap: () => onEditProduct(p),
+          onAvailabilityChange: (v) => onSetProductAvailability(p, v),
         );
       },
     );
@@ -46,7 +51,7 @@ class VendorMenuPreviewProductsGrid extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.shortestSide >= 600;
     final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
-    if (!isTablet) return 2.42;
-    return isLandscape ? 0.86 : 0.68;
+    if (!isTablet) return 1.95;
+    return isLandscape ? 0.74 : 0.58;
   }
 }

@@ -45,12 +45,16 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
     super.key,
     required this.controller,
     required this.scanning,
+    required this.connectInProgress,
+    required this.onManualConnect,
     required this.onScan,
     required this.onManualChanged,
   });
 
   final TextEditingController controller;
   final bool scanning;
+  final bool connectInProgress;
+  final VoidCallback onManualConnect;
   final VoidCallback onScan;
   final ValueChanged<String> onManualChanged;
 
@@ -63,24 +67,41 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
       size: context.spOf(12, aw),
     );
     final stackedButtons = aw < 600;
+    final busy = scanning || connectInProgress;
+
+    Widget connectButton() => CustomButton(
+      label: TranslationKeys.printerConnect.tr(context: context),
+      onPressed: busy ? null : onManualConnect,
+      isLoading: connectInProgress,
+      isDisabled: busy,
+      height: buttonHeight,
+      textStyle: buttonTextStyle,
+    );
 
     Widget scanButton() => CustomButton(
       label: TranslationKeys.printerSearchWifi.tr(context: context),
-      onPressed: scanning ? null : onScan,
+      onPressed: busy ? null : onScan,
       isLoading: scanning,
-      isDisabled: scanning,
+      isDisabled: busy,
       height: buttonHeight,
-      textStyle: buttonTextStyle, //
+      textStyle: buttonTextStyle,
     );
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          TranslationKeys.printerManualConnect.tr(context: context),
+          style: AppTextStyle.semibold16(context, color: StaticColors.black),
+        ),
+        const SizedBox(height: 8),
         CommonTextField(
           controller: controller,
           onChanged: onManualChanged,
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.done,
           inputFormatter: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9a-zA-Z.:\-]')),
           ],
           hint: TranslationKeys.printerIpHint.tr(context: context),
           textSize: context.spOf(14, aw).clamp(13.0, 14.0),
@@ -91,9 +112,17 @@ class ReceiptPrinterManualConnectSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (stackedButtons) ...[
+          connectButton(),
+          const SizedBox(height: 10),
           scanButton(),
         ] else
-          scanButton(),
+          Row(
+            children: [
+              Expanded(child: connectButton()),
+              SizedBox(width: context.wOf(12, aw).clamp(10.0, 12.0)),
+              Expanded(child: scanButton()),
+            ],
+          ),
       ],
     );
   }

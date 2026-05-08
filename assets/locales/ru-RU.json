@@ -177,7 +177,8 @@
     "intro": "Термальные принтеры EPSON обычно работают на порту RAW TCP {port}. Принтер и телефон/планшет должны быть в одной WiFi сети.",
     "wifiIp": "Ваш WiFi IP: {ip}",
     "searchWifi": "Поиск в WiFi сети",
-    "manualConnect": "Подключить вручную",
+    "manualConnect": "Ручной ввод",
+    "connect": "Подключить",
     "noSearchResult": "Поиск еще не выполнялся или результат пуст.",
     "port": "Порт {port}",
     "tooltip": "Принтер чеков",
@@ -249,7 +250,9 @@
     "updatedTitle": "Товар обновлен",
     "updatedMessage": "Товар успешно обновлен",
     "updateFailedTitle": "Не удалось обновить товар",
-    "percentOff": "Скидка {percent}%"
+    "percentOff": "Скидка {percent}%",
+    "unavailableBadge": "Нет в наличии",
+    "inMenuSwitch": "В меню"
   },
   "profile": {
     "editProfile": "Редактировать профиль",
@@ -314,7 +317,12 @@
     "empty": "Заказов пока нет",
     "invalidHistoryResponse": "Некорректный ответ истории заказов",
     "invalidOrdersResponse": "Некорректный ответ заказов",
-    "invalidDetailResponse": "Некорректный ответ деталей заказа"
+    "invalidDetailResponse": "Некорректный ответ деталей заказа",
+    "newOrderDialogTitle": "Новый заказ",
+    "newOrderDialogBody": "Заказ: {orderNumber}",
+    "newOrderDialogBodyNoNumber": "Поступил новый заказ.",
+    "newOrderGoBack": "Назад",
+    "newOrderOpenOrders": "К заказам"
   },
   "clips": {
     "title": "Клипы",
@@ -374,7 +382,10 @@
     "tabBasic": "Основное",
     "tabDocuments": "Документы",
     "tabLocation": "Локация",
-    "tabWorkHours": "Часы работы"
+    "tabWorkHours": "Часы работы",
+    "mapSearchHint": "Поиск адреса или места на карте",
+    "mapSearchNoResults": "По этому запросу ничего не найдено.",
+    "mapSearchFailed": "Поиск не удался. Проверьте написание или попробуйте снова."
   },
   "menu": {
     "products": "Товары",

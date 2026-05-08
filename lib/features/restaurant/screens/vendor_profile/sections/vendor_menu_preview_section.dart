@@ -73,6 +73,46 @@ class _VendorMenuPreviewSectionState extends State<VendorMenuPreviewSection> {
     return getIt<RestaurantRepo>().getVendorProductsByVendorId(vendorId);
   }
 
+  Future<void> _setProductAvailability(
+    VendorProductModel product,
+    bool isAvailable,
+  ) async {
+    final vendorId = widget.vendorId;
+    if (vendorId == null) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final repo = getIt<RestaurantRepo>();
+    try {
+      await repo.updateVendorProduct(
+        vendorId: vendorId,
+        productId: product.id,
+        name: product.name,
+        preparationTime: product.preparationTime ?? 1,
+        price: double.tryParse(product.price ?? ''),
+        description: product.description,
+        isAvailable: isAvailable,
+        categories: product.categories.map((e) => e.id).toList(growable: false),
+      );
+      if (!mounted) return;
+      final groups = await repo.getVendorProductsByVendorId(vendorId);
+      if (!mounted) return;
+      setState(() {
+        _groupsFuture = Future.value(groups);
+        _latestGroups = groups;
+      });
+    } catch (_) {
+      if (mounted) {
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationKeys.productUpdateFailedTitle.tr(context: context),
+            ),
+          ),
+        );
+      }
+      rethrow;
+    }
+  }
+
   /// Profil menyusi [NestedScrollView] ichida; marshrutdan qaytganda ichki scroll 0 ga tushib qoladi.
   /// Offsetlarni saqlab, [push] dan keyin qayta qo‘llaymiz.
   Future<void> _pushEditProductAndRestoreScroll(
@@ -284,6 +324,7 @@ class _VendorMenuPreviewSectionState extends State<VendorMenuPreviewSection> {
                     products: group.products,
                     onEditProduct: (product) =>
                         _pushEditProductAndRestoreScroll(context, product),
+                    onSetProductAvailability: _setProductAvailability,
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 18)),

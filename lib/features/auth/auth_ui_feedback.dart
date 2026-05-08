@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -32,7 +34,11 @@ void handleSignInFlowResult(
       display.success(state.message!);
     }
     context.read<AuthBloc>().add(const AuthReset());
-    navigateAfterLoginCheckingVendor();
+    // Root `replace` bilan AuthFlow o‘chirilguncha bir freym kutamiz — element daraxti sinxronida.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      unawaited(navigateAfterLoginCheckingVendor());
+    });
   }
 }
 

@@ -127,6 +127,7 @@ abstract final class TranslationKeys {
   static const printerWifiIp = 'printer.wifiIp';
   static const printerSearchWifi = 'printer.searchWifi';
   static const printerManualConnect = 'printer.manualConnect';
+  static const printerConnect = 'printer.connect';
   static const printerNoSearchResult = 'printer.noSearchResult';
   static const printerPort = 'printer.port';
   static const printerTooltip = 'printer.tooltip';
@@ -277,6 +278,8 @@ abstract final class TranslationKeys {
   static const productUpdatedMessage = 'product.updatedMessage';
   static const productUpdateFailedTitle = 'product.updateFailedTitle';
   static const productPercentOff = 'product.percentOff';
+  static const productUnavailableBadge = 'product.unavailableBadge';
+  static const productInMenuSwitch = 'product.inMenuSwitch';
 
   // Vendor detail
   static const vendorDetailMostActiveCustomers =
@@ -476,6 +479,12 @@ abstract final class TranslationKeys {
 
   // Empty states
   static const ordersEmpty = 'orders.empty';
+  static const ordersNewOrderDialogTitle = 'orders.newOrderDialogTitle';
+  static const ordersNewOrderDialogBody = 'orders.newOrderDialogBody';
+  static const ordersNewOrderDialogBodyNoNumber =
+      'orders.newOrderDialogBodyNoNumber';
+  static const ordersNewOrderGoBack = 'orders.newOrderGoBack';
+  static const ordersNewOrderOpenOrders = 'orders.newOrderOpenOrders';
   static const notificationsEmpty = 'notifications.empty';
   static const notificationJustNow = 'notifications.justNow';
   static const notificationMinuteAgo = 'notifications.minuteAgo';
@@ -516,4 +525,7 @@ abstract final class TranslationKeys {
   static const updateRestaurantTabDocuments = 'updateRestaurant.tabDocuments';
   static const updateRestaurantTabLocation = 'updateRestaurant.tabLocation';
   static const updateRestaurantTabWorkHours = 'updateRestaurant.tabWorkHours';
+  static const updateMapSearchHint = 'updateRestaurant.mapSearchHint';
+  static const updateMapSearchNoResults = 'updateRestaurant.mapSearchNoResults';
+  static const updateMapSearchFailed = 'updateRestaurant.mapSearchFailed';
 }

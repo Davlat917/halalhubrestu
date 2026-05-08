@@ -2,6 +2,15 @@ class Constants {
   // map api key
   static const mapApiKey = 'AIzaSyDvA7oUFBIZE_FkQ107PRJU7GH9V5BHBoE';
 
+  /// Google Maps / Places (autocomplete, details).
+  static String get mapKey => mapApiKey;
+
+  static const String addressApi =
+      'https://maps.googleapis.com/maps/api/place/autocomplete/json';
+
+  static const String placeDetailsApi =
+      'https://maps.googleapis.com/maps/api/place/details/json';
+
   // base url
   // static const baseUrl = 'https://infonexuz.uz';
   static const baseUrl = 'https://backend-api.wehalalhub.com';

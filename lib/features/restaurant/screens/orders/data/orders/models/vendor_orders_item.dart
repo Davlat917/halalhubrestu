@@ -44,7 +44,7 @@ class VendorOrdersItem extends Equatable {
       backendId: id,
       id: orderNumber,
       createdAtLabel: _formatDateLabel(),
-      status: _statusFromApi(status),
+      status: statusFromApi(status),
       itemsSummary: itemsSummary,
       totalLabel: '$totalPrice\$',
       orderType: orderType,
@@ -71,7 +71,8 @@ class VendorOrdersItem extends Equatable {
     return raw;
   }
 
-  static VendorOrderStatus _statusFromApi(String raw) {
+  /// API `status` qatorini UI enumiga aylantiradi (WS ovoz sinxroni ham shu bilan mos).
+  static VendorOrderStatus statusFromApi(String raw) {
     switch (raw.toLowerCase()) {
       case 'pending':
       case 'created':

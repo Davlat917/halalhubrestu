@@ -177,7 +177,8 @@
     "intro": "عادةً ما تعمل طابعات EPSON الحرارية على منفذ RAW TCP {port}. يجب أن تكون الطابعة والهاتف/اللوحي على نفس شبكة WiFi.",
     "wifiIp": "عنوان WiFi الخاص بك: {ip}",
     "searchWifi": "بحث ضمن شبكة WiFi",
-    "manualConnect": "اتصال يدوي",
+    "manualConnect": "إدخال يدوي",
+    "connect": "اتصال",
     "noSearchResult": "لم يتم إجراء بحث بعد أو أن النتيجة فارغة.",
     "port": "المنفذ {port}",
     "tooltip": "طابعة الإيصال",
@@ -249,7 +250,9 @@
     "updatedTitle": "تم تحديث المنتج",
     "updatedMessage": "تم تحديث المنتج بنجاح",
     "updateFailedTitle": "فشل تحديث المنتج",
-    "percentOff": "خصم {percent}%"
+    "percentOff": "خصم {percent}%",
+    "unavailableBadge": "غير متوفر",
+    "inMenuSwitch": "في القائمة"
   },
   "profile": {
     "editProfile": "تعديل الملف الشخصي",
@@ -314,7 +317,12 @@
     "empty": "لا توجد طلبات بعد",
     "invalidHistoryResponse": "استجابة سجل الطلبات غير صالحة",
     "invalidOrdersResponse": "استجابة الطلبات غير صالحة",
-    "invalidDetailResponse": "استجابة تفاصيل الطلب غير صالحة"
+    "invalidDetailResponse": "استجابة تفاصيل الطلب غير صالحة",
+    "newOrderDialogTitle": "طلب جديد",
+    "newOrderDialogBody": "الطلب: {orderNumber}",
+    "newOrderDialogBodyNoNumber": "لديك طلب جديد.",
+    "newOrderGoBack": "رجوع",
+    "newOrderOpenOrders": "الانتقال إلى الطلبات"
   },
   "clips": {
     "title": "المقاطع",
@@ -374,7 +382,10 @@
     "tabBasic": "أساسي",
     "tabDocuments": "المستندات",
     "tabLocation": "الموقع",
-    "tabWorkHours": "ساعات العمل"
+    "tabWorkHours": "ساعات العمل",
+    "mapSearchHint": "ابحث عن عنوان أو مكان على الخريطة",
+    "mapSearchNoResults": "لم يتم العثور على أماكن لهذا البحث.",
+    "mapSearchFailed": "فشل البحث. تحقق من الإملاء أو حاول مرة أخرى."
   },
   "menu": {
     "products": "المنتجات",

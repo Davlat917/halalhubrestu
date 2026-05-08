@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
+import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart';
 
 // ---------------------------------------------------------------------------
 // Background handlers — top-level funksiyalar bo'lishi SHART (Firebase talab)
@@ -131,9 +132,9 @@ class PushNotificationService {
     _listenMessages();
 
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
+      alert: false,
       badge: true,
-      sound: true,
+      sound: false,
     );
   }
 
@@ -247,6 +248,7 @@ class PushNotificationService {
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         _log('initial message: ${message.data}');
+        _syncOrderAlertSoundAfterPushOpen(message, source: 'initial');
         _handleMessage(message, source: 'initial');
       }
     });
@@ -254,19 +256,66 @@ class PushNotificationService {
     FirebaseMessaging.onMessage.listen((message) {
       _log('foreground message received');
       _handleMessage(message, source: 'foreground');
-      if (message.notification != null) {
-        LocalNotificationService.show(message);
-      }
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       _log('message opened app');
+      _syncOrderAlertSoundAfterPushOpen(message, source: 'openedApp');
       _handleMessage(message, source: 'openedApp');
     });
   }
 
+  static void _syncOrderAlertSoundAfterPushOpen(
+    RemoteMessage message, {
+    required String source,
+  }) {
+    final ws = getIt<VendorNotificationsWsService>();
+    _log('[$source] push-open payload: ${message.data}');
+    if (_looksLikeNewOrderMessage(message)) {
+      _log('[$source] new order detected from push → start sound loop');
+      unawaited(ws.startNewOrderAlertSoundLoop());
+    }
+    // Payload format turlicha bo'lishi mumkin; backend holati bilan aniq sync qilamiz.
+    unawaited(ws.syncAlertSoundWithPendingOrdersFromBackend());
+    // Ba'zi holatlarda app resume bo'lgach network/state kechroq tiklanadi.
+    unawaited(
+      Future<void>.delayed(
+        const Duration(milliseconds: 900),
+        ws.syncAlertSoundWithPendingOrdersFromBackend,
+      ),
+    );
+    unawaited(
+      Future<void>.delayed(
+        const Duration(seconds: 2),
+        ws.syncAlertSoundWithPendingOrdersFromBackend,
+      ),
+    );
+  }
+
+  static bool _looksLikeNewOrderMessage(RemoteMessage message) {
+    final data = message.data;
+    final type = (data['type'] ?? '').toString().trim().toLowerCase();
+    if (type == 'order_created') return true;
+    final keys = <String>[
+      'order_id',
+      'orderId',
+      'id',
+      'order_number',
+      'orderNumber',
+    ];
+    for (final key in keys) {
+      final value = data[key];
+      if (value != null && value.toString().trim().isNotEmpty) return true;
+    }
+    return false;
+  }
+
   static void _handleMessage(RemoteMessage message, {required String source}) {
     _log('[$source] data=${message.data} | title=${message.notification?.title}');
-    // TODO: navigate yoki state update shu yerda
+    if (source == 'foreground') {
+      // Ilova ochiq: FCM banner/shovqin ko'rinmasin — yangi buyurtma WS + dialog + AudioPlayer.
+      return;
+    }
+    // TODO: background/initial: navigate yoki state update
   }
 }

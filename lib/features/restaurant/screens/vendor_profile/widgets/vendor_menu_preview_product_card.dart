@@ -5,27 +5,83 @@ import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_product/vendor_product_model.dart';
 
-class VendorMenuPreviewProductCard extends StatelessWidget {
+class VendorMenuPreviewProductCard extends StatefulWidget {
   const VendorMenuPreviewProductCard({
     super.key,
     required this.product,
     required this.onEditTap,
+    required this.onAvailabilityChange,
   });
 
   final VendorProductModel product;
   final VoidCallback onEditTap;
+  final Future<void> Function(bool isAvailable) onAvailabilityChange;
+
+  @override
+  State<VendorMenuPreviewProductCard> createState() =>
+      _VendorMenuPreviewProductCardState();
+}
+
+class _VendorMenuPreviewProductCardState
+    extends State<VendorMenuPreviewProductCard> {
+  late bool _available;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _available = widget.product.isAvailable ?? true;
+  }
+
+  @override
+  void didUpdateWidget(covariant VendorMenuPreviewProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.product.id != oldWidget.product.id) {
+      setState(() {
+        _available = widget.product.isAvailable ?? true;
+      });
+      return;
+    }
+    if (!_busy) {
+      final server = widget.product.isAvailable ?? true;
+      if (server != _available) {
+        setState(() => _available = server);
+      }
+    }
+  }
+
+  Future<void> _onSwitch(bool value) async {
+    final prev = _available;
+    setState(() {
+      _available = value;
+      _busy = true;
+    });
+    try {
+      await widget.onAvailabilityChange(value);
+      if (mounted) setState(() => _busy = false);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _available = prev;
+          _busy = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = product.images.isNotEmpty
-        ? product.images.first.imageUrl
+    final imageUrl = widget.product.images.isNotEmpty
+        ? widget.product.images.first.imageUrl
         : null;
-    final discount = product.discounts.isNotEmpty
-        ? product.discounts.first
+    final discount = widget.product.discounts.isNotEmpty
+        ? widget.product.discounts.first
         : null;
     final discountBadgeText = _resolveDiscountBadgeText(discount);
     final price =
-        product.finalPrice?.toStringAsFixed(2) ?? product.price ?? '-';
+        widget.product.finalPrice?.toStringAsFixed(2) ??
+        widget.product.price ??
+        '-';
     final size = MediaQuery.sizeOf(context);
     final isMobile = size.shortestSide < 600;
     final isTabletLandscape =
@@ -94,6 +150,10 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  _unavailableImageOverlay(
+                    context,
+                    const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
                 ],
               ),
             ),
@@ -110,7 +170,7 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            product.name,
+                            widget.product.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyle.medium16(
@@ -144,7 +204,7 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      product.name,
+                      widget.product.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyle.medium16(
@@ -156,7 +216,7 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                   ],
                   const SizedBox(height: 4),
                   Text(
-                    product.description ?? '',
+                    widget.product.description ?? '',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.regular12(
@@ -165,11 +225,12 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  _availabilityRow(context),
                   const SizedBox(height: 6),
                   Align(
                     alignment: Alignment.centerRight,
                     child: InkWell(
-                      onTap: onEditTap,
+                      onTap: widget.onEditTap,
                       child: Text(
                         TranslationKeys.editProductTitle.tr(context: context),
                         style: AppTextStyle.regular14(
@@ -190,12 +251,89 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
     );
   }
 
+  Widget _availabilityRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            TranslationKeys.productInMenuSwitch.tr(context: context),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.regular12(
+              context,
+              color: StaticColors.c666666,
+            ),
+          ),
+        ),
+        if (_busy)
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        Switch.adaptive(
+          value: _available,
+          onChanged: _busy ? null : _onSwitch,
+          activeTrackColor: StaticColors.primary,
+          activeThumbColor: StaticColors.white,
+          inactiveTrackColor: StaticColors.cE0E0E0,
+          inactiveThumbColor: StaticColors.white,
+        ),
+      ],
+    );
+  }
+
+  Widget _unavailableImageOverlay(
+    BuildContext context,
+    BorderRadius borderRadius,
+  ) {
+    if (_available) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: ColoredBox(
+          color: Colors.black.withValues(alpha: 0.45),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: StaticColors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    TranslationKeys.productUnavailableBadge.tr(
+                      context: context,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: AppTextStyle.semibold12(
+                      context,
+                      color: StaticColors.cFF4E4E,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _mobileCard(
     BuildContext context, {
     required String? imageUrl,
     required String? discountBadgeText,
     required String price,
-    required String? oldPrice, //
+    required String? oldPrice,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -251,19 +389,23 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  _unavailableImageOverlay(
+                    context,
+                    BorderRadius.circular(10),
+                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: SizedBox(
-              height: 120,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.name,
+                    widget.product.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.medium16(
@@ -275,7 +417,7 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Flexible(
                     child: Text(
-                      product.description ?? '',
+                      widget.product.description ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyle.regular12(
@@ -285,6 +427,8 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  _availabilityRow(context),
                   const Spacer(),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -321,9 +465,11 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
                         ),
                       ),
                       InkWell(
-                        onTap: onEditTap,
+                        onTap: widget.onEditTap,
                         child: Text(
-                          TranslationKeys.editProductTitle.tr(context: context),
+                          TranslationKeys.editProductTitle.tr(
+                            context: context,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyle.regular12(
@@ -365,9 +511,9 @@ class VendorMenuPreviewProductCard extends StatelessWidget {
   }
 
   String? _resolveOldPriceText() {
-    final old = product.price?.trim();
+    final old = widget.product.price?.trim();
     if (old == null || old.isEmpty) return null;
-    final finalP = product.finalPrice;
+    final finalP = widget.product.finalPrice;
     if (finalP == null) return null;
     final oldNum = double.tryParse(old);
     if (oldNum == null) return null;

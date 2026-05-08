@@ -42,9 +42,14 @@
 		<key>GMSApiKey</key>
 		<string>$(MAPS_API_KEY)</string>
 		<!-- Push Notification -->
+		<key>BGTaskSchedulerPermittedIdentifiers</key>
+		<array>
+			<string>com.pravera.flutter_foreground_task.refresh</string>
+		</array>
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>remote-notification</string>
+			<string>fetch</string>
 		</array>
 		<!-- App UIDeviceFamily -->
 		<key>UIDeviceFamily</key>

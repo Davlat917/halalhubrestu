@@ -1,6 +1,7 @@
 import Flutter
 import GoogleMaps
 import UIKit
+import flutter_foreground_task
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -13,7 +14,10 @@ import UIKit
     {
       GMSServices.provideAPIKey(mapsApiKey)
     } else {
-      assertionFailure("GMSApiKey is missing in Info.plist")
+      NSLog("GMSApiKey is missing in Info.plist. Google Maps features may not work.")
+    }
+    SwiftFlutterForegroundTaskPlugin.setPluginRegistrantCallback { registry in
+      GeneratedPluginRegistrant.register(with: registry)
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

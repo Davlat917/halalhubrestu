@@ -5,6 +5,7 @@ import 'package:halalhub_restaurant/core/network/network_exception.dart';
 import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/models/vendor_order_status.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/models/vendor_order_ui_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_item.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_event.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_state.dart';
@@ -24,6 +25,24 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
   final VendorNotificationsWsService _notificationsWs;
   StreamSubscription<VendorWsEvent>? _wsSubscription;
   DateTime? _lastRealtimeRefreshAt;
+
+  void _syncNewOrderAlertSound(
+    List<VendorOrderUiModel> items, {
+    bool afterVendorStatusUpdate = false,
+  }) {
+    final hasPendingNewOrders = items.any(
+      (order) => order.status == VendorOrderStatus.newOrder,
+    );
+    if (hasPendingNewOrders) {
+      unawaited(_notificationsWs.startNewOrderAlertSoundLoop());
+      return;
+    }
+    // Ro'yxat yuklash/refresh ovozni o'chirmaydi — faqat dialog tugmalari yoki
+    // buyurtma statusini API orqali o'zgartirganda.
+    if (afterVendorStatusUpdate) {
+      unawaited(_notificationsWs.stopNewOrderAlertSound());
+    }
+  }
 
   void _onWsEvent(VendorWsEvent event) {
     if (event.type != VendorWsEventType.orderCreated) return;
@@ -61,6 +80,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
           clearError: true,
         ),
       );
+      _syncNewOrderAlertSound(items);
     } catch (e) {
       emit(
         state.copyWith(
@@ -91,6 +111,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
           clearError: true,
         ),
       );
+      _syncNewOrderAlertSound(items);
     } catch (e) {
       emit(
         state.copyWith(
@@ -123,6 +144,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
           clearError: true,
         ),
       );
+      _syncNewOrderAlertSound([...state.items, ...newItems]);
     } catch (e) {
       emit(
         state.copyWith(
@@ -142,7 +164,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
         orderId: event.orderBackendId,
         status: event.nextStatusApi,
       );
-      final nextUiStatus = _statusFromApi(event.nextStatusApi);
+      final nextUiStatus = VendorOrdersItem.statusFromApi(event.nextStatusApi);
       final isTerminal =
           nextUiStatus == VendorOrderStatus.completed ||
           nextUiStatus == VendorOrderStatus.delivered ||
@@ -160,36 +182,13 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
         }
       }
       emit(state.copyWith(items: updated));
+      _syncNewOrderAlertSound(updated, afterVendorStatusUpdate: true);
     } catch (e) {
       emit(
         state.copyWith(
           errorMessage: e is NetworkException ? e.message : e.toString(),
         ),
       );
-    }
-  }
-
-  VendorOrderStatus _statusFromApi(String raw) {
-    switch (raw.toLowerCase()) {
-      case 'confirmed':
-      case 'preparing':
-        return VendorOrderStatus.accepted;
-      case 'ready':
-      case 'assigned':
-      case 'picked_up':
-      case 'on_the_way':
-        return VendorOrderStatus.ready;
-      case 'cancelled':
-      case 'canceled':
-        return VendorOrderStatus.canceled;
-      case 'delivery_failed':
-        return VendorOrderStatus.deliveryFailed;
-      case 'delivered':
-        return VendorOrderStatus.delivered;
-      case 'completed':
-        return VendorOrderStatus.completed;
-      default:
-        return VendorOrderStatus.newOrder;
     }
   }
 
