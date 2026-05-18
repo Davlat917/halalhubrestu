@@ -1,8 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
+import 'package:halalhub_restaurant/core/router/app_router.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_finance_overview/vendor_finance_overview_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/models/vendor_finance_period.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/widgets/vendor_overview_card.dart';
 
 mixin VendorFinanceOverviewSectionMixin {
@@ -17,6 +20,7 @@ mixin VendorFinanceOverviewSectionMixin {
         changeText: buildChangeLabel(overview.daily),
         changeColor: statusColor(overview.daily.status),
         status: overview.daily.status,
+        onTap: () => _openTransactions(context, VendorFinancePeriod.daily),
       ),
       VendorOverviewCardData(
         title: TranslationKeys.vendorDetailWeeklyEarnings.tr(context: context),
@@ -24,6 +28,7 @@ mixin VendorFinanceOverviewSectionMixin {
         changeText: buildChangeLabel(overview.weekly),
         changeColor: statusColor(overview.weekly.status),
         status: overview.weekly.status,
+        onTap: () => _openTransactions(context, VendorFinancePeriod.weekly),
       ),
       VendorOverviewCardData(
         title: TranslationKeys.vendorDetailMonthlyEarnings.tr(context: context),
@@ -31,6 +36,7 @@ mixin VendorFinanceOverviewSectionMixin {
         changeText: buildChangeLabel(overview.monthly),
         changeColor: statusColor(overview.monthly.status),
         status: overview.monthly.status,
+        onTap: () => _openTransactions(context, VendorFinancePeriod.monthly),
       ),
       VendorOverviewCardData(
         title: TranslationKeys.vendorDetailYearlyEarnings.tr(context: context),
@@ -38,6 +44,7 @@ mixin VendorFinanceOverviewSectionMixin {
         changeText: buildChangeLabel(overview.yearly),
         changeColor: statusColor(overview.yearly.status),
         status: overview.yearly.status,
+        onTap: () => _openTransactions(context, VendorFinancePeriod.yearly),
       ),
     ];
   }
@@ -65,6 +72,12 @@ mixin VendorFinanceOverviewSectionMixin {
       default:
         return cleanValue;
     }
+  }
+
+  void _openTransactions(BuildContext context, VendorFinancePeriod period) {
+    context.router.push(
+      FinanceTransactionsRoute(period: period.apiValue),
+    );
   }
 
   Color statusColor(String status) {

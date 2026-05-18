@@ -19,6 +19,7 @@ import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_m
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/notification_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/support/support_chat_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/vendor_account_menu_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/finance_transactions_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/vendor_profile_page.dart';
 import 'package:halalhub_restaurant/features/splash/app_start_page.dart';
 import 'package:halalhub_restaurant/features/splash/splash_page.dart';
@@ -46,6 +47,7 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: OrdersRoute.page),
     AutoRoute(page: OrdersHistoryRoute.page),
     AutoRoute(page: ReceiptPrinterSettingsRoute.page),
+    AutoRoute(page: FinanceTransactionsRoute.page),
     AutoRoute(
       page: AuthFlowRoute.page,
       path: '/auth',

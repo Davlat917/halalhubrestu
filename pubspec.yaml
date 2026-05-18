@@ -55,9 +55,7 @@ dependencies:
   geolocator: ^14.0.2
   flutter_foreground_task: ^9.2.2
   uuid: ^4.5.3
-
- 
-  
+  image: ^4.8.0
 
 dev_dependencies:
   flutter_test:

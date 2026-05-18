@@ -360,7 +360,11 @@
     "yearlyEarnings": "الأرباح السنوية",
     "dailyOrdersChart": "طلبات المطعم اليومية",
     "yearLabel": "{year} سنة",
-    "customerFallback": "عميل #{id}"
+    "customerFallback": "عميل #{id}",
+    "financeTransactionsTitle": "المعاملات المالية",
+    "financeTransactionsFailedLoad": "تعذر تحميل المعاملات",
+    "financeTransactionsQuantity": "الكمية: {count}x",
+    "financeTransactionsPriceLabel": "السعر: "
   },
   "updateRestaurant": {
     "addCategory": "إضافة فئة",

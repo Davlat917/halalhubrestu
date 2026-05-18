@@ -9,7 +9,8 @@ class VendorOverviewCardData {
     required this.amount,
     required this.changeText,
     required this.changeColor,
-    required this.status, //
+    required this.status,
+    this.onTap,
   });
 
   final String title;
@@ -17,6 +18,7 @@ class VendorOverviewCardData {
   final String changeText;
   final Color changeColor;
   final String status;
+  final VoidCallback? onTap;
 }
 
 class VendorOverviewCard extends StatelessWidget {
@@ -27,7 +29,7 @@ class VendorOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final child = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: StaticColors.white,
@@ -62,6 +64,17 @@ class VendorOverviewCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+
+    if (isLoading || item.onTap == null) return child;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: child,
       ),
     );
   }

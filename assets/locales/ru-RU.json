@@ -360,7 +360,11 @@
     "yearlyEarnings": "Годовой доход",
     "dailyOrdersChart": "Ежедневные заказы ресторана",
     "yearLabel": "{year} год",
-    "customerFallback": "Клиент #{id}"
+    "customerFallback": "Клиент #{id}",
+    "financeTransactionsTitle": "Финансовые транзакции",
+    "financeTransactionsFailedLoad": "Не удалось загрузить транзакции",
+    "financeTransactionsQuantity": "Количество: {count}x",
+    "financeTransactionsPriceLabel": "Цена: "
   },
   "updateRestaurant": {
     "addCategory": "Добавить категорию",

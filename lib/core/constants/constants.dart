@@ -45,6 +45,8 @@ class Constants {
       "/vendors/vendor/finance/top-customers/";
   static const vendorsFinanceSalesDistribution =
       "/vendors/vendor/finance/sales-distribution/";
+  static const vendorsFinanceTransactions =
+      "/vendors/vendor/finance/transactions/";
   static const vendorsWalletDashboard = "/vendors/wallet/dashboard/";
   static const vendorsBankInfo = "/vendors/bank-info/";
   static const vendorsPayoutRequests = "/vendors/payout-requests/";

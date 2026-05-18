@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
+import 'package:halalhub_restaurant/core/services/models/vendor_ws_order_created_payload.dart';
 import 'package:halalhub_restaurant/core/services/vendor_orders_foreground_task_callback.dart';
 import 'package:halalhub_restaurant/core/storage/storage.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_item.dart';
@@ -22,16 +23,25 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 enum VendorWsEventType { orderCreated, unknown }
 
 class VendorWsEvent {
-  const VendorWsEvent({required this.type, required this.raw});
+  const VendorWsEvent({
+    required this.type,
+    required this.raw,
+    this.orderCreated,
+  });
 
   final VendorWsEventType type;
   final Map<String, dynamic> raw;
+  final VendorWsOrderCreatedPayload? orderCreated;
 
   static VendorWsEvent fromJson(Map<String, dynamic> json) {
     final typeRaw = (json['type'] as String? ?? '').toLowerCase().trim();
     switch (typeRaw) {
       case 'order_created':
-        return VendorWsEvent(type: VendorWsEventType.orderCreated, raw: json);
+        return VendorWsEvent(
+          type: VendorWsEventType.orderCreated,
+          raw: json,
+          orderCreated: VendorWsOrderCreatedPayload.fromJson(json),
+        );
       default:
         return VendorWsEvent(type: VendorWsEventType.unknown, raw: json);
     }
@@ -72,6 +82,8 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
   AudioPlayer? _newOrderSoundPlayer;
   File? _newOrderSoundCacheFile;
   final Map<String, DateTime> _recentPrintedOrderKeys = <String, DateTime>{};
+  int _alertSoundEpoch = 0;
+  Future<void> _alertSoundChain = Future.value();
 
   void _logInfo(String message) {
     if (kDebugMode) _logger.i(message);
@@ -81,6 +93,30 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     if (kDebugMode) _logger.w(message, stackTrace: stackTrace);
   }
 
+  void _logDebug(String message) {
+    if (kDebugMode) _logger.d(message);
+  }
+
+  /// Postman Messages paneliga o‘xshash: JSON bo‘lsa indent bilan.
+  String _formatWsIncomingForLog(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      final String body;
+      if (decoded is Map || decoded is List) {
+        body = const JsonEncoder.withIndent('  ').convert(decoded);
+      } else {
+        body = decoded.toString();
+      }
+      if (body.length > _wsIncomingLogMaxChars) {
+        return '${body.substring(0, _wsIncomingLogMaxChars)}\n… (truncated, ${body.length} chars total)';
+      }
+      return body;
+    } catch (_) {
+      final preview = raw.length > 2000 ? '${raw.substring(0, 2000)}…' : raw;
+      return '(parse as JSON failed — raw preview)\n$preview';
+    }
+  }
+
   // static const _wsBase = 'wss://infonexuz.uz/ws/notifications/vendor/';
   static const _wsBase = 'wss://backend-api.wehalalhub.com/ws/notifications/vendor/';
   /// `rootBundle` uchun to‘liq kalit; `AssetSource` (web) uchun — prefiksiz.
@@ -88,6 +124,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
   static const _newOrderSoundAssetPath = 'sounds/new-order.wav';
   static final _newOrderAsset = AssetSource(_newOrderSoundAssetPath);
   static const Duration _printDedupWindow = Duration(seconds: 90);
+  static const int _wsIncomingLogMaxChars = 12000;
   /// Android 8+ kanal bir marta yaratiladi; ovoz yo‘q kanalni almashtirish uchun ID yangilandi.
   static const _androidOrderAlertChannelId = 'vendor_orders_alert_v1';
   static const _androidNativeAlertChannel =
@@ -206,7 +243,18 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
 
   void _onData(dynamic data) {
     // Yengil parse: faqat event turini ajratamiz.
-    if (data is! String) return;
+    if (data is! String) {
+      _logDebug(
+        'Vendor WS ← [${data.runtimeType}] $data',
+      );
+      return;
+    }
+    _logDebug(
+      'Vendor WS ← incoming\n'
+      '┌${'─' * 38}\n'
+      '${_formatWsIncomingForLog(data)}\n'
+      '└${'─' * 38}',
+    );
     try {
       final json = jsonDecode(data);
       if (json is! Map<String, dynamic>) return;
@@ -241,20 +289,68 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     _androidNativeOrderAlertActive = false;
   }
 
-  Future<void> startNewOrderAlertSoundLoop() async {
+  Future<void> startNewOrderAlertSoundLoop() {
+    final epoch = _alertSoundEpoch;
+    _alertSoundChain = _alertSoundChain.then((_) async {
+      if (epoch != _alertSoundEpoch) return;
+      await _startNewOrderAlertSoundLoopBody(epoch);
+    });
+    return _alertSoundChain;
+  }
+
+  Future<void> stopNewOrderAlertSound() {
+    _alertSoundEpoch++;
+    _alertSoundChain = _alertSoundChain.then((_) async {
+      await _stopNewOrderAlertSoundBody();
+    });
+    return _alertSoundChain;
+  }
+
+  bool _alertSoundEpochActive(int epoch) => epoch == _alertSoundEpoch;
+
+  Future<void> _disposeAlertPlayer(AudioPlayer? player) async {
+    if (player == null) return;
     try {
+      await player.stop();
+    } catch (_) {}
+    try {
+      await player.dispose();
+    } catch (_) {}
+  }
+
+  Future<void> _releaseCurrentAlertPlayer() async {
+    final previous = _newOrderSoundPlayer;
+    _newOrderSoundPlayer = null;
+    await _disposeAlertPlayer(previous);
+  }
+
+  Future<void> _startNewOrderAlertSoundLoopBody(int epoch) async {
+    try {
+      final current = _newOrderSoundPlayer;
+      if (current != null) {
+        try {
+          if (current.state == PlayerState.playing) {
+            _logDebug('startNewOrderAlertSoundLoop: already playing, skip');
+            return;
+          }
+        } catch (_) {}
+      }
+
+      if (!_alertSoundEpochActive(epoch)) return;
+
       if (defaultTargetPlatform == TargetPlatform.android) {
         await _stopAndroidNativeOrderAlert();
-        final previous = _newOrderSoundPlayer;
-        _newOrderSoundPlayer = null;
-        await previous?.dispose();
+        await _releaseCurrentAlertPlayer();
+        if (!_alertSoundEpochActive(epoch)) return;
         try {
           await _androidNativeAlertChannel.invokeMethod<void>('startLoop');
           _androidNativeOrderAlertActive = true;
           _logInfo('startNewOrderAlertSoundLoop Android native MediaPlayer started');
           return;
         } catch (e, st) {
-          debugPrint('[VendorNewOrderSound] native start failed, fallback audioplayers: $e\n$st');
+          debugPrint(
+            '[VendorNewOrderSound] native start failed, fallback audioplayers: $e\n$st',
+          );
           await _stopAndroidNativeOrderAlert();
         }
         await AudioPlayer.global.setAudioContext(
@@ -269,14 +365,19 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
           ),
         );
       } else {
-        final previous = _newOrderSoundPlayer;
-        _newOrderSoundPlayer = null;
-        await previous?.dispose();
+        await _releaseCurrentAlertPlayer();
       }
+
+      if (!_alertSoundEpochActive(epoch)) return;
 
       final player = AudioPlayer();
       _newOrderSoundPlayer = player;
       await player.setPlayerMode(PlayerMode.mediaPlayer);
+      if (!_alertSoundEpochActive(epoch) || _newOrderSoundPlayer != player) {
+        await _disposeAlertPlayer(player);
+        return;
+      }
+
       await player.setAudioContext(
         AudioContext(
           iOS: AudioContextIOS(
@@ -291,21 +392,34 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
           ),
         ),
       );
+      if (!_alertSoundEpochActive(epoch) || _newOrderSoundPlayer != player) {
+        await _disposeAlertPlayer(player);
+        return;
+      }
 
       final Source source;
       if (kIsWeb) {
         source = _newOrderAsset;
       } else {
         final f = await _ensureNewOrderSoundFileOnDisk();
+        if (!_alertSoundEpochActive(epoch) || _newOrderSoundPlayer != player) {
+          await _disposeAlertPlayer(player);
+          return;
+        }
         source = DeviceFileSource(f.path);
       }
 
-      final pathLog = source is DeviceFileSource ? source.path : _newOrderBundleKey;
+      final pathLog =
+          source is DeviceFileSource ? source.path : _newOrderBundleKey;
       _logInfo(
         'startNewOrderAlertSoundLoop source=${source.runtimeType} path=$pathLog | '
         'state=${player.state.name}',
       );
       await player.setReleaseMode(ReleaseMode.loop);
+      if (!_alertSoundEpochActive(epoch) || _newOrderSoundPlayer != player) {
+        await _disposeAlertPlayer(player);
+        return;
+      }
       await player.setVolume(1.0);
       await player.play(source);
       _logInfo(
@@ -318,7 +432,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     }
   }
 
-  Future<void> stopNewOrderAlertSound() async {
+  Future<void> _stopNewOrderAlertSoundBody() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
       await _stopAndroidNativeOrderAlert();
     }
@@ -327,8 +441,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     if (player == null) return;
     try {
       _logInfo('stopNewOrderAlertSound requested');
-      await player.stop();
-      await player.dispose();
+      await _disposeAlertPlayer(player);
       _logInfo('stopNewOrderAlertSound completed');
     } catch (e, st) {
       debugPrint('[VendorNewOrderSound] stop failed: $e\n$st');

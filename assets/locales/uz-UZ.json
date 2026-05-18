@@ -360,7 +360,11 @@
     "yearlyEarnings": "Yillik daromad",
     "dailyOrdersChart": "Restoran kunlik buyurtmalari",
     "yearLabel": "{year}-yil",
-    "customerFallback": "Mijoz #{id}"
+    "customerFallback": "Mijoz #{id}",
+    "financeTransactionsTitle": "Moliyaviy tranzaksiyalar",
+    "financeTransactionsFailedLoad": "Tranzaksiyalarni yuklab bo'lmadi",
+    "financeTransactionsQuantity": "Miqdor: {count}x",
+    "financeTransactionsPriceLabel": "Narx: "
   },
   "updateRestaurant": {
     "addCategory": "Kategoriya qo'shish",

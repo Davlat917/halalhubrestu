@@ -78,6 +78,10 @@ import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_m
     as _i153;
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_clips/bloc/vendor_clips_bloc.dart'
     as _i835;
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/repositories/finance_repository.dart'
+    as _i36;
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/repositories/finance_repository_impl.dart'
+    as _i940;
 import 'package:halalhub_restaurant/features/restaurant/services/restaurant_map_service.dart'
     as _i570;
 import 'package:injectable/injectable.dart' as _i526;
@@ -137,6 +141,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i280.SupportChatRepository>(
       () => _i153.SupportChatRepositoryImpl(gh<_i521.Storage>()),
+    );
+    gh.factory<_i36.FinanceRepository>(
+      () => _i940.FinanceRepositoryImpl(gh<_i361.Dio>()),
     );
     gh.factory<_i1000.OrderHistoryRepository>(
       () => _i303.OrderHistoryRepositoryImpl(gh<_i361.Dio>()),

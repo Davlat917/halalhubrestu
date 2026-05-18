@@ -308,6 +308,14 @@ abstract final class TranslationKeys {
   static const vendorDetailDailyOrdersChart = 'vendorDetail.dailyOrdersChart';
   static const vendorDetailYearLabel = 'vendorDetail.yearLabel';
   static const vendorDetailCustomerFallback = 'vendorDetail.customerFallback';
+  static const vendorFinanceTransactionsTitle =
+      'vendorDetail.financeTransactionsTitle';
+  static const vendorFinanceTransactionsFailedLoad =
+      'vendorDetail.financeTransactionsFailedLoad';
+  static const vendorFinanceTransactionsQuantity =
+      'vendorDetail.financeTransactionsQuantity';
+  static const vendorFinanceTransactionsPriceLabel =
+      'vendorDetail.financeTransactionsPriceLabel';
 
   // Update restaurant
   static const updateAddCategory = 'updateRestaurant.addCategory';

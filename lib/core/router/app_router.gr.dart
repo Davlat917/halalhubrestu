@@ -291,6 +291,60 @@ class EditProductRouteArgs {
 }
 
 /// generated route for
+/// [FinanceTransactionsPage]
+class FinanceTransactionsRoute
+    extends PageRouteInfo<FinanceTransactionsRouteArgs> {
+  FinanceTransactionsRoute({
+    Key? key,
+    String period = 'weekly',
+    List<PageRouteInfo>? children,
+  }) : super(
+         FinanceTransactionsRoute.name,
+         args: FinanceTransactionsRouteArgs(key: key, period: period),
+         rawQueryParams: {'period': period},
+         initialChildren: children,
+       );
+
+  static const String name = 'FinanceTransactionsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final queryParams = data.queryParams;
+      final args = data.argsAs<FinanceTransactionsRouteArgs>(
+        orElse: () => FinanceTransactionsRouteArgs(
+          period: queryParams.getString('period', 'weekly'),
+        ),
+      );
+      return FinanceTransactionsPage(key: args.key, period: args.period);
+    },
+  );
+}
+
+class FinanceTransactionsRouteArgs {
+  const FinanceTransactionsRouteArgs({this.key, this.period = 'weekly'});
+
+  final Key? key;
+
+  final String period;
+
+  @override
+  String toString() {
+    return 'FinanceTransactionsRouteArgs{key: $key, period: $period}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! FinanceTransactionsRouteArgs) return false;
+    return key == other.key && period == other.period;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ period.hashCode;
+}
+
+/// generated route for
 /// [ForgotPasswordPage]
 class ForgotPasswordRoute extends PageRouteInfo<void> {
   const ForgotPasswordRoute({List<PageRouteInfo>? children})

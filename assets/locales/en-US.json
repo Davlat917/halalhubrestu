@@ -360,7 +360,11 @@
     "yearlyEarnings": "Yearly earnings",
     "dailyOrdersChart": "Restaurant Daily Orders",
     "yearLabel": "{year} year",
-    "customerFallback": "Customer #{id}"
+    "customerFallback": "Customer #{id}",
+    "financeTransactionsTitle": "Finance transactions",
+    "financeTransactionsFailedLoad": "Failed to load transactions",
+    "financeTransactionsQuantity": "Quantity: {count}x",
+    "financeTransactionsPriceLabel": "Price: "
   },
   "updateRestaurant": {
     "addCategory": "Add Category",
