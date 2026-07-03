@@ -4,6 +4,8 @@ import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_finan
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_finance_overview/vendor_finance_overview_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_bank_info/vendor_bank_info_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_sales_distribution/vendor_sales_distribution_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_stripe_check/vendor_stripe_check_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_stripe_connect/vendor_stripe_connect_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_top_customer/vendor_top_customer_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_ingredient/vendor_ingredient_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_me/vendor_me_model.dart';
@@ -16,6 +18,7 @@ import 'package:image_picker/image_picker.dart';
 abstract class RestaurantRepo {
   Future<VendorMeModel> getVendorMe();
   Future<List<VendorCategoryModel>> getVendorCategories();
+  Future<List<VendorCategoryModel>> getVendorProductCategories();
   Future<List<VendorIngredientModel>> getVendorIngredients();
   Future<List<VendorProductGroupModel>> getVendorProductsByVendorId(
     int vendorId,
@@ -28,6 +31,13 @@ abstract class RestaurantRepo {
   Future<VendorWalletDashboardModel> getVendorWalletDashboard();
   Future<VendorBankInfoModel> getVendorBankInfo();
 
+  Future<VendorStripeCheckModel> checkVendorStripe({required int vendorId});
+
+  Future<VendorStripeConnectModel> connectVendorStripe({
+    required String returnUrl,
+    required String refreshUrl,
+  });
+
   /// [url] — `null` bo‘lsa birinchi sahifa, aks holda API `next` havolasi.
   Future<VendorPayoutRequestsPageResult> getVendorPayoutRequests({String? url});
 
@@ -39,9 +49,9 @@ abstract class RestaurantRepo {
   Future<VendorBankInfoModel> updateVendorBankInfo({
     required String businessName,
     required String payoutSchedule,
-    required String einNumber,
-    required String accountNumber,
-    required String routingNumber,
+    String? einNumber,
+    String? accountNumber,
+    String? routingNumber,
   });
 
   /// [url] — `null` bo‘lsa birinchi sahifa, aks holda API `next` havolasi.
@@ -64,6 +74,8 @@ abstract class RestaurantRepo {
     List<String> newIngredients = const [],
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
     List<XFile> newImages = const [],
   });
   Future<void> updateVendorProduct({
@@ -78,6 +90,8 @@ abstract class RestaurantRepo {
     List<String> newIngredients = const [],
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
     List<XFile> newImages = const [],
   });
 

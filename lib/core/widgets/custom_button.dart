@@ -60,19 +60,19 @@ class CustomButton extends ResponsiveSection {
 
   @override
   Widget buildMobile(BuildContext context) => _ButtonContent(
-        button: this,
-        height: height ?? context.size52,
-        textStyle: textStyle ?? AppTextStyle.semibold16(context),
-        width: width ?? context.screenWidth,
-      );
+    button: this,
+    height: height ?? 50,
+    textStyle: textStyle ?? AppTextStyle.semibold16(context),
+    width: width ?? context.screenWidth,
+  );
 
   @override
   Widget buildTablet(BuildContext context) => _ButtonContent(
-        button: this,
-        height: height ?? context.size52,
-        textStyle: textStyle ?? AppTextStyle.semibold16(context),
-        width: width ?? context.screenWidth,
-      );
+    button: this,
+    height: height ?? 50,
+    textStyle: textStyle ?? AppTextStyle.semibold16(context),
+    width: width ?? context.screenWidth,
+  );
 }
 
 // ─── Button content ───────────────────────────────────────────────────────────
@@ -144,18 +144,18 @@ class _ButtonContentState extends State<_ButtonContent> {
   bool get _isInteractable => !b.isDisabled && !b.isLoading;
 
   Color _resolveFg() => switch (b.type) {
-        ButtonType.filled || ButtonType.gradient =>
-          b.foregroundColor ?? Colors.white,
-        ButtonType.outlined => b.foregroundColor ?? StaticColors.primary,
-        ButtonType.text => b.foregroundColor ?? StaticColors.black,
-      };
+    ButtonType.filled ||
+    ButtonType.gradient => b.foregroundColor ?? Colors.white,
+    ButtonType.outlined => b.foregroundColor ?? StaticColors.primary,
+    ButtonType.text => b.foregroundColor ?? StaticColors.black,
+  };
 
   Color get _resolveBg => switch (b.type) {
-        ButtonType.filled => b.backgroundColor ?? StaticColors.primary,
-        ButtonType.outlined || ButtonType.text =>
-          b.backgroundColor ?? StaticColors.white,
-        ButtonType.gradient => Colors.transparent,
-      };
+    ButtonType.filled => b.backgroundColor ?? StaticColors.primary,
+    ButtonType.outlined ||
+    ButtonType.text => b.backgroundColor ?? StaticColors.white,
+    ButtonType.gradient => Colors.transparent,
+  };
 
   BoxDecoration _buildDecoration() {
     final radius = BorderRadius.circular(b.borderRadius);
@@ -177,8 +177,7 @@ class _ButtonContentState extends State<_ButtonContent> {
       borderRadius: radius,
       border: b.type == ButtonType.outlined
           ? Border.all(
-              color:
-                  (b.borderColor ?? StaticColors.primary).withAlpha(opacity),
+              color: (b.borderColor ?? StaticColors.primary).withAlpha(opacity),
               width: b.borderWidth,
             )
           : null,
@@ -217,8 +216,7 @@ class _ButtonContentState extends State<_ButtonContent> {
             width: widget.width,
             height: widget.height,
             margin: b.margin,
-            padding:
-                b.padding ?? const EdgeInsets.symmetric(horizontal: 24),
+            padding: b.padding ?? const EdgeInsets.symmetric(horizontal: 24),
             decoration: _cachedDecoration,
             alignment: Alignment.center,
             child: _ButtonLabel(
@@ -280,16 +278,16 @@ class _ButtonLabel extends StatelessWidget {
   final Widget? suffixIcon;
 
   Widget _buildLoading() => switch (loadingType) {
-        ButtonLoadingType.circular => SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(loadingColor),
-            ),
-          ),
-        ButtonLoadingType.dots => _DotsIndicator(color: loadingColor),
-      };
+    ButtonLoadingType.circular => SizedBox(
+      width: 18,
+      height: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation(loadingColor),
+      ),
+    ),
+    ButtonLoadingType.dots => _DotsIndicator(color: loadingColor),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -356,8 +354,10 @@ class _DotsIndicatorState extends State<_DotsIndicator>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(3, (i) {
             final value = ((_controller.value - i / 3) % 1.0);
-            final scale =
-                (value < 0.5 ? 0.5 + value : 1.5 - value).clamp(0.5, 1.0);
+            final scale = (value < 0.5 ? 0.5 + value : 1.5 - value).clamp(
+              0.5,
+              1.0,
+            );
             return Transform.scale(
               scale: scale,
               child: _DotShape(color: widget.color),

@@ -8,6 +8,7 @@ import 'package:halalhub_restaurant/features/auth/sreens/otp/otp_page.dart';
 import 'package:halalhub_restaurant/features/auth/sreens/reset_password/reset_password_page.dart';
 import 'package:halalhub_restaurant/features/auth/sreens/sign_in/sign_in_page.dart';
 import 'package:halalhub_restaurant/features/auth/sreens/sign_up/sign_up_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_product/vendor_product_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/create_restaurant/create_restaurant_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/default_fallback/default_fallback_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/edit_product/edit_product_page.dart';
@@ -17,6 +18,10 @@ import 'package:halalhub_restaurant/features/restaurant/screens/orders/orders_pa
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/receipt_printer_settings_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/delete_account/delete_account_reason_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/notification_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/settings/account_settings_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/settings/screens/change_password/change_password_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/settings/screens/change_password_confirm/change_password_confirm_page.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/settings/screens/change_password_otp/change_password_otp_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/support/support_chat_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/vendor_account_menu_page.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/finance_transactions_page.dart';
@@ -31,7 +36,11 @@ part 'app_router.gr.dart';
 class AppRouter extends RootStackRouter {
   @override
   List<AutoRoute> routes = [
-    AutoRoute(page: AppStartRoute.page, initial: true, guards: [StartupGuard()]),
+    AutoRoute(
+      page: AppStartRoute.page,
+      initial: true,
+      guards: [StartupGuard()],
+    ),
     AutoRoute(page: SplashRoute.page),
     AutoRoute(page: NotInternetRoute.page),
     AutoRoute(page: ServerErrorRoute.page),
@@ -42,6 +51,10 @@ class AppRouter extends RootStackRouter {
     AutoRoute(page: VendorProfileRoute.page),
     AutoRoute(page: VendorAccountMenuRoute.page),
     AutoRoute(page: DeleteAccountReasonRoute.page),
+    AutoRoute(page: AccountSettingsRoute.page),
+    AutoRoute(page: ChangePasswordRoute.page),
+    AutoRoute(page: ChangePasswordOtpRoute.page),
+    AutoRoute(page: ChangePasswordConfirmRoute.page),
     AutoRoute(page: SupportChatRoute.page),
     AutoRoute(page: NotificationRoute.page),
     AutoRoute(page: OrdersRoute.page),

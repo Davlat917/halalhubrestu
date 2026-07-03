@@ -9,12 +9,6 @@ abstract class AuthRepository {
     required String role, //
   });
 
-  // Sign up phone
-  Future<void> signUpPhone({
-    required String phoneNumber,
-    required String role, //
-  });
-
   // login email
   Future<void> loginEmail({
     required String email,

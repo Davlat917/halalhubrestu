@@ -7,6 +7,8 @@ import 'package:halalhub_restaurant/core/widgets/common_textfield.dart';
 import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/bloc/add_product_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/widgets/add_product_details_parts.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/add_product/widgets/add_product_dimension_modifier_selector.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/add_product/widgets/add_product_expansion_selection_field.dart';
 
 class AddProductDetailsSection extends StatelessWidget {
   const AddProductDetailsSection({
@@ -22,6 +24,10 @@ class AddProductDetailsSection extends StatelessWidget {
     required this.onSubmit,
     required this.onToggleCategory,
     required this.onToggleIngredient,
+    required this.onToggleRecommendation,
+    required this.onAddModifierGroup,
+    required this.onUpdateModifierGroup,
+    required this.onRemoveModifierGroup,
     required this.onChangeAvailability,
     this.showSelectionSummaryFields = true,
   });
@@ -37,26 +43,20 @@ class AddProductDetailsSection extends StatelessWidget {
   final VoidCallback onSubmit;
   final void Function(int id, bool selected) onToggleCategory;
   final void Function(int id, bool selected) onToggleIngredient;
+  final void Function(int id, bool selected) onToggleRecommendation;
+  final ValueChanged<AddProductModifierGroup> onAddModifierGroup;
+  final void Function(int index, AddProductModifierGroup group)
+  onUpdateModifierGroup;
+  final ValueChanged<int> onRemoveModifierGroup;
   final ValueChanged<bool> onChangeAvailability;
   final bool showSelectionSummaryFields;
   static const _singlePadding = EdgeInsets.symmetric(
     horizontal: 16,
     vertical: 13,
   );
-  static const _chipRadius = 100.0;
 
   @override
   Widget build(BuildContext context) {
-    final selectedCategoryText = state.selectedCategoryIds.isEmpty
-        ? TranslationKeys.productCategorySelect.tr(context: context)
-        : state.categories
-              .where((e) => state.selectedCategoryIds.contains(e.id))
-              .map((e) => e.name)
-              .join(', ');
-    final selectedIngredientText = state.selectedIngredientIds.isEmpty
-        ? TranslationKeys.productIngredientSelect.tr(context: context)
-        : '${state.selectedIngredientIds.length} selected';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -104,117 +104,56 @@ class AddProductDetailsSection extends StatelessWidget {
           singlePadding: _singlePadding, //
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5FBF7),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2F2E8)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.restaurant_rounded,
-                    size: 18,
-                    color: StaticColors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    TranslationKeys.productIngredient.tr(context: context),
-                    style: AppTextStyle.medium14(context, color: StaticColors.black),
-                  ),
-                  Text(
-                    '*',
-                    style: AppTextStyle.medium14(context, color: Colors.red),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (showSelectionSummaryFields) ...[
-                SelectionField(
-                  label: TranslationKeys.productIngredient.tr(context: context),
-                  required: true,
-                  text: selectedIngredientText,
-                  controller: ingredientsController,
-                  singlePadding: _singlePadding,
-                  validator: (_) => state.selectedIngredientIds.isEmpty
-                      ? TranslationKeys.productIngredientRequired.tr(context: context)
-                      : null, //
-                ),
-                const SizedBox(height: 10),
-              ],
-              if (state.isLoadingIngredients)
-                const LinearProgressIndicator()
-              else
-                ChipWrapSelector(
-                  labels: state.ingredients
-                      .map((e) => e.title)
-                      .toList(growable: false),
-                  selectedIds: state.selectedIngredientIds,
-                  ids: state.ingredients.map((e) => e.id).toList(growable: false),
-                  onSelected: onToggleIngredient,
-                  chipRadius: _chipRadius, //
-                ),
-            ],
-          ),
+        ExpansionSelectionField(
+          label: TranslationKeys.productIngredient.tr(context: context),
+          hint: TranslationKeys.productIngredientSelect.tr(context: context),
+          ids: state.ingredients.map((e) => e.id).toList(growable: false),
+          labels: state.ingredients.map((e) => e.title).toList(growable: false),
+          selectedIds: state.selectedIngredientIds,
+          controlType: ExpansionSelectionControlType.checkbox,
+          required: true,
+          isLoading: state.isLoadingIngredients,
+          validator: (_) => state.selectedIngredientIds.isEmpty
+              ? TranslationKeys.productIngredientRequired.tr(context: context)
+              : null,
+          onSelected: onToggleIngredient,
         ),
         const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F8F8),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: StaticColors.cE2E2E2),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.grid_view_rounded,
-                    size: 17,
-                    color: StaticColors.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    TranslationKeys.productCategory.tr(context: context),
-                    style: AppTextStyle.medium14(context, color: StaticColors.black),
-                  ),
-                  Text(
-                    '*',
-                    style: AppTextStyle.medium14(context, color: Colors.red),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (showSelectionSummaryFields) ...[
-                SelectionField(
-                  label: TranslationKeys.productCategory.tr(context: context),
-                  required: true,
-                  text: selectedCategoryText,
-                  singlePadding: _singlePadding,
-                  validator: (_) => state.selectedCategoryIds.isEmpty
-                      ? TranslationKeys.productCategoryRequired.tr(context: context)
-                      : null, //
-                ),
-                const SizedBox(height: 10),
-              ],
-              if (state.isLoadingCategories)
-                const LinearProgressIndicator()
-              else
-                ChipWrapSelector(
-                  labels: state.categories.map((e) => e.name).toList(growable: false),
-                  selectedIds: state.selectedCategoryIds,
-                  ids: state.categories.map((e) => e.id).toList(growable: false),
-                  onSelected: onToggleCategory,
-                  chipRadius: _chipRadius, //
-                ),
-            ],
-          ),
+        ExpansionSelectionField(
+          label: TranslationKeys.productCategory.tr(context: context),
+          hint: TranslationKeys.productCategorySelect.tr(context: context),
+          ids: state.categories.map((e) => e.id).toList(growable: false),
+          labels: state.categories.map((e) => e.name).toList(growable: false),
+          selectedIds: state.selectedCategoryIds,
+          controlType: ExpansionSelectionControlType.radio,
+          required: true,
+          isLoading: state.isLoadingCategories,
+          validator: (_) => state.selectedCategoryIds.isEmpty
+              ? TranslationKeys.productCategoryRequired.tr(context: context)
+              : null,
+          onSelected: onToggleCategory,
+        ),
+        const SizedBox(height: 20),
+        AddProductDimensionModifierSelector(
+          dishName: nameController.text,
+          groups: state.modifierGroups,
+          onAddModifierGroup: onAddModifierGroup,
+          onUpdateModifierGroup: onUpdateModifierGroup,
+          onRemoveModifierGroup: onRemoveModifierGroup,
+        ),
+        const SizedBox(height: 20),
+        ExpansionSelectionField(
+          label: 'Recommendations',
+          hint: 'Select recommendations',
+          ids: state.recommendationProducts
+              .map((e) => e.id)
+              .toList(growable: false),
+          labels: state.recommendationProducts
+              .map((e) => e.name)
+              .toList(growable: false),
+          selectedIds: state.selectedRecommendationIds,
+          controlType: ExpansionSelectionControlType.checkbox,
+          onSelected: onToggleRecommendation,
         ),
         const SizedBox(height: 12),
         FieldLabel(text: TranslationKeys.productDiscount.tr(context: context)),
@@ -225,16 +164,20 @@ class AddProductDetailsSection extends StatelessWidget {
           singlePadding: _singlePadding, //
         ),
         const SizedBox(height: 12),
-        SwitchListTile(
-          value: state.isAvailable,
-          onChanged: onChangeAvailability,
-          activeThumbColor: Colors.white,
-          activeTrackColor: const Color(0xFF0DA84A),
-          title: Text(
-            TranslationKeys.productAvailability.tr(context: context),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-          ),
-          contentPadding: EdgeInsets.zero,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              TranslationKeys.productAvailability.tr(context: context),
+              style: AppTextStyle.regular16(context),
+            ),
+            Switch(
+              value: state.isAvailable,
+              onChanged: onChangeAvailability,
+              activeThumbColor: StaticColors.white,
+              activeTrackColor: StaticColors.primary,
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         CustomButton(

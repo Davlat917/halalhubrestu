@@ -1,37 +1,56 @@
 import 'package:url_launcher/url_launcher.dart';
 
 Future<void> launchSocialOrPhone(String input) async {
-  Uri? uri;
+  final uri = _resolveLaunchUri(input);
+  if (uri == null) {
+    throw 'URL ochib bo‘lmadi: $input';
+  }
 
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (opened) return;
+
+  if (uri.scheme == 'https' || uri.scheme == 'http') {
+    final openedInApp = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    if (openedInApp) return;
+  }
+
+  throw 'URL ochib bo‘lmadi: $uri';
+}
+
+Uri? _resolveLaunchUri(String input) {
   if (input.startsWith('+') || input.startsWith('998')) {
-    // Telefon raqami
-    uri = Uri.parse('tel:$input');
-  } else if (input.startsWith('@')) {
-    // Telegram username
+    return Uri.parse('tel:$input');
+  }
+  if (input.startsWith('@')) {
     final username = input.substring(1);
-    uri = Uri.parse('https://t.me/$username');
-  } else if (input.startsWith('telegram:')) {
+    return Uri.parse('https://t.me/$username');
+  }
+  if (input.startsWith('telegram:')) {
     final username = input.replaceFirst('telegram:', '');
-    uri = Uri.parse('https://t.me/$username');
-  } else if (input.startsWith('instagram:')) {
+    return Uri.parse('https://t.me/$username');
+  }
+  if (input.startsWith('instagram:')) {
     final username = input.replaceFirst('instagram:', '');
-    uri = Uri.parse('https://instagram.com/$username');
-  } else if (input.startsWith('facebook:')) {
+    return Uri.parse('https://www.instagram.com/$username');
+  }
+  if (input.startsWith('whatsapp:')) {
+    final value = input.replaceFirst('whatsapp:', '').trim();
+    final digitsOnly = value.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length >= 10) {
+      return Uri.parse('https://wa.me/$digitsOnly');
+    }
+    return Uri.parse('https://wa.me/$value');
+  }
+  if (input.startsWith('facebook:')) {
     final username = input.replaceFirst('facebook:', '');
-    uri = Uri.parse('https://facebook.com/$username');
-  } else if (input.startsWith('google:')) {
+    return Uri.parse('https://facebook.com/$username');
+  }
+  if (input.startsWith('google:')) {
     final query = input.replaceFirst('google:', '');
-    uri = Uri.parse('https://www.google.com/search?q=$query');
-  } else if (input.startsWith('http')) {
-    uri = Uri.parse(input);
-  } else {
-    // Default — Google search
-    uri = Uri.parse('https://www.google.com/search?q=$input');
+    return Uri.parse('https://www.google.com/search?q=$query');
   }
-
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } else {
-    throw 'URL ochib bo‘lmadi: $uri';
+  if (input.startsWith('http')) {
+    return Uri.parse(input);
   }
+  return Uri.parse('https://www.google.com/search?q=$input');
 }

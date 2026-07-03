@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
-import 'package:halalhub_restaurant/core/network/network_exception.dart'
-    show ExceptionHandler, NetworkException, UnexpectedException;
+import 'package:halalhub_restaurant/core/network/network_exception.dart' show ExceptionHandler, NetworkException, UnexpectedException;
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_order_detail_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_page_result.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -41,9 +41,7 @@ class OrdersRepositoryImpl implements OrdersRepository {
 
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        throw NetworkException(
-          message: TranslationKeys.ordersInvalidOrdersResponse.tr(),
-        );
+        throw NetworkException(message: TranslationKeys.ordersInvalidOrdersResponse.tr());
       }
       return VendorOrdersPageResult.fromJson(data);
     } catch (e) {
@@ -52,33 +50,23 @@ class OrdersRepositoryImpl implements OrdersRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> fetchOrderDetail({required int orderId}) async {
+  Future<VendorOrderDetailModel> fetchOrderDetail({required int orderId}) async {
     try {
-      final response = await _dio.get(
-        Constants.vendorsOrderDetailById(orderId),
-      );
+      final response = await _dio.get(Constants.vendorsOrderDetailById(orderId));
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        throw NetworkException(
-          message: TranslationKeys.ordersInvalidDetailResponse.tr(),
-        );
+        throw NetworkException(message: TranslationKeys.ordersInvalidDetailResponse.tr());
       }
-      return data;
+      return VendorOrderDetailModel.fromJson(data);
     } catch (e) {
       _rethrow(e);
     }
   }
 
   @override
-  Future<void> updateOrderStatus({
-    required int orderId,
-    required String status,
-  }) async {
+  Future<void> updateOrderStatus({required int orderId, required String status}) async {
     try {
-      await _dio.patch(
-        Constants.vendorsOrderStatusById(orderId),
-        data: {'status': status},
-      );
+      await _dio.patch(Constants.vendorsOrderStatusById(orderId), data: {'status': status});
     } catch (e) {
       _rethrow(e);
     }

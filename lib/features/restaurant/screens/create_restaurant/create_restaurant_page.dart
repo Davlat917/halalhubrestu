@@ -11,6 +11,8 @@ import 'package:halalhub_restaurant/core/extensions/size_extension.dart';
 import 'package:halalhub_restaurant/core/mixins/validation_mixin.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/storage/storage.dart';
+import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
@@ -196,6 +198,20 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody> with Valida
     });
   }
 
+  Future<void> _onBackPressed() async {
+    if (context.router.canPop()) {
+      context.router.maybePop();
+      return;
+    }
+    final storage = getIt<Storage>();
+    await storage.token.delete();
+    await storage.refreshToken.delete();
+    if (!mounted) return;
+    await context.router.replaceAll([
+      const AuthFlowRoute(children: [SignInRoute()]),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loadingInitialVendor) {
@@ -211,62 +227,74 @@ class _CreateRestaurantBodyState extends State<CreateRestaurantBody> with Valida
           _handlePostCreateStatus();
         }
       },
-      builder: (context, state) => SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: cardWidth),
-            child: state is RestaurantPendingApproval || _showPendingFromVendorStatus
-                ? RefreshIndicator(
-                    onRefresh: () => _onRefreshVendorApproval(context),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: outerPadding,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                            child: _pendingApprovalView(cardWidth),
+      builder: (context, state) => Stack(
+        children: [
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: cardWidth),
+                child: state is RestaurantPendingApproval || _showPendingFromVendorStatus
+                    ? RefreshIndicator(
+                        onRefresh: () => _onRefreshVendorApproval(context),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: outerPadding,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                                child: _pendingApprovalView(cardWidth),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: outerPadding,
+                        child: Container(
+                          padding: EdgeInsets.all(context.wOf(14, cardWidth)),
+                          decoration: BoxDecoration(
+                            color: StaticColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: StaticColors.cE2E2E2),
                           ),
-                        );
-                      },
-                    ),
-                  )
-                : SingleChildScrollView(
-                    padding: outerPadding,
-                    child: Container(
-                      padding: EdgeInsets.all(context.wOf(14, cardWidth)),
-                      decoration: BoxDecoration(
-                        color: StaticColors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: StaticColors.cE2E2E2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.isEdit ? TranslationKeys.createRestaurantUpdateTitle.tr(context: context) : TranslationKeys.createRestaurantTitle.tr(context: context),
+                                style: AppTextStyle.semibold24(context, aW: cardWidth, color: StaticColors.black),
+                              ),
+                              SizedBox(height: context.wOf(14, cardWidth)),
+                              RestaurantStepIndicator(
+                                currentStep: currentStep,
+                                completedSteps: completedSteps,
+                                availableWidth: cardWidth,
+                                onStepTap: (i) {
+                                  if (i <= currentStep || completedSteps.take(i).every((e) => e)) {
+                                    setState(() => currentStep = i);
+                                  }
+                                },
+                              ),
+                              SizedBox(height: context.wOf(14, cardWidth)),
+                              _stepView(cardWidth),
+                              if (widget.isEdit) ...[SizedBox(height: context.wOf(18, cardWidth)), _updateButton(context, cardWidth)],
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.isEdit ? TranslationKeys.createRestaurantUpdateTitle.tr(context: context) : TranslationKeys.createRestaurantTitle.tr(context: context),
-                            style: AppTextStyle.semibold24(context, aW: cardWidth, color: StaticColors.black),
-                          ),
-                          SizedBox(height: context.wOf(14, cardWidth)),
-                          RestaurantStepIndicator(
-                            currentStep: currentStep,
-                            completedSteps: completedSteps,
-                            availableWidth: cardWidth,
-                            onStepTap: (i) {
-                              if (i <= currentStep || completedSteps.take(i).every((e) => e)) {
-                                setState(() => currentStep = i);
-                              }
-                            },
-                          ),
-                          SizedBox(height: context.wOf(14, cardWidth)),
-                          _stepView(cardWidth),
-                          if (widget.isEdit) ...[SizedBox(height: context.wOf(18, cardWidth)), _updateButton(context, cardWidth)],
-                        ],
-                      ),
-                    ),
-                  ),
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + context.wOf(8, cardWidth),
+            left: context.wOf(12, cardWidth),
+            child: CircleBtnWidget(
+              bgColor: StaticColors.backgroundColor,
+              onPress: _onBackPressed,
+            ),
+          ),
+        ],
       ),
     );
   }

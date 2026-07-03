@@ -204,7 +204,7 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
         validateName: validateName,
         validateEmail: validateEmail,
         validateRequired: validateRequired,
-        validateUsPhone: validateUsPhone, //
+        validateOptionalUsPhone: validateOptionalUsPhone, //
       ),
       UpdateRestaurantTab.documents => const DocumentsUpdateSection(),
       UpdateRestaurantTab.location => LocationUpdateSection(
@@ -303,7 +303,7 @@ class _UpdateRestaurantScaffoldState extends State<_UpdateRestaurantScaffold>
                     validateName: validateName,
                     validateEmail: validateEmail,
                     validateRequired: validateRequired,
-                    validateUsPhone: validateUsPhone,
+                    validateOptionalUsPhone: validateOptionalUsPhone,
                     showCategory: false,
                     showMediaRow: false, //
                   ),

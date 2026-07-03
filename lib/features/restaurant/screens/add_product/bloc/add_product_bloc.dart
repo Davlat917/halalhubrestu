@@ -1,15 +1,55 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_category/vendor_category_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_ingredient/vendor_ingredient_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_product/vendor_product_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
 import 'package:image_picker/image_picker.dart';
+
+class AddProductModifierOption {
+  const AddProductModifierOption({required this.name, required this.price});
+
+  final String name;
+  final double price;
+
+  Map<String, dynamic> toJson() => {'name': name, 'price': price};
+}
+
+class AddProductModifierGroup {
+  const AddProductModifierGroup({
+    required this.name,
+    required this.selectionType,
+    required this.isRequired,
+    required this.minSelect,
+    required this.maxSelect,
+    required this.options,
+  });
+
+  final String name;
+  final String selectionType;
+  final bool isRequired;
+  final int minSelect;
+  final int maxSelect;
+  final List<AddProductModifierOption> options;
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'selection_type': selectionType,
+    'is_required': isRequired,
+    'min_select': minSelect,
+    'max_select': maxSelect,
+    'options': options.map((e) => e.toJson()).toList(growable: false),
+  };
+}
 
 class AddProductState {
   const AddProductState({
     this.categories = const [],
     this.ingredients = const [],
+    this.recommendationProducts = const [],
     this.selectedCategoryIds = const <int>{},
     this.selectedIngredientIds = const <int>{},
+    this.selectedRecommendationIds = const <int>{},
+    this.modifierGroups = const [],
     this.images = const [],
     this.isAvailable = true,
     this.isLoadingCategories = false,
@@ -23,8 +63,11 @@ class AddProductState {
 
   final List<VendorCategoryModel> categories;
   final List<VendorIngredientModel> ingredients;
+  final List<VendorProductModel> recommendationProducts;
   final Set<int> selectedCategoryIds;
   final Set<int> selectedIngredientIds;
+  final Set<int> selectedRecommendationIds;
+  final List<AddProductModifierGroup> modifierGroups;
   final List<XFile> images;
   final bool isAvailable;
   final bool isLoadingCategories;
@@ -38,8 +81,11 @@ class AddProductState {
   AddProductState copyWith({
     List<VendorCategoryModel>? categories,
     List<VendorIngredientModel>? ingredients,
+    List<VendorProductModel>? recommendationProducts,
     Set<int>? selectedCategoryIds,
     Set<int>? selectedIngredientIds,
+    Set<int>? selectedRecommendationIds,
+    List<AddProductModifierGroup>? modifierGroups,
     List<XFile>? images,
     bool? isAvailable,
     bool? isLoadingCategories,
@@ -54,8 +100,14 @@ class AddProductState {
     return AddProductState(
       categories: categories ?? this.categories,
       ingredients: ingredients ?? this.ingredients,
+      recommendationProducts:
+          recommendationProducts ?? this.recommendationProducts,
       selectedCategoryIds: selectedCategoryIds ?? this.selectedCategoryIds,
-      selectedIngredientIds: selectedIngredientIds ?? this.selectedIngredientIds,
+      selectedIngredientIds:
+          selectedIngredientIds ?? this.selectedIngredientIds,
+      selectedRecommendationIds:
+          selectedRecommendationIds ?? this.selectedRecommendationIds,
+      modifierGroups: modifierGroups ?? this.modifierGroups,
       images: images ?? this.images,
       isAvailable: isAvailable ?? this.isAvailable,
       isLoadingCategories: isLoadingCategories ?? this.isLoadingCategories,
@@ -88,15 +140,18 @@ class AddProductBloc extends Cubit<AddProductState> {
     );
     try {
       final results = await Future.wait([
-        _repo.getVendorCategories(),
+        _repo.getVendorProductCategories(),
         _repo.getVendorIngredients(),
+        _loadRecommendationProducts(),
       ]);
       final categories = results[0] as List<VendorCategoryModel>;
       final ingredients = results[1] as List<VendorIngredientModel>;
+      final recommendationProducts = results[2] as List<VendorProductModel>;
       emit(
         state.copyWith(
           categories: categories,
           ingredients: ingredients,
+          recommendationProducts: recommendationProducts,
           isLoadingCategories: false,
           isLoadingIngredients: false,
           categoriesReady: true,
@@ -137,6 +192,52 @@ class AddProductBloc extends Cubit<AddProductState> {
     emit(state.copyWith(selectedIngredientIds: updated, success: false));
   }
 
+  Future<List<VendorProductModel>> _loadRecommendationProducts() async {
+    try {
+      final vendor = await _repo.getVendorMe();
+      final vendorId = vendor.id;
+      if (vendorId == null) return const [];
+      final groups = await _repo.getVendorProductsByVendorId(vendorId);
+      return groups
+          .expand((group) => group.products)
+          .where((product) => product.id > 0)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  void toggleRecommendation(int id, bool selected) {
+    final updated = {...state.selectedRecommendationIds};
+    if (selected) {
+      updated.add(id);
+    } else {
+      updated.remove(id);
+    }
+    emit(state.copyWith(selectedRecommendationIds: updated, success: false));
+  }
+
+  void addModifierGroup(AddProductModifierGroup group) {
+    emit(
+      state.copyWith(
+        modifierGroups: [...state.modifierGroups, group],
+        success: false,
+      ),
+    );
+  }
+
+  void updateModifierGroupAt(int index, AddProductModifierGroup group) {
+    if (index < 0 || index >= state.modifierGroups.length) return;
+    final updated = [...state.modifierGroups]..[index] = group;
+    emit(state.copyWith(modifierGroups: updated, success: false));
+  }
+
+  void removeModifierGroupAt(int index) {
+    if (index < 0 || index >= state.modifierGroups.length) return;
+    final updated = [...state.modifierGroups]..removeAt(index);
+    emit(state.copyWith(modifierGroups: updated, success: false));
+  }
+
   void addImages(List<XFile> files) {
     if (files.isEmpty) return;
     final merged = [...state.images, ...files];
@@ -155,6 +256,8 @@ class AddProductBloc extends Cubit<AddProductState> {
       state.copyWith(
         selectedCategoryIds: <int>{},
         selectedIngredientIds: <int>{},
+        selectedRecommendationIds: <int>{},
+        modifierGroups: const [],
         images: const [],
         isAvailable: true,
         clearError: true,
@@ -167,11 +270,24 @@ class AddProductBloc extends Cubit<AddProductState> {
     required Set<int> selectedCategoryIds,
     required Set<int> selectedIngredientIds,
     required bool isAvailable,
+    Set<int> selectedRecommendationIds = const <int>{},
+    List<VendorProductModel> initialRecommendationProducts = const [],
+    List<AddProductModifierGroup> modifierGroups = const [],
   }) {
+    final recommendationProducts = [...state.recommendationProducts];
+    for (final product in initialRecommendationProducts) {
+      final exists = recommendationProducts.any(
+        (item) => item.id == product.id,
+      );
+      if (!exists) recommendationProducts.add(product);
+    }
     emit(
       state.copyWith(
         selectedCategoryIds: selectedCategoryIds,
         selectedIngredientIds: selectedIngredientIds,
+        selectedRecommendationIds: selectedRecommendationIds,
+        recommendationProducts: recommendationProducts,
+        modifierGroups: modifierGroups,
         isAvailable: isAvailable,
         success: false,
       ),
@@ -185,6 +301,8 @@ class AddProductBloc extends Cubit<AddProductState> {
     String? description,
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
   }) async {
     emit(state.copyWith(isSubmitting: true, clearError: true, success: false));
     try {
@@ -202,9 +320,13 @@ class AddProductBloc extends Cubit<AddProductState> {
         newIngredients: selectedIngredients,
         discountsJson: discountsJson,
         deletedImageIds: deletedImageIds,
+        modifierGroupsJson: modifierGroupsJson,
+        recommendationsJson: recommendationsJson,
         newImages: state.images,
       );
-      emit(state.copyWith(isSubmitting: false, clearError: true, success: true));
+      emit(
+        state.copyWith(isSubmitting: false, clearError: true, success: true),
+      );
     } catch (e) {
       emit(state.copyWith(isSubmitting: false, errorMessage: e.toString()));
     }
@@ -219,6 +341,8 @@ class AddProductBloc extends Cubit<AddProductState> {
     String? description,
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
   }) async {
     emit(state.copyWith(isSubmitting: true, clearError: true, success: false));
     try {
@@ -238,9 +362,13 @@ class AddProductBloc extends Cubit<AddProductState> {
         newIngredients: selectedIngredients,
         discountsJson: discountsJson,
         deletedImageIds: deletedImageIds,
+        modifierGroupsJson: modifierGroupsJson,
+        recommendationsJson: recommendationsJson,
         newImages: state.images,
       );
-      emit(state.copyWith(isSubmitting: false, clearError: true, success: true));
+      emit(
+        state.copyWith(isSubmitting: false, clearError: true, success: true),
+      );
     } catch (e) {
       emit(state.copyWith(isSubmitting: false, errorMessage: e.toString()));
     }

@@ -13,8 +13,9 @@ mixin UpdateRestaurantValidationMixin {
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty)
+    if (value == null || value.trim().isEmpty) {
       return TranslationKeys.validationEmailRequired.tr();
+    }
     final v = value.trim();
     if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v)) {
       return TranslationKeys.validationEmailInvalid.tr();
@@ -31,9 +32,26 @@ mixin UpdateRestaurantValidationMixin {
   }
 
   String? validateUsPhone(String? value) {
-    if (value == null || value.trim().isEmpty)
+    if (value == null || value.trim().isEmpty) {
       return TranslationKeys.validationPhoneRequired.tr();
+    }
     final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 11) return TranslationKeys.validationPhoneInvalid.tr();
+    return null;
+  }
+
+  String? validateOptionalUsPhone(
+    String? value, {
+    required String? otherValue,
+  }) {
+    final digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
+    final otherDigits = otherValue?.replaceAll(RegExp(r'\D'), '') ?? '';
+
+    if (digits.isEmpty) {
+      return otherDigits.isEmpty
+          ? TranslationKeys.validationPhoneRequired.tr()
+          : null;
+    }
     if (digits.length != 11) return TranslationKeys.validationPhoneInvalid.tr();
     return null;
   }

@@ -42,16 +42,6 @@ final class SignUpEmailSubmitted extends AuthEvent {
   List<Object?> get props => [email, firstName, lastName, password1, password2, role];
 }
 
-final class SignUpPhoneSubmitted extends AuthEvent {
-  const SignUpPhoneSubmitted({required this.phoneNumber, required this.role});
-
-  final String phoneNumber;
-  final String role;
-
-  @override
-  List<Object?> get props => [phoneNumber, role];
-}
-
 final class VerifyOtpSubmitted extends AuthEvent {
   const VerifyOtpSubmitted({required this.credential, required this.otp});
 

@@ -2,8 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
-import 'package:halalhub_restaurant/core/network/network_exception.dart'
-    show ExceptionHandler, NetworkException, UnexpectedException;
+import 'package:halalhub_restaurant/core/network/network_exception.dart' show ExceptionHandler, NetworkException, UnexpectedException;
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/order_history/models/vendor_order_history_page_result.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/order_history/order_history_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -24,9 +23,7 @@ class OrderHistoryRepositoryImpl implements OrderHistoryRepository {
   }
 
   @override
-  Future<VendorOrderHistoryPageResult> fetchOrderHistory({
-    String? nextPageUrl,
-  }) async {
+  Future<VendorOrderHistoryPageResult> fetchOrderHistory({String? nextPageUrl}) async {
     try {
       final Response<dynamic> response;
       final next = nextPageUrl?.trim();
@@ -43,9 +40,7 @@ class OrderHistoryRepositoryImpl implements OrderHistoryRepository {
 
       final data = response.data;
       if (data is! Map<String, dynamic>) {
-        throw NetworkException(
-          message: TranslationKeys.ordersInvalidHistoryResponse.tr(),
-        );
+        throw NetworkException(message: TranslationKeys.ordersInvalidHistoryResponse.tr());
       }
       return VendorOrderHistoryPageResult.fromJson(data);
     } catch (e) {

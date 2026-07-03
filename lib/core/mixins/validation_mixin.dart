@@ -124,6 +124,7 @@ mixin ValidationMixin {
   String? validatePaymentDigitsField(
     String? value, {
     required String fieldName,
+    int? exactLength,
     int maxLength = 50,
   }) {
     final text = value?.trim() ?? '';
@@ -136,6 +137,9 @@ mixin ValidationMixin {
       return TranslationKeys.validationFieldDigitsOnly.tr(
         namedArgs: {'field': fieldName},
       );
+    }
+    if (exactLength != null && text.length != exactLength) {
+      return TranslationKeys.validationTooShort.tr();
     }
     if (text.length > maxLength) {
       return TranslationKeys.validationFieldTooLong.tr(

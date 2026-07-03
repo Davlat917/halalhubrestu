@@ -161,6 +161,9 @@ class _VendorMenuPreviewSectionState extends State<VendorMenuPreviewSection> {
         initialImageIds: product.images
             .map((e) => e.id)
             .toList(growable: false),
+        initialModifierGroups: product.modifierGroups,
+        initialRecommendationProducts: product.recommendationProducts,
+        initialRecommendationIds: product.recommendationIds,
         initialDiscountTitle: firstDiscount?.title,
         initialDiscountPercent: firstDiscount?.percent,
       ),

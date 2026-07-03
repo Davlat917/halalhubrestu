@@ -15,16 +15,16 @@ final class PaymentBankInfoUpdateRequested extends PaymentDashboardEvent {
   const PaymentBankInfoUpdateRequested({
     required this.businessName,
     required this.payoutSchedule,
-    required this.einNumber,
-    required this.accountNumber,
-    required this.routingNumber,
+    this.einNumber,
+    this.accountNumber,
+    this.routingNumber,
   });
 
   final String businessName;
   final String payoutSchedule;
-  final String einNumber;
-  final String accountNumber;
-  final String routingNumber;
+  final String? einNumber;
+  final String? accountNumber;
+  final String? routingNumber;
 
   @override
   List<Object?> get props => [
@@ -51,6 +51,18 @@ final class PaymentWithdrawRequestSubmitted extends PaymentDashboardEvent {
 
   @override
   List<Object?> get props => [requestedAmount];
+}
+
+final class PaymentStripeCheckRequested extends PaymentDashboardEvent {
+  const PaymentStripeCheckRequested();
+}
+
+final class PaymentStripeConnectRequested extends PaymentDashboardEvent {
+  const PaymentStripeConnectRequested();
+}
+
+final class PaymentStripeConnectHandled extends PaymentDashboardEvent {
+  const PaymentStripeConnectHandled();
 }
 
 final class PaymentWithdrawRequestStatusCleared extends PaymentDashboardEvent {

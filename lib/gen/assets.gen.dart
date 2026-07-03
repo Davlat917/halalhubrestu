@@ -65,6 +65,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/calendar.svg
   SvgGenImage get calendar => const SvgGenImage('assets/icons/calendar.svg');
 
+  /// File path: assets/icons/call.svg
+  SvgGenImage get call => const SvgGenImage('assets/icons/call.svg');
+
   /// File path: assets/icons/change_status_down.svg
   SvgGenImage get changeStatusDown =>
       const SvgGenImage('assets/icons/change_status_down.svg');
@@ -98,6 +101,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/information.svg
   SvgGenImage get information =>
       const SvgGenImage('assets/icons/information.svg');
+
+  /// File path: assets/icons/instagram.svg
+  SvgGenImage get instagram => const SvgGenImage('assets/icons/instagram.svg');
 
   /// File path: assets/icons/language_icon.svg
   SvgGenImage get languageIcon =>
@@ -179,6 +185,9 @@ class $AssetsIconsGen {
   /// File path: assets/icons/verify.svg
   SvgGenImage get verify => const SvgGenImage('assets/icons/verify.svg');
 
+  /// File path: assets/icons/whatsapp.svg
+  SvgGenImage get whatsapp => const SvgGenImage('assets/icons/whatsapp.svg');
+
   /// List of all assets
   List<SvgGenImage> get values => [
     addProductIcon,
@@ -188,6 +197,7 @@ class $AssetsIconsGen {
     arrowBackIcon,
     arrowDown,
     calendar,
+    call,
     changeStatusDown,
     changeStatusUp,
     clipsIcon,
@@ -197,6 +207,7 @@ class $AssetsIconsGen {
     edit,
     googleIcon,
     information,
+    instagram,
     languageIcon,
     logoutIcon,
     notConnected,
@@ -218,6 +229,7 @@ class $AssetsIconsGen {
     usageIcon,
     vakum,
     verify,
+    whatsapp,
   ];
 }
 

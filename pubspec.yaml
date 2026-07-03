@@ -3,7 +3,7 @@ description: "A Halalhub Restaurant application."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.5+1
+version: 1.0.13+1
 
 environment:
   sdk: ^3.11.0

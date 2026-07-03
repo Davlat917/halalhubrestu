@@ -82,5 +82,13 @@
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+			<string>http</string>
+			<string>tel</string>
+			<string>whatsapp</string>
+			<string>instagram</string>
+		</array>
 	</dict>
 </plist>

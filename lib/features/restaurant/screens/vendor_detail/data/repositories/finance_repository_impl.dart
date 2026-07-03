@@ -4,6 +4,7 @@ import 'package:halalhub_restaurant/core/network/network_exception.dart'
     show ExceptionHandler, NetworkException, UnexpectedException;
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/models/vendor_finance_period.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/models/vendor_finance_transactions_page_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/models/vendor_finance_transactions_pdf_file.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/data/repositories/finance_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -54,5 +55,43 @@ class FinanceRepositoryImpl implements FinanceRepository {
     } catch (e) {
       _rethrow(e);
     }
+  }
+
+  @override
+  Future<VendorFinanceTransactionsPdfFile> downloadTransactionsPdf({
+    required VendorFinancePeriod period,
+  }) async {
+    try {
+      final response = await _dio.get<List<int>>(
+        Constants.vendorsFinanceTransactionsPdf,
+        queryParameters: {'period': period.apiValue},
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final bytes = response.data ?? const <int>[];
+      if (bytes.isEmpty) {
+        throw NetworkException(message: 'Finance transactions PDF is empty');
+      }
+      final disposition = response.headers.value('content-disposition') ?? '';
+      final fileName = _extractFileName(disposition) ??
+          'finance_transactions_${period.apiValue}.pdf';
+      return VendorFinanceTransactionsPdfFile(bytes: bytes, fileName: fileName);
+    } catch (e) {
+      _rethrow(e);
+    }
+  }
+
+  String? _extractFileName(String contentDisposition) {
+    if (contentDisposition.isEmpty) return null;
+    final parts = contentDisposition.split(';');
+    for (final raw in parts) {
+      final part = raw.trim();
+      if (!part.toLowerCase().startsWith('filename=')) continue;
+      var name = part.substring('filename='.length).trim();
+      if (name.startsWith('"') && name.endsWith('"') && name.length >= 2) {
+        name = name.substring(1, name.length - 1);
+      }
+      if (name.isNotEmpty) return name;
+    }
+    return null;
   }
 }

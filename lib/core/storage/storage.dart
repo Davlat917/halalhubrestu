@@ -40,4 +40,8 @@ class Storage {
   /// UI tanlovi: `tablet` yoki `clover`.
   BaseStorage<String> get receiptPrinterType =>
       BaseStorage(_box, 'receiptPrinterType');
+
+  /// Chek dublikatini oldini olish (fon/FCM + WS).
+  BaseStorage<String> get receiptPrintDedupJson =>
+      BaseStorage(_box, 'receiptPrintDedupJson');
 }

@@ -25,6 +25,8 @@ mixin PaymentPageMixin<T extends StatefulWidget> on State<T>, ValidationMixin {
   late final ValueNotifier<String?> accountNumberErrorNotifier;
   late final ValueNotifier<String?> routingNumberErrorNotifier;
 
+  VendorBankInfoModel? _editingBankInfo;
+
   void initPaymentPageMixin() {
     editBusinessNameController = TextEditingController();
     editEinController = TextEditingController();
@@ -306,6 +308,7 @@ mixin PaymentPageMixin<T extends StatefulWidget> on State<T>, ValidationMixin {
   }
 
   void _fillEditBankForm(VendorBankInfoModel bankInfo) {
+    _editingBankInfo = bankInfo;
     editBusinessNameController.text = bankInfo.businessName;
     editEinController.text = bankInfo.einNumberMasked;
     editAccountNumberController.text = bankInfo.accountNumberMasked;
@@ -314,6 +317,56 @@ mixin PaymentPageMixin<T extends StatefulWidget> on State<T>, ValidationMixin {
         ? 'weekly'
         : bankInfo.payoutSchedule;
     _clearEditBankErrors();
+  }
+
+  bool _isMaskedBankFieldUnchanged(String current, String originalMasked) {
+    return current.trim() == originalMasked.trim();
+  }
+
+  String? _validateEinForEdit(String value) {
+    final original = _editingBankInfo?.einNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return validateEinForPayment(value);
+  }
+
+  String? _validateAccountNumberForEdit(String value) {
+    final original = _editingBankInfo?.accountNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return validatePaymentDigitsField(
+      value,
+      fieldName: TranslationKeys.paymentAccountNumber.tr(context: context),
+      exactLength: 12,
+      maxLength: 12,
+    );
+  }
+
+  String? _validateRoutingNumberForEdit(String value) {
+    final original = _editingBankInfo?.routingNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return validatePaymentDigitsField(
+      value,
+      fieldName: TranslationKeys.paymentRoutingNumber.tr(context: context),
+      exactLength: 9,
+      maxLength: 9,
+    );
+  }
+
+  String? _einNumberForSubmit(String value) {
+    final original = _editingBankInfo?.einNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return value.trim();
+  }
+
+  String? _accountNumberForSubmit(String value) {
+    final original = _editingBankInfo?.accountNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return value.trim();
+  }
+
+  String? _routingNumberForSubmit(String value) {
+    final original = _editingBankInfo?.routingNumberMasked ?? '';
+    if (_isMaskedBankFieldUnchanged(value, original)) return null;
+    return value.trim();
   }
 
   void _setWeeklyPayoutSchedule() {
@@ -333,38 +386,30 @@ mixin PaymentPageMixin<T extends StatefulWidget> on State<T>, ValidationMixin {
 
   void _onEinChanged(String _) {
     if (einErrorNotifier.value == null) return;
-    einErrorNotifier.value = validateEinForPayment(editEinController.text);
+    einErrorNotifier.value = _validateEinForEdit(editEinController.text);
   }
 
   void _onAccountNumberChanged(String _) {
     if (accountNumberErrorNotifier.value == null) return;
-    accountNumberErrorNotifier.value = validatePaymentDigitsField(
-      editAccountNumberController.text,
-      fieldName: TranslationKeys.paymentAccountNumber.tr(context: context),
-    );
+    accountNumberErrorNotifier.value =
+        _validateAccountNumberForEdit(editAccountNumberController.text);
   }
 
   void _onRoutingNumberChanged(String _) {
     if (routingNumberErrorNotifier.value == null) return;
-    routingNumberErrorNotifier.value = validatePaymentDigitsField(
-      editRoutingNumberController.text,
-      fieldName: TranslationKeys.paymentRoutingNumber.tr(context: context),
-    );
+    routingNumberErrorNotifier.value =
+        _validateRoutingNumberForEdit(editRoutingNumberController.text);
   }
 
   bool _validateEditBankForm() {
     final businessError = validateBusinessNameForPayment(
       editBusinessNameController.text,
     );
-    final einError = validateEinForPayment(editEinController.text);
-    final accountError = validatePaymentDigitsField(
-      editAccountNumberController.text,
-      fieldName: TranslationKeys.paymentAccountNumber.tr(context: context),
-    );
-    final routingError = validatePaymentDigitsField(
-      editRoutingNumberController.text,
-      fieldName: TranslationKeys.paymentRoutingNumber.tr(context: context),
-    );
+    final einError = _validateEinForEdit(editEinController.text);
+    final accountError =
+        _validateAccountNumberForEdit(editAccountNumberController.text);
+    final routingError =
+        _validateRoutingNumberForEdit(editRoutingNumberController.text);
 
     businessNameErrorNotifier.value = businessError;
     einErrorNotifier.value = einError;
@@ -390,9 +435,9 @@ mixin PaymentPageMixin<T extends StatefulWidget> on State<T>, ValidationMixin {
       PaymentBankInfoUpdateRequested(
         businessName: editBusinessNameController.text.trim(),
         payoutSchedule: payoutScheduleNotifier.value,
-        einNumber: editEinController.text.trim(),
-        accountNumber: editAccountNumberController.text.trim(),
-        routingNumber: editRoutingNumberController.text.trim(),
+        einNumber: _einNumberForSubmit(editEinController.text),
+        accountNumber: _accountNumberForSubmit(editAccountNumberController.text),
+        routingNumber: _routingNumberForSubmit(editRoutingNumberController.text),
       ),
     );
   }

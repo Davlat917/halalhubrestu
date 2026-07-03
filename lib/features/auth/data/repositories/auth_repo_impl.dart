@@ -88,22 +88,6 @@ class AuthRepoImpl extends AuthRepository {
   }
 
   @override
-  Future<void> signUpPhone({
-    required String phoneNumber,
-    required String role,
-  }) async {
-    try {
-      await _dio.post(
-        Constants.signupPhone,
-        data: {'phone_number': phoneNumber, 'role': role},
-        options: Options(headers: _mobileHeaders),
-      );
-    } catch (e) {
-      _rethrow(e);
-    }
-  }
-
-  @override
   Future<void> verifyOtp({
     required String credential,
     required String otp,

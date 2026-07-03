@@ -179,12 +179,13 @@ class _DeleteAccountReasonPageState extends State<DeleteAccountReasonPage> {
                         onPressed: _selectedIndex == null
                             ? null
                             : () {
-                                final reason = DeleteAccountReasonPage
-                                    .reasonKeys[_selectedIndex!]
+                                final index = _selectedIndex!;
+                                final reasonLabel = DeleteAccountReasonPage
+                                    .reasonKeys[index]
                                     .tr(context: context);
                                 VendorAccountMenuHandlers.showDeleteAccountConfirmDialog(
                                   context,
-                                  reasonLabel: reason,
+                                  reasonLabel: reasonLabel,
                                 );
                               },
                       );

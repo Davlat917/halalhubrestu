@@ -10,6 +10,8 @@ import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_finan
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_finance_overview/vendor_finance_overview_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_bank_info/vendor_bank_info_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_sales_distribution/vendor_sales_distribution_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_stripe_check/vendor_stripe_check_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_stripe_connect/vendor_stripe_connect_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_top_customer/vendor_top_customer_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_payout_request/vendor_payout_request_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_wallet_dashboard/vendor_wallet_dashboard_model.dart';
@@ -158,6 +160,43 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
           rows.add(Map<String, dynamic>.from(e));
         }
       }
+      if (rows.isEmpty) return [];
+      return compute(_parseVendorCategoriesInIsolate, rows);
+    } catch (e) {
+      final ex = ExceptionHandler.handleException(e);
+      if (ex is NetworkException) throw ex;
+      throw NetworkException(message: ex.toString());
+    }
+  }
+
+  @override
+  Future<List<VendorCategoryModel>> getVendorProductCategories() async {
+    try {
+      final rows = <Map<String, dynamic>>[];
+      String? nextUrl = Constants.vendorsProductCategories;
+
+      while (nextUrl != null && nextUrl.isNotEmpty) {
+        final response = await _dio.get<Map<String, dynamic>>(nextUrl);
+        final body = response.data;
+        if (body == null) break;
+
+        final results = body['results'];
+        if (results is List) {
+          for (final item in results) {
+            if (item is Map) {
+              rows.add(Map<String, dynamic>.from(item));
+            }
+          }
+        }
+
+        final next = body['next'];
+        if (next is String && next.trim().isNotEmpty) {
+          nextUrl = next;
+        } else {
+          nextUrl = null;
+        }
+      }
+
       if (rows.isEmpty) return [];
       return compute(_parseVendorCategoriesInIsolate, rows);
     } catch (e) {
@@ -393,23 +432,72 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
   }
 
   @override
+  Future<VendorStripeCheckModel> checkVendorStripe({
+    required int vendorId,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        Constants.vendorsVendorCheckStripe(vendorId),
+      );
+      final body = response.data;
+      if (body == null) {
+        throw NetworkException(message: 'Invalid Stripe check response');
+      }
+      return VendorStripeCheckModel.fromJson(Map<String, dynamic>.from(body));
+    } catch (e) {
+      final ex = ExceptionHandler.handleException(e);
+      if (ex is NetworkException) throw ex;
+      throw NetworkException(message: ex.toString());
+    }
+  }
+
+  @override
+  Future<VendorStripeConnectModel> connectVendorStripe({
+    required String returnUrl,
+    required String refreshUrl,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        Constants.vendorsVendorConnectStripe,
+        data: {'return_url': returnUrl, 'refresh_url': refreshUrl},
+      );
+      final body = response.data;
+      if (body == null) {
+        throw NetworkException(message: 'Invalid Stripe connect response');
+      }
+      return VendorStripeConnectModel.fromJson(Map<String, dynamic>.from(body));
+    } catch (e) {
+      final ex = ExceptionHandler.handleException(e);
+      if (ex is NetworkException) throw ex;
+      throw NetworkException(message: ex.toString());
+    }
+  }
+
+  @override
   Future<VendorBankInfoModel> updateVendorBankInfo({
     required String businessName,
     required String payoutSchedule,
-    required String einNumber,
-    required String accountNumber,
-    required String routingNumber,
+    String? einNumber,
+    String? accountNumber,
+    String? routingNumber,
   }) async {
     try {
+      final data = <String, dynamic>{
+        'business_name': businessName.trim(),
+        'payout_schedule': payoutSchedule.trim(),
+      };
+      if (einNumber != null) {
+        data['ein_number'] = einNumber.trim();
+      }
+      if (accountNumber != null) {
+        data['account_number'] = accountNumber.trim();
+      }
+      if (routingNumber != null) {
+        data['routing_number'] = routingNumber.trim();
+      }
       final response = await _dio.patch<Map<String, dynamic>>(
         Constants.vendorsBankInfo,
-        data: {
-          'business_name': businessName.trim(),
-          'payout_schedule': payoutSchedule.trim(),
-          'ein_number': einNumber.trim(),
-          'account_number': accountNumber.trim(),
-          'routing_number': routingNumber.trim(),
-        },
+        data: data,
       );
       final body = response.data;
       if (body == null) {
@@ -478,6 +566,8 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
     List<String> newIngredients = const [],
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
     List<XFile> newImages = const [],
   }) async {
     try {
@@ -526,6 +616,16 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
           );
         }
       }
+      _addNormalizedJsonField(
+        formData,
+        key: 'modifier_groups',
+        rawJson: modifierGroupsJson,
+      );
+      _addNormalizedJsonField(
+        formData,
+        key: 'recommendations',
+        rawJson: recommendationsJson,
+      );
       for (final image in newImages) {
         formData.files.add(
           MapEntry(
@@ -556,6 +656,8 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
     List<String> newIngredients = const [],
     String? discountsJson,
     String? deletedImageIds,
+    String? modifierGroupsJson,
+    String? recommendationsJson,
     List<XFile> newImages = const [],
   }) async {
     try {
@@ -608,6 +710,16 @@ class RestaurantRepositoryImpl extends RestaurantRepo {
           );
         }
       }
+      _addNormalizedJsonField(
+        formData,
+        key: 'modifier_groups',
+        rawJson: modifierGroupsJson,
+      );
+      _addNormalizedJsonField(
+        formData,
+        key: 'recommendations',
+        rawJson: recommendationsJson,
+      );
       for (final image in newImages) {
         formData.files.add(
           MapEntry(
@@ -777,6 +889,17 @@ String? _normalizeOptionalJsonField(String raw) {
     // discounts optional: noto'g'ri format bo'lsa field yuborilmaydi
     return null;
   }
+}
+
+void _addNormalizedJsonField(
+  FormData formData, {
+  required String key,
+  required String? rawJson,
+}) {
+  if (rawJson == null || rawJson.trim().isEmpty) return;
+  final normalized = _normalizeOptionalJsonField(rawJson);
+  if (normalized == null) return;
+  formData.fields.add(MapEntry(key, normalized));
 }
 
 String? _normalizeOptionalDeletedImageIdsJson(String raw) {

@@ -23,11 +23,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 enum VendorWsEventType { orderCreated, unknown }
 
 class VendorWsEvent {
-  const VendorWsEvent({
-    required this.type,
-    required this.raw,
-    this.orderCreated,
-  });
+  const VendorWsEvent({required this.type, required this.raw, this.orderCreated});
 
   final VendorWsEventType type;
   final Map<String, dynamic> raw;
@@ -37,11 +33,7 @@ class VendorWsEvent {
     final typeRaw = (json['type'] as String? ?? '').toLowerCase().trim();
     switch (typeRaw) {
       case 'order_created':
-        return VendorWsEvent(
-          type: VendorWsEventType.orderCreated,
-          raw: json,
-          orderCreated: VendorWsOrderCreatedPayload.fromJson(json),
-        );
+        return VendorWsEvent(type: VendorWsEventType.orderCreated, raw: json, orderCreated: VendorWsOrderCreatedPayload.fromJson(json));
       default:
         return VendorWsEvent(type: VendorWsEventType.unknown, raw: json);
     }
@@ -55,20 +47,14 @@ class VendorWsEvent {
 /// - Ulanish uzilsa yengil backoff bilan qayta ulanadi.
 @lazySingleton
 class VendorNotificationsWsService with WidgetsBindingObserver {
-  VendorNotificationsWsService(
-    this._storage,
-    this._dio,
-    this._logger,
-    this._receiptPrinter,
-  );
+  VendorNotificationsWsService(this._storage, this._dio, this._logger, this._receiptPrinter);
 
   final Storage _storage;
   final Dio _dio;
   final Logger _logger;
   final ReceiptPrinterService _receiptPrinter;
   final _eventsController = StreamController<VendorWsEvent>.broadcast();
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _subscription;
@@ -81,7 +67,6 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
   bool _flutterForegroundConfigured = false;
   AudioPlayer? _newOrderSoundPlayer;
   File? _newOrderSoundCacheFile;
-  final Map<String, DateTime> _recentPrintedOrderKeys = <String, DateTime>{};
   int _alertSoundEpoch = 0;
   Future<void> _alertSoundChain = Future.value();
 
@@ -95,6 +80,35 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
 
   void _logDebug(String message) {
     if (kDebugMode) _logger.d(message);
+  }
+
+  void _logWsIncoming(String raw) {
+    if (!kDebugMode) return;
+    _logger.i(
+      '📡 Vendor WS ← incoming\n'
+      '┌${'─' * 38}\n'
+      '${_formatWsIncomingForLog(raw)}\n'
+      '└${'─' * 38}',
+    );
+  }
+
+  void _logWsEventParsed(VendorWsEvent event) {
+    if (!kDebugMode) return;
+    final payload = event.orderCreated;
+    if (payload == null) {
+      _logger.i('📡 Vendor WS parsed: type=${event.type.name}');
+      return;
+    }
+    final rawItems = event.raw['items'];
+    final itemCount = rawItems is List ? rawItems.length : 0;
+    _logger.i(
+      '📡 Vendor WS parsed: type=${event.type.name} | '
+      'order_id=${payload.orderId} | '
+      'order_number=${payload.orderNumber} | '
+      'customer=${payload.customerName} | '
+      'order_type=${payload.orderType} | '
+      'items=$itemCount',
+    );
   }
 
   /// Postman Messages paneliga o‘xshash: JSON bo‘lsa indent bilan.
@@ -119,16 +133,16 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
 
   // static const _wsBase = 'wss://infonexuz.uz/ws/notifications/vendor/';
   static const _wsBase = 'wss://backend-api.wehalalhub.com/ws/notifications/vendor/';
+
   /// `rootBundle` uchun to‘liq kalit; `AssetSource` (web) uchun — prefiksiz.
   static const _newOrderBundleKey = 'assets/sounds/new-order.wav';
   static const _newOrderSoundAssetPath = 'sounds/new-order.wav';
   static final _newOrderAsset = AssetSource(_newOrderSoundAssetPath);
-  static const Duration _printDedupWindow = Duration(seconds: 90);
   static const int _wsIncomingLogMaxChars = 12000;
+
   /// Android 8+ kanal bir marta yaratiladi; ovoz yo‘q kanalni almashtirish uchun ID yangilandi.
   static const _androidOrderAlertChannelId = 'vendor_orders_alert_v1';
-  static const _androidNativeAlertChannel =
-      MethodChannel('com.infonex.halalhubrestu/vendor_order_alert');
+  static const _androidNativeAlertChannel = MethodChannel('com.infonex.halalhubrestu/vendor_order_alert');
 
   Stream<VendorWsEvent> get events => _eventsController.stream;
 
@@ -139,6 +153,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     _started = true;
     await _ensureLocalNotificationsInitialized();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(_startAndroidForegroundForVendorOrders());
     _tokenSubscription = _storage.token.watch().listen((token) {
       if (token == null || token.isEmpty) {
         unawaited(_stopAndroidForegroundForVendorOrders());
@@ -169,18 +184,22 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     _foreground = isForeground;
     if (_foreground) {
       _connectIfPossible();
-      // App lock/backgrounddan qaytganda pending order bo'lsa ovozni
-      // refreshsiz ham darhol tiklaymiz.
-      unawaited(syncAlertSoundWithPendingOrdersFromBackend());
-      unawaited(
-        Future<void>.delayed(
-          const Duration(milliseconds: 900),
-          syncAlertSoundWithPendingOrdersFromBackend,
-        ),
-      );
+      _schedulePendingOrderAlertSync();
     }
     // Fon / ekran o‘chiq: WebSocketni yopmaymiz — Android’da foreground service
     // jarayonni tiriklab turadi; buyurtma bildirishnoma va chek ishlayveradi.
+  }
+
+  void _schedulePendingOrderAlertSync() {
+    unawaited(syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true));
+    for (final ms in const [900, 2000, 5000]) {
+      unawaited(
+        Future<void>.delayed(Duration(milliseconds: ms), () {
+          if (!_foreground) return;
+          unawaited(syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true));
+        }),
+      );
+    }
   }
 
   Future<void> _connectIfPossible() async {
@@ -192,10 +211,9 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     try {
       final vendorId = await _resolveVendorId();
       if (vendorId == null) return;
-      final uri = Uri.parse(
-        '$_wsBase$vendorId/?token=${Uri.encodeQueryComponent(token)}',
-      );
+      final uri = Uri.parse('$_wsBase$vendorId/?token=${Uri.encodeQueryComponent(token)}');
       _channel = WebSocketChannel.connect(uri);
+      _logInfo('Vendor notifications WS connecting (vendorId=$vendorId)');
       _subscription = _channel!.stream.listen(
         _onData,
         onError: (Object e, StackTrace st) {
@@ -233,35 +251,30 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     final existing = _newOrderSoundCacheFile;
     if (existing != null && await existing.exists()) return existing;
     final data = await rootBundle.load(_newOrderBundleKey);
-    final file = File(
-      '${Directory.systemTemp.path}/halalhub_new_order_alert.wav',
-    );
+    final file = File('${Directory.systemTemp.path}/halalhub_new_order_alert.wav');
     await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
     _newOrderSoundCacheFile = file;
     return file;
   }
 
   void _onData(dynamic data) {
-    // Yengil parse: faqat event turini ajratamiz.
     if (data is! String) {
-      _logDebug(
-        'Vendor WS ← [${data.runtimeType}] $data',
-      );
+      _logWarn('Vendor WS ← unexpected payload type: ${data.runtimeType}');
       return;
     }
-    _logDebug(
-      'Vendor WS ← incoming\n'
-      '┌${'─' * 38}\n'
-      '${_formatWsIncomingForLog(data)}\n'
-      '└${'─' * 38}',
-    );
+    _logWsIncoming(data);
     try {
       final json = jsonDecode(data);
-      if (json is! Map<String, dynamic>) return;
+      if (json is! Map<String, dynamic>) {
+        _logWarn('Vendor WS ← JSON is not an object');
+        return;
+      }
       if (_eventsController.isClosed) return;
       final event = VendorWsEvent.fromJson(json);
+      _logWsEventParsed(event);
       _eventsController.add(event);
       if (event.type == VendorWsEventType.orderCreated) {
+        _receiptPrinter.cacheOrderCreatedPayload(event.raw);
         // Ovozni faqat dialog (yoki buyurtmalar ro'yxatida status) bilan o'chiramiz.
         unawaited(startNewOrderAlertSoundLoop());
         // Ilova ochiq (foreground): push/banner ko'rinmasin — faqat ovoz + dialog.
@@ -269,18 +282,14 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
         if (!_foreground) {
           unawaited(_showOrderCreatedNotification(event.raw));
         }
-        // WS reconnect/payloadda dublikat bo'lsa, bir orderni qayta chop etmaymiz.
-        if (_shouldPrintFor(event.raw)) {
-          // Chek servisi ichida xatolar log qilinadi; WS oqimini bloklamaymiz.
-          unawaited(_receiptPrinter.printNewOrderReceiptFromWs(event.raw));
-        }
       }
-    } catch (_) {
-      // ignore malformed payload
+    } catch (e, st) {
+      _logWarn('Vendor WS payload parse failed: $e', stackTrace: st);
     }
   }
 
   Future<void> _stopAndroidNativeOrderAlert() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
     try {
       await _androidNativeAlertChannel.invokeMethod<void>('stopLoop');
     } catch (e, st) {
@@ -289,11 +298,11 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     _androidNativeOrderAlertActive = false;
   }
 
-  Future<void> startNewOrderAlertSoundLoop() {
+  Future<void> startNewOrderAlertSoundLoop({bool forceRestart = false}) {
     final epoch = _alertSoundEpoch;
     _alertSoundChain = _alertSoundChain.then((_) async {
       if (epoch != _alertSoundEpoch) return;
-      await _startNewOrderAlertSoundLoopBody(epoch);
+      await _startNewOrderAlertSoundLoopBody(epoch, forceRestart: forceRestart);
     });
     return _alertSoundChain;
   }
@@ -324,16 +333,24 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     await _disposeAlertPlayer(previous);
   }
 
-  Future<void> _startNewOrderAlertSoundLoopBody(int epoch) async {
+  Future<void> _startNewOrderAlertSoundLoopBody(int epoch, {bool forceRestart = false}) async {
     try {
-      final current = _newOrderSoundPlayer;
-      if (current != null) {
-        try {
-          if (current.state == PlayerState.playing) {
-            _logDebug('startNewOrderAlertSoundLoop: already playing, skip');
-            return;
-          }
-        } catch (_) {}
+      if (forceRestart) {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          await _stopAndroidNativeOrderAlert();
+        }
+        await _releaseCurrentAlertPlayer();
+        _androidNativeOrderAlertActive = false;
+      } else {
+        final current = _newOrderSoundPlayer;
+        if (current != null) {
+          try {
+            if (current.state == PlayerState.playing) {
+              _logDebug('startNewOrderAlertSoundLoop: already playing, skip');
+              return;
+            }
+          } catch (_) {}
+        }
       }
 
       if (!_alertSoundEpochActive(epoch)) return;
@@ -348,20 +365,12 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
           _logInfo('startNewOrderAlertSoundLoop Android native MediaPlayer started');
           return;
         } catch (e, st) {
-          debugPrint(
-            '[VendorNewOrderSound] native start failed, fallback audioplayers: $e\n$st',
-          );
+          debugPrint('[VendorNewOrderSound] native start failed, fallback audioplayers: $e\n$st');
           await _stopAndroidNativeOrderAlert();
         }
         await AudioPlayer.global.setAudioContext(
           AudioContext(
-            android: AudioContextAndroid(
-              usageType: AndroidUsageType.media,
-              contentType: AndroidContentType.music,
-              audioFocus: AndroidAudioFocus.gain,
-              isSpeakerphoneOn: true,
-              stayAwake: true,
-            ),
+            android: AudioContextAndroid(usageType: AndroidUsageType.media, contentType: AndroidContentType.music, audioFocus: AndroidAudioFocus.gain, isSpeakerphoneOn: true, stayAwake: true),
           ),
         );
       } else {
@@ -380,16 +389,8 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
 
       await player.setAudioContext(
         AudioContext(
-          iOS: AudioContextIOS(
-            category: AVAudioSessionCategory.playback,
-          ),
-          android: AudioContextAndroid(
-            usageType: AndroidUsageType.media,
-            contentType: AndroidContentType.music,
-            audioFocus: AndroidAudioFocus.gain,
-            isSpeakerphoneOn: true,
-            stayAwake: true,
-          ),
+          iOS: AudioContextIOS(category: AVAudioSessionCategory.playback),
+          android: AudioContextAndroid(usageType: AndroidUsageType.media, contentType: AndroidContentType.music, audioFocus: AndroidAudioFocus.gain, isSpeakerphoneOn: true, stayAwake: true),
         ),
       );
       if (!_alertSoundEpochActive(epoch) || _newOrderSoundPlayer != player) {
@@ -409,8 +410,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
         source = DeviceFileSource(f.path);
       }
 
-      final pathLog =
-          source is DeviceFileSource ? source.path : _newOrderBundleKey;
+      final pathLog = source is DeviceFileSource ? source.path : _newOrderBundleKey;
       _logInfo(
         'startNewOrderAlertSoundLoop source=${source.runtimeType} path=$pathLog | '
         'state=${player.state.name}',
@@ -422,13 +422,10 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
       }
       await player.setVolume(1.0);
       await player.play(source);
-      _logInfo(
-        'startNewOrderAlertSoundLoop started successfully | state=${player.state.name}',
-      );
+      _logInfo('startNewOrderAlertSoundLoop started successfully | state=${player.state.name}');
     } catch (e, st) {
       debugPrint('[VendorNewOrderSound] start failed: $e\n$st');
-      _logWarn('Vendor notifications new order loop start failed: $e',
-          stackTrace: st);
+      _logWarn('Vendor notifications new order loop start failed: $e', stackTrace: st);
     }
   }
 
@@ -445,12 +442,11 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
       _logInfo('stopNewOrderAlertSound completed');
     } catch (e, st) {
       debugPrint('[VendorNewOrderSound] stop failed: $e\n$st');
-      _logWarn('Vendor notifications new order loop stop failed: $e',
-          stackTrace: st);
+      _logWarn('Vendor notifications new order loop stop failed: $e', stackTrace: st);
     }
   }
 
-  Future<void> syncAlertSoundWithPendingOrdersFromBackend() async {
+  Future<void> syncAlertSoundWithPendingOrdersFromBackend({bool forceRestart = false}) async {
     try {
       _logInfo('syncAlertSoundWithPendingOrdersFromBackend started');
       final response = await _dio.get(Constants.vendorsOrders);
@@ -465,8 +461,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
         final map = Map<String, dynamic>.from(item);
         final statusRaw = (map['status'] ?? '').toString();
         // OrdersBloc bilan bir xil: noma'lum statuslar default bo'lib newOrder (tovush o'chmasin).
-        if (VendorOrdersItem.statusFromApi(statusRaw) ==
-            VendorOrderStatus.newOrder) {
+        if (VendorOrdersItem.statusFromApi(statusRaw) == VendorOrderStatus.newOrder) {
           hasPending = true;
           break;
         }
@@ -476,38 +471,21 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
       // Bu yerda hech qachon stop qilmaymiz: push/lifecycle sinxroni API kechikishi bilan
       // ovozni "yo'q qilib" yuborardi. O'chirish — OrdersBloc (ro'yxat + grace) yoki status yangilanishi.
       if (hasPending) {
-        await startNewOrderAlertSoundLoop();
+        await startNewOrderAlertSoundLoop(forceRestart: forceRestart);
       }
     } catch (e, st) {
-      _logWarn(
-        'Vendor notifications pending orders sync failed: $e',
-        stackTrace: st,
-      );
+      _logWarn('Vendor notifications pending orders sync failed: $e', stackTrace: st);
     }
   }
 
   Future<void> _ensureLocalNotificationsInitialized() async {
     if (_localNotificationsReady) return;
-    const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    );
+    const settings = InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher'), iOS: DarwinInitializationSettings());
     await _localNotifications.initialize(settings: settings);
 
-    final android = _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final android = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
-      await android.createNotificationChannel(
-        const AndroidNotificationChannel(
-          _androidOrderAlertChannelId,
-          'Vendor order alerts',
-          description: 'New order sound when app is open or in background',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-        ),
-      );
+      await android.createNotificationChannel(const AndroidNotificationChannel(_androidOrderAlertChannelId, 'Vendor order alerts', description: 'New order sound when app is open or in background', importance: Importance.max, playSound: true, enableVibration: true));
     }
 
     _localNotificationsReady = true;
@@ -518,24 +496,13 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     try {
       final orderNumber = raw['order_number']?.toString().trim();
       final title = raw['message']?.toString().trim();
-      final text = (orderNumber == null || orderNumber.isEmpty)
-          ? 'New order received'
-          : 'Order: $orderNumber';
+      final text = (orderNumber == null || orderNumber.isEmpty) ? 'New order received' : 'Order: $orderNumber';
       await _localNotifications.show(
         id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
         title: (title == null || title.isEmpty) ? 'New order received' : title,
         body: text,
         notificationDetails: NotificationDetails(
-          android: AndroidNotificationDetails(
-            _androidOrderAlertChannelId,
-            'Vendor order alerts',
-            channelDescription:
-                'New order sound when app is open or in background',
-            importance: Importance.max,
-            priority: Priority.high,
-            playSound: true,
-            enableVibration: true,
-          ),
+          android: AndroidNotificationDetails(_androidOrderAlertChannelId, 'Vendor order alerts', channelDescription: 'New order sound when app is open or in background', importance: Importance.max, priority: Priority.high, playSound: true, enableVibration: true),
           iOS: const DarwinNotificationDetails(),
         ),
       );
@@ -557,75 +524,16 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     _reconnectTimer?.cancel();
     final delaySeconds = (_retry + 1).clamp(1, 20);
     _retry = delaySeconds;
-    _reconnectTimer = Timer(
-      Duration(seconds: delaySeconds),
-      _connectIfPossible,
-    );
-  }
-
-  bool _shouldPrintFor(Map<String, dynamic> raw) {
-    _cleanupExpiredPrintKeys();
-    final key = _orderPrintKey(raw);
-    if (key == null) return true;
-    final now = DateTime.now();
-    final lastPrintedAt = _recentPrintedOrderKeys[key];
-    if (lastPrintedAt != null && now.difference(lastPrintedAt) < _printDedupWindow) {
-      _logInfo('Vendor WS duplicate order print skipped: $key');
-      return false;
-    }
-    _recentPrintedOrderKeys[key] = now;
-    return true;
-  }
-
-  void _cleanupExpiredPrintKeys() {
-    if (_recentPrintedOrderKeys.isEmpty) return;
-    final now = DateTime.now();
-    _recentPrintedOrderKeys.removeWhere(
-      (_, ts) => now.difference(ts) > _printDedupWindow,
-    );
-  }
-
-  String? _orderPrintKey(Map<String, dynamic> raw) {
-    final candidates = <dynamic>[
-      raw['order_id'],
-      raw['orderId'],
-      raw['id'],
-      raw['order_number'],
-      raw['orderNumber'],
-    ];
-    for (final c in candidates) {
-      if (c == null) continue;
-      final s = c.toString().trim();
-      if (s.isNotEmpty) return s;
-    }
-    // ID kelmasa fallback fingerprint; shu payload takror kelsa dublikat deb ko'ramiz.
-    final message = raw['message']?.toString().trim() ?? '';
-    if (message.isEmpty) return null;
-    return 'msg:$message';
+    _reconnectTimer = Timer(Duration(seconds: delaySeconds), _connectIfPossible);
   }
 
   void _configureFlutterForegroundTaskOnce() {
     if (_flutterForegroundConfigured) return;
     _flutterForegroundConfigured = true;
     FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'vendor_orders_fg',
-        channelName: 'Vendor orders',
-        channelDescription:
-            "Ekran o'chiq bo'lsa ham buyurtmalar ulanishini saqlab turadi.",
-        channelImportance: NotificationChannelImportance.LOW,
-        priority: NotificationPriority.LOW,
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: false,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.nothing(),
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
+      androidNotificationOptions: AndroidNotificationOptions(channelId: 'vendor_orders_fg', channelName: 'Vendor orders', channelDescription: "Ekran o'chiq bo'lsa ham buyurtmalar ulanishini saqlab turadi.", channelImportance: NotificationChannelImportance.LOW, priority: NotificationPriority.LOW, onlyAlertOnce: true),
+      iosNotificationOptions: const IOSNotificationOptions(showNotification: false, playSound: false),
+      foregroundTaskOptions: ForegroundTaskOptions(eventAction: ForegroundTaskEventAction.nothing(), allowWakeLock: true, allowWifiLock: true),
     );
   }
 
@@ -650,15 +558,7 @@ class VendorNotificationsWsService with WidgetsBindingObserver {
     }
 
     try {
-      final result = await FlutterForegroundTask.startService(
-        serviceId: 888,
-        serviceTypes: const [
-          ForegroundServiceTypes.dataSync,
-        ],
-        notificationTitle: 'HalalHub Restaurant',
-        notificationText: "Buyurtmalar kutilmoqda (fon rejimi)",
-        callback: vendorOrdersForegroundTaskStartCallback,
-      );
+      final result = await FlutterForegroundTask.startService(serviceId: 888, serviceTypes: const [ForegroundServiceTypes.dataSync], notificationTitle: 'HalalHub Restaurant', notificationText: "Buyurtmalar kutilmoqda (fon rejimi)", callback: vendorOrdersForegroundTaskStartCallback);
       if (result is ServiceRequestFailure) {
         _logWarn('Foreground service start failed: ${result.error}');
       }

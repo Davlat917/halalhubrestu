@@ -1,12 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/mixins/validation_mixin.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
-import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/shimmer_item.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
@@ -15,9 +14,11 @@ import 'package:halalhub_restaurant/features/restaurant/screens/payment/bloc/pay
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/bloc/payment_dashboard_state.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/mixins/payment_page_mixin.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/sections/payment_bank_account_section.dart';
-import 'package:halalhub_restaurant/features/restaurant/screens/payment/sections/payment_history_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/payment/sections/payment_management_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/sections/payment_summary_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/payment/widgets/payment_stripe_check_section.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key, this.bloc});
@@ -29,14 +30,16 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage>
-    with ValidationMixin, PaymentPageMixin {
+    with ValidationMixin, PaymentPageMixin, WidgetsBindingObserver {
   /// [BlocProvider] boladan pastda — [State.context] orqali o‘qib bo‘lmaydi; listenerlar shu instancedan foydalanadi.
   late final PaymentDashboardBloc _paymentBloc;
   late final ScrollController _scrollController;
+  bool _pendingStripeRecheck = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initPaymentPageMixin();
     _paymentBloc =
         widget.bloc ??
@@ -73,7 +76,35 @@ class _PaymentPageState extends State<PaymentPage>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingStripeRecheck) {
+      _pendingStripeRecheck = false;
+      _paymentBloc.add(const PaymentStripeCheckRequested());
+    }
+  }
+
+  Future<void> _openStripeOnboarding(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      getIt<Display>().error(
+        TranslationKeys.paymentStripeConnectOpenFailed.tr(context: context),
+      );
+      return;
+    }
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened) {
+      if (!mounted) return;
+      getIt<Display>().error(
+        TranslationKeys.paymentStripeConnectOpenFailed.tr(context: context),
+      );
+      return;
+    }
+    _pendingStripeRecheck = true;
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_onPaymentScrollLoadMore);
     _scrollController.dispose();
     if (widget.bloc == null) {
@@ -87,24 +118,56 @@ class _PaymentPageState extends State<PaymentPage>
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _paymentBloc,
-      child: BlocListener<PaymentDashboardBloc, PaymentDashboardState>(
-        listenWhen: (previous, current) {
-          return previous.bankInfoUpdateStatus != current.bankInfoUpdateStatus;
-        },
-        listener: (context, state) {
-          if (state.bankInfoUpdateStatus == PaymentDashboardStatus.success &&
-              state.bankInfoUpdateMessage != null) {
-            getIt<Display>().success(state.bankInfoUpdateMessage!);
-            context.read<PaymentDashboardBloc>().add(
-              const PaymentBankInfoUpdateStatusCleared(),
-            );
-            return;
-          }
-          if (state.bankInfoUpdateStatus == PaymentDashboardStatus.failure &&
-              state.bankInfoUpdateMessage != null) {
-            getIt<Display>().error(state.bankInfoUpdateMessage!);
-          }
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<PaymentDashboardBloc, PaymentDashboardState>(
+            listenWhen: (previous, current) {
+              return previous.bankInfoUpdateStatus !=
+                  current.bankInfoUpdateStatus;
+            },
+            listener: (context, state) {
+              if (state.bankInfoUpdateStatus ==
+                      PaymentDashboardStatus.success &&
+                  state.bankInfoUpdateMessage != null) {
+                getIt<Display>().success(state.bankInfoUpdateMessage!);
+                context.read<PaymentDashboardBloc>().add(
+                  const PaymentBankInfoUpdateStatusCleared(),
+                );
+                return;
+              }
+              if (state.bankInfoUpdateStatus ==
+                      PaymentDashboardStatus.failure &&
+                  state.bankInfoUpdateMessage != null) {
+                getIt<Display>().error(state.bankInfoUpdateMessage!);
+              }
+            },
+          ),
+          BlocListener<PaymentDashboardBloc, PaymentDashboardState>(
+            listenWhen: (previous, current) {
+              return previous.stripeConnectStatus != current.stripeConnectStatus;
+            },
+            listener: (context, state) async {
+              if (state.stripeConnectStatus == PaymentDashboardStatus.failure &&
+                  state.stripeConnectErrorMessage != null) {
+                getIt<Display>().error(state.stripeConnectErrorMessage!);
+                context.read<PaymentDashboardBloc>().add(
+                  const PaymentStripeConnectHandled(),
+                );
+                return;
+              }
+              if (state.stripeConnectStatus ==
+                      PaymentDashboardStatus.success &&
+                  state.stripeOnboardingUrl != null &&
+                  state.stripeOnboardingUrl!.isNotEmpty) {
+                final url = state.stripeOnboardingUrl!;
+                context.read<PaymentDashboardBloc>().add(
+                  const PaymentStripeConnectHandled(),
+                );
+                await _openStripeOnboarding(url);
+              }
+            },
+          ),
+        ],
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isTabletLandscape =
@@ -175,19 +238,56 @@ class _PaymentPageState extends State<PaymentPage>
   }
 
   Widget _buildLoadedContent(BuildContext context, bool isTabletLandscape) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(pageTitle(context), style: AppTextStyle.semibold18(context)),
-        const SizedBox(height: 12),
-        BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
-          buildWhen: (previous, current) {
-            return previous.status != current.status ||
-                previous.dashboard != current.dashboard ||
-                previous.errorMessage != current.errorMessage;
-          },
-          builder: (context, state) {
-            return PaymentSummarySection(
+    return BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
+      buildWhen: (previous, current) {
+        return previous.bankInfo != current.bankInfo ||
+            previous.bankInfoStatus != current.bankInfoStatus ||
+            previous.payoutHistoryStatus != current.payoutHistoryStatus ||
+            previous.payoutHistoryRows != current.payoutHistoryRows ||
+            previous.payoutHistoryErrorMessage !=
+                current.payoutHistoryErrorMessage ||
+            previous.payoutNextUrl != current.payoutNextUrl ||
+            previous.payoutLoadingMore != current.payoutLoadingMore ||
+            previous.status != current.status ||
+            previous.dashboard != current.dashboard ||
+            previous.errorMessage != current.errorMessage ||
+            previous.stripeCheckStatus != current.stripeCheckStatus ||
+            previous.stripeIsConnected != current.stripeIsConnected ||
+            previous.stripeChargesEnabled != current.stripeChargesEnabled ||
+            previous.stripeRequirements != current.stripeRequirements ||
+            previous.stripeDetailsEn != current.stripeDetailsEn ||
+            previous.stripeCheckErrorMessage != current.stripeCheckErrorMessage;
+      },
+      builder: (context, state) {
+        final isManualPayout = isManualPayoutSchedule(
+          state.bankInfo.payoutSchedule,
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(pageTitle(context), style: AppTextStyle.semibold18(context)),
+            const SizedBox(height: 12),
+            PaymentStripeCheckSection(
+              status: state.stripeCheckStatus,
+              isConnected: state.stripeIsConnected,
+              chargesEnabled: state.stripeChargesEnabled,
+              requirements: state.stripeRequirements,
+              detailsEn: state.stripeDetailsEn,
+              errorMessage: state.stripeCheckErrorMessage,
+              connectStatus: state.stripeConnectStatus,
+              onCheckPressed: () {
+                context.read<PaymentDashboardBloc>().add(
+                  const PaymentStripeCheckRequested(),
+                );
+              },
+              onConnectPressed: () {
+                context.read<PaymentDashboardBloc>().add(
+                  const PaymentStripeConnectRequested(),
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            PaymentSummarySection(
               dashboard: state.dashboard,
               status: state.status,
               onRetry: () {
@@ -195,59 +295,16 @@ class _PaymentPageState extends State<PaymentPage>
                   const PaymentDashboardRequested(),
                 );
               },
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        if (isTabletLandscape) ...[
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  TranslationKeys.paymentManagement.tr(context: context),
-                  style: AppTextStyle.semibold18(context),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 230,
-                height: 44,
-                child: CustomButton(
-                  label: TranslationKeys.paymentWithdrawFromBank.tr(
-                    context: context,
-                  ),
-                  onPressed: () => onWithdrawPressed(context),
-                  backgroundColor: StaticColors.primary,
-                  foregroundColor: StaticColors.white,
-                  borderRadius: 10,
-                  height: 44,
-                  textStyle: AppTextStyle.medium16(
-                    context,
-                    size: 14,
-                    color: StaticColors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
-                  buildWhen: (previous, current) {
-                    return previous.payoutHistoryStatus !=
-                            current.payoutHistoryStatus ||
-                        previous.payoutHistoryRows != current.payoutHistoryRows ||
-                        previous.payoutHistoryErrorMessage !=
-                            current.payoutHistoryErrorMessage ||
-                        previous.payoutNextUrl != current.payoutNextUrl ||
-                        previous.payoutLoadingMore != current.payoutLoadingMore;
-                  },
-                  builder: (context, state) {
-                    return PaymentHistorySection(
+            ),
+            const SizedBox(height: 14),
+            if (isTabletLandscape) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: PaymentManagementSection(
+                      isManualPayout: isManualPayout,
                       rows: state.payoutHistoryRows,
                       status: state.payoutHistoryStatus,
                       errorMessage: state.payoutHistoryErrorMessage,
@@ -257,21 +314,13 @@ class _PaymentPageState extends State<PaymentPage>
                         );
                       },
                       isLoadingMore: state.payoutLoadingMore,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
-                  buildWhen: (previous, current) {
-                    return previous.bankInfoStatus != current.bankInfoStatus ||
-                        previous.bankInfo != current.bankInfo ||
-                        previous.bankInfoErrorMessage !=
-                            current.bankInfoErrorMessage;
-                  },
-                  builder: (context, state) {
-                    return PaymentBankAccountSection(
+                      onWithdrawPressed: () => onWithdrawPressed(context),
+                      withdrawButtonWidth: 230,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: PaymentBankAccountSection(
                       status: state.bankInfoStatus,
                       bankInfo: state.bankInfo,
                       errorMessage: state.bankInfoErrorMessage,
@@ -282,21 +331,12 @@ class _PaymentPageState extends State<PaymentPage>
                       },
                       onEditPressed: () =>
                           onEditBankAccountPressed(context, state.bankInfo),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ] else ...[
-          BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
-            buildWhen: (previous, current) {
-              return previous.bankInfoStatus != current.bankInfoStatus ||
-                  previous.bankInfo != current.bankInfo ||
-                  previous.bankInfoErrorMessage != current.bankInfoErrorMessage;
-            },
-            builder: (context, state) {
-              return PaymentBankAccountSection(
+            ] else ...[
+              PaymentBankAccountSection(
                 status: state.bankInfoStatus,
                 bankInfo: state.bankInfo,
                 errorMessage: state.bankInfoErrorMessage,
@@ -307,52 +347,10 @@ class _PaymentPageState extends State<PaymentPage>
                 },
                 onEditPressed: () =>
                     onEditBankAccountPressed(context, state.bankInfo),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  TranslationKeys.paymentManagement.tr(context: context),
-                  style: AppTextStyle.semibold18(context),
-                ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 200,
-                height: 44,
-                child: CustomButton(
-                  label: TranslationKeys.paymentWithdrawFromBank.tr(
-                    context: context,
-                  ),
-                  onPressed: () => onWithdrawPressed(context),
-                  backgroundColor: StaticColors.primary,
-                  foregroundColor: StaticColors.white,
-                  borderRadius: 10,
-                  height: 44,
-                  textStyle: AppTextStyle.medium16(
-                    context,
-                    size: 14,
-                    color: StaticColors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          BlocBuilder<PaymentDashboardBloc, PaymentDashboardState>(
-            buildWhen: (previous, current) {
-              return previous.payoutHistoryStatus != current.payoutHistoryStatus ||
-                  previous.payoutHistoryRows != current.payoutHistoryRows ||
-                  previous.payoutHistoryErrorMessage !=
-                      current.payoutHistoryErrorMessage ||
-                  previous.payoutNextUrl != current.payoutNextUrl ||
-                  previous.payoutLoadingMore != current.payoutLoadingMore;
-            },
-            builder: (context, state) {
-              return PaymentHistorySection(
+              const SizedBox(height: 12),
+              PaymentManagementSection(
+                isManualPayout: isManualPayout,
                 rows: state.payoutHistoryRows,
                 status: state.payoutHistoryStatus,
                 errorMessage: state.payoutHistoryErrorMessage,
@@ -362,11 +360,12 @@ class _PaymentPageState extends State<PaymentPage>
                   );
                 },
                 isLoadingMore: state.payoutLoadingMore,
-              );
-            },
-          ),
-        ],
-      ],
+                onWithdrawPressed: () => onWithdrawPressed(context),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }

@@ -31,11 +31,14 @@ class Constants {
   static const googleLogin = "$accounts/google/";
   static const appleLogin = "$accounts/apple/";
   static const updateRole = "$accounts/update/role/";
+  static const deleteAccount = "$accounts/delete/";
+  static const accountsProfile = "$accounts/profile/";
 
   // vendor
   static const vendorsCreate = "/vendors/create/";
   static const vendorsMe = "/vendors/me/";
   static const vendorsCategories = "/vendors/categories/";
+  static const vendorsProductCategories = "/vendors/products/categories/";
   static const vendorsIngredients = "/vendors/ingredients/";
   static const vendorsProducts = "/vendors/products/";
   static const vendorsFinanceOverview = "/vendors/vendor/finance/overview/";
@@ -47,9 +50,14 @@ class Constants {
       "/vendors/vendor/finance/sales-distribution/";
   static const vendorsFinanceTransactions =
       "/vendors/vendor/finance/transactions/";
+  static const vendorsFinanceTransactionsPdf =
+      "/vendors/vendor/finance/transactions/pdf/";
   static const vendorsWalletDashboard = "/vendors/wallet/dashboard/";
   static const vendorsBankInfo = "/vendors/bank-info/";
   static const vendorsPayoutRequests = "/vendors/payout-requests/";
+  static String vendorsVendorCheckStripe(int vendorId) =>
+      "/vendors/vendor/$vendorId/check-stripe/";
+  static const vendorsVendorConnectStripe = "/vendors/vendor/connect-stripe/";
   static String vendorsProductsByVendorId(int vendorId) =>
       "/vendors/vendors/$vendorId/products/";
   static String vendorsProductDetailByVendorId(int vendorId, int productId) =>
@@ -86,4 +94,14 @@ class Constants {
 
   /// Clover OAuth boshlash (authorize_url qaytaradi).
   static const deliveryCloverConnect = "/delivery/clover/connect/";
+
+  /// Hisob menyusi — ijtimoiy tarmoq va aloqa.
+  static const supportInstagramUsername = 'wehalalhub';
+  static const supportWhatsappUsername = 'wehalalhub';
+  static const supportUsPhoneNumber = '9172394422';
+  static const supportUsCountryCode = '1';
+  static String get supportUsPhoneE164 =>
+      '+$supportUsCountryCode$supportUsPhoneNumber';
+  static String get supportWhatsappLaunchNumber =>
+      '$supportUsCountryCode$supportUsPhoneNumber';
 }

@@ -22,6 +22,15 @@ class PaymentDashboardState extends Equatable {
     this.payoutLoadingMore = false,
     this.withdrawRequestStatus = PaymentDashboardStatus.initial,
     this.withdrawRequestMessage,
+    this.stripeCheckStatus = PaymentDashboardStatus.initial,
+    this.stripeIsConnected = false,
+    this.stripeChargesEnabled = false,
+    this.stripeRequirements = const [],
+    this.stripeDetailsEn = '',
+    this.stripeCheckErrorMessage,
+    this.stripeConnectStatus = PaymentDashboardStatus.initial,
+    this.stripeConnectErrorMessage,
+    this.stripeOnboardingUrl,
   });
 
   final PaymentDashboardStatus status;
@@ -39,6 +48,15 @@ class PaymentDashboardState extends Equatable {
   final bool payoutLoadingMore;
   final PaymentDashboardStatus withdrawRequestStatus;
   final String? withdrawRequestMessage;
+  final PaymentDashboardStatus stripeCheckStatus;
+  final bool stripeIsConnected;
+  final bool stripeChargesEnabled;
+  final List<String> stripeRequirements;
+  final String stripeDetailsEn;
+  final String? stripeCheckErrorMessage;
+  final PaymentDashboardStatus stripeConnectStatus;
+  final String? stripeConnectErrorMessage;
+  final String? stripeOnboardingUrl;
 
   PaymentDashboardState copyWith({
     PaymentDashboardStatus? status,
@@ -63,6 +81,18 @@ class PaymentDashboardState extends Equatable {
     PaymentDashboardStatus? withdrawRequestStatus,
     String? withdrawRequestMessage,
     bool clearWithdrawRequestMessage = false,
+    PaymentDashboardStatus? stripeCheckStatus,
+    bool? stripeIsConnected,
+    bool? stripeChargesEnabled,
+    List<String>? stripeRequirements,
+    String? stripeDetailsEn,
+    String? stripeCheckErrorMessage,
+    bool clearStripeCheckError = false,
+    PaymentDashboardStatus? stripeConnectStatus,
+    String? stripeConnectErrorMessage,
+    bool clearStripeConnectError = false,
+    String? stripeOnboardingUrl,
+    bool clearStripeOnboardingUrl = false,
   }) {
     return PaymentDashboardState(
       status: status ?? this.status,
@@ -88,6 +118,21 @@ class PaymentDashboardState extends Equatable {
       withdrawRequestMessage: clearWithdrawRequestMessage
           ? null
           : (withdrawRequestMessage ?? this.withdrawRequestMessage),
+      stripeCheckStatus: stripeCheckStatus ?? this.stripeCheckStatus,
+      stripeIsConnected: stripeIsConnected ?? this.stripeIsConnected,
+      stripeChargesEnabled: stripeChargesEnabled ?? this.stripeChargesEnabled,
+      stripeRequirements: stripeRequirements ?? this.stripeRequirements,
+      stripeDetailsEn: stripeDetailsEn ?? this.stripeDetailsEn,
+      stripeCheckErrorMessage: clearStripeCheckError
+          ? null
+          : (stripeCheckErrorMessage ?? this.stripeCheckErrorMessage),
+      stripeConnectStatus: stripeConnectStatus ?? this.stripeConnectStatus,
+      stripeConnectErrorMessage: clearStripeConnectError
+          ? null
+          : (stripeConnectErrorMessage ?? this.stripeConnectErrorMessage),
+      stripeOnboardingUrl: clearStripeOnboardingUrl
+          ? null
+          : (stripeOnboardingUrl ?? this.stripeOnboardingUrl),
     );
   }
 
@@ -108,5 +153,14 @@ class PaymentDashboardState extends Equatable {
         payoutLoadingMore,
         withdrawRequestStatus,
         withdrawRequestMessage,
+        stripeCheckStatus,
+        stripeIsConnected,
+        stripeChargesEnabled,
+        stripeRequirements,
+        stripeDetailsEn,
+        stripeCheckErrorMessage,
+        stripeConnectStatus,
+        stripeConnectErrorMessage,
+        stripeOnboardingUrl,
       ];
 }

@@ -9,9 +9,11 @@ import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orde
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_event.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_state.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/services/receipt_printer_service.dart';
 
 class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
-  OrdersBloc(this._repo, this._notificationsWs) : super(const OrdersState()) {
+  OrdersBloc(this._repo, this._notificationsWs, this._receiptPrinter)
+      : super(const OrdersState()) {
     on<OrdersLoadRequested>(_onLoad);
     on<OrdersRefreshRequested>(_onRefresh);
     on<OrdersLoadMoreRequested>(_onLoadMore);
@@ -23,8 +25,29 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
 
   final OrdersRepository _repo;
   final VendorNotificationsWsService _notificationsWs;
+  final ReceiptPrinterService _receiptPrinter;
   StreamSubscription<VendorWsEvent>? _wsSubscription;
   DateTime? _lastRealtimeRefreshAt;
+
+  List<VendorOrderUiModel> _activeUiItems(List<VendorOrdersItem> items) {
+    return items
+        .where((item) => !_isTerminalStatus(item.status))
+        .map((item) => item.toUiModel())
+        .toList();
+  }
+
+  bool _isTerminalStatus(String raw) {
+    switch (raw.trim().toLowerCase()) {
+      case 'delivered':
+      case 'completed':
+      case 'cancelled':
+      case 'canceled':
+      case 'delivery_failed':
+        return true;
+      default:
+        return false;
+    }
+  }
 
   void _syncNewOrderAlertSound(
     List<VendorOrderUiModel> items, {
@@ -68,7 +91,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
     emit(state.copyWith(status: OrdersLoadStatus.loading, clearError: true));
     try {
       final page = await _repo.fetchOrders();
-      final items = page.items.map((e) => e.toUiModel()).toList();
+      final items = _activeUiItems(page.items);
       emit(
         state.copyWith(
           status: OrdersLoadStatus.success,
@@ -99,7 +122,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
     emit(state.copyWith(status: OrdersLoadStatus.loading, clearError: true));
     try {
       final page = await _repo.fetchOrders();
-      final items = page.items.map((e) => e.toUiModel()).toList();
+      final items = _activeUiItems(page.items);
       emit(
         state.copyWith(
           status: OrdersLoadStatus.success,
@@ -131,7 +154,7 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
     emit(state.copyWith(isLoadingMore: true, clearError: true));
     try {
       final page = await _repo.fetchOrders(nextPageUrl: url);
-      final newItems = page.items.map((e) => e.toUiModel()).toList();
+      final newItems = _activeUiItems(page.items);
       emit(
         state.copyWith(
           status: OrdersLoadStatus.success,
@@ -164,6 +187,22 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
         orderId: event.orderBackendId,
         status: event.nextStatusApi,
       );
+      if (event.nextStatusApi.trim().toLowerCase() == 'confirmed') {
+        VendorOrderUiModel? confirmedOrder;
+        for (final order in state.items) {
+          if (order.backendId == event.orderBackendId) {
+            confirmedOrder = order;
+            break;
+          }
+        }
+        unawaited(
+          _receiptPrinter.printNewOrderReceiptFromWs({
+            'type': 'order_created',
+            'order_id': event.orderBackendId,
+            if (confirmedOrder != null) 'order_number': confirmedOrder.id,
+          }),
+        );
+      }
       final nextUiStatus = VendorOrdersItem.statusFromApi(event.nextStatusApi);
       final isTerminal =
           nextUiStatus == VendorOrderStatus.completed ||

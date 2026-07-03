@@ -68,6 +68,10 @@ import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/
     as _i8;
 import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/services/receipt_printer_service.dart'
     as _i865;
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/delete_account/data/delete_account_repository.dart'
+    as _i186;
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/delete_account/data/delete_account_repository_impl.dart'
+    as _i813;
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/data/notifications_repository.dart'
     as _i546;
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/notification/data/notifications_repository_impl.dart'
@@ -122,6 +126,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i546.NotificationsRepository>(
       () => _i37.NotificationsRepositoryImpl(gh<_i361.Dio>()),
+    );
+    gh.factory<_i186.DeleteAccountRepository>(
+      () => _i813.DeleteAccountRepositoryImpl(gh<_i361.Dio>()),
     );
     gh.lazySingleton<_i865.ReceiptPrinterService>(
       () => _i865.ReceiptPrinterService(

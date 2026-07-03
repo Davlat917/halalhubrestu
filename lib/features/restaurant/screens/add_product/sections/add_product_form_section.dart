@@ -22,6 +22,10 @@ class AddProductFormSection extends StatelessWidget {
     this.onRemoveInitialImage,
     required this.onToggleCategory,
     required this.onToggleIngredient,
+    required this.onToggleRecommendation,
+    required this.onAddModifierGroup,
+    required this.onUpdateModifierGroup,
+    required this.onRemoveModifierGroup,
     required this.onChangeAvailability,
     this.initialImageUrls = const [],
     this.showSelectionSummaryFields = true,
@@ -42,6 +46,11 @@ class AddProductFormSection extends StatelessWidget {
   final ValueChanged<int>? onRemoveInitialImage;
   final void Function(int id, bool selected) onToggleCategory;
   final void Function(int id, bool selected) onToggleIngredient;
+  final void Function(int id, bool selected) onToggleRecommendation;
+  final ValueChanged<AddProductModifierGroup> onAddModifierGroup;
+  final void Function(int index, AddProductModifierGroup group)
+  onUpdateModifierGroup;
+  final ValueChanged<int> onRemoveModifierGroup;
   final ValueChanged<bool> onChangeAvailability;
   final List<String> initialImageUrls;
   final bool showSelectionSummaryFields;
@@ -66,12 +75,17 @@ class AddProductFormSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: AddProductImageSection(
-                        images: state.images,
-                        initialImageUrls: initialImageUrls,
-                        onPick: onPickImages,
-                        onRemoveImage: onRemoveImage,
-                        onRemoveInitialImage: onRemoveInitialImage,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AddProductImageSection(
+                            images: state.images,
+                            initialImageUrls: initialImageUrls,
+                            onPick: onPickImages,
+                            onRemoveImage: onRemoveImage,
+                            onRemoveInitialImage: onRemoveInitialImage,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 24),
@@ -88,6 +102,10 @@ class AddProductFormSection extends StatelessWidget {
                         onSubmit: onSubmit,
                         onToggleCategory: onToggleCategory,
                         onToggleIngredient: onToggleIngredient,
+                        onToggleRecommendation: onToggleRecommendation,
+                        onAddModifierGroup: onAddModifierGroup,
+                        onUpdateModifierGroup: onUpdateModifierGroup,
+                        onRemoveModifierGroup: onRemoveModifierGroup,
                         onChangeAvailability: onChangeAvailability,
                         showSelectionSummaryFields: showSelectionSummaryFields,
                       ),
@@ -117,6 +135,10 @@ class AddProductFormSection extends StatelessWidget {
                       onSubmit: onSubmit,
                       onToggleCategory: onToggleCategory,
                       onToggleIngredient: onToggleIngredient,
+                      onToggleRecommendation: onToggleRecommendation,
+                      onAddModifierGroup: onAddModifierGroup,
+                      onUpdateModifierGroup: onUpdateModifierGroup,
+                      onRemoveModifierGroup: onRemoveModifierGroup,
                       onChangeAvailability: onChangeAvailability,
                       showSelectionSummaryFields: showSelectionSummaryFields,
                     ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
+import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
+import 'package:halalhub_restaurant/core/network/network_exception.dart';
 import 'package:halalhub_restaurant/core/router/app_router.dart';
 import 'package:halalhub_restaurant/core/storage/storage.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
@@ -9,7 +11,9 @@ import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
 import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/delete_account/data/delete_account_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/screens/language/language_picker_sheet.dart';
+import 'package:halalhub_restaurant/core/services/launch_social_or_phone.dart';
 import 'package:halalhub_restaurant/gen/assets.gen.dart';
 
 /// Hisob menyusi uchun dialog va placeholder amallar.
@@ -22,6 +26,38 @@ abstract final class VendorAccountMenuHandlers {
 
   static Future<void> showLanguagePicker(BuildContext context) async {
     await LanguagePickerSheet.open(context);
+  }
+
+  static Future<void> openInstagram(BuildContext context) {
+    return _launchSocialLink(
+      context,
+      'instagram:${Constants.supportInstagramUsername}',
+    );
+  }
+
+  static Future<void> openWhatsapp(BuildContext context) {
+    return _launchSocialLink(
+      context,
+      'whatsapp:${Constants.supportWhatsappLaunchNumber}',
+    );
+  }
+
+  static Future<void> openPhone(BuildContext context) {
+    return _launchSocialLink(context, Constants.supportUsPhoneE164);
+  }
+
+  static Future<void> _launchSocialLink(
+    BuildContext context,
+    String target,
+  ) async {
+    try {
+      await launchSocialOrPhone(target);
+    } catch (_) {
+      if (!context.mounted) return;
+      getIt<Display>().error(
+        TranslationKeys.commonCouldNotOpenLink.tr(context: context),
+      );
+    }
   }
 
   static void showLogOutPlaceholder(BuildContext context) {
@@ -50,6 +86,7 @@ abstract final class VendorAccountMenuHandlers {
         namedArgs: {'reason': reasonLabel},
       ),
       yesLabel: TranslationKeys.yes.tr(context: context),
+      onConfirm: () => _deleteAccountAndGoToLogin(context: context),
     );
   }
 
@@ -59,6 +96,7 @@ abstract final class VendorAccountMenuHandlers {
     required String title,
     required String description,
     required String yesLabel,
+    Future<void> Function()? onConfirm,
   }) async {
     await showDialog<void>(
       context: context,
@@ -142,7 +180,11 @@ abstract final class VendorAccountMenuHandlers {
                             ),
                             onPressed: () async {
                               Navigator.of(ctx).pop();
-                              await _finishSessionAndGoToLogin();
+                              if (onConfirm != null) {
+                                await onConfirm();
+                              } else {
+                                await _finishSessionAndGoToLogin();
+                              }
                             },
                           ),
                         ),
@@ -164,7 +206,83 @@ abstract final class VendorAccountMenuHandlers {
     await storage.refreshToken.delete();
   }
 
-  /// Tasdiqdan keyin 2 s loading, tokenlarni tozalash, login sahifasiga o‘tish.
+  static Future<void> _deleteAccountAndGoToLogin({
+    required BuildContext context,
+  }) async {
+    final router = getIt<AppRouter>();
+    final display = getIt<Display>();
+    final rootCtx = router.navigatorKey.currentContext ?? context;
+    var loadingShown = false;
+
+    void hideLoading() {
+      if (!loadingShown) return;
+      loadingShown = false;
+      final navCtx = router.navigatorKey.currentContext;
+      if (navCtx != null && navCtx.mounted) {
+        final nav = Navigator.of(navCtx, rootNavigator: true);
+        if (nav.canPop()) nav.pop();
+      }
+    }
+
+    if (rootCtx.mounted) {
+      loadingShown = true;
+      showDialog<void>(
+        context: rootCtx,
+        barrierDismissible: false,
+        useRootNavigator: true,
+        builder: (loadingCtx) => PopScope(
+          canPop: false,
+          child: Material(
+            color: Colors.black.withValues(alpha: 0.35),
+            child: const Center(
+              child: Card(
+                color: StaticColors.white,
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [CircularProgressIndicator.adaptive()],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    try {
+      await getIt<DeleteAccountRepository>().deleteAccount();
+      await _clearSessionTokens();
+      hideLoading();
+      if (context.mounted) {
+        display.success(
+          TranslationKeys.deleteAccountSuccess.tr(context: context),
+        );
+      }
+      await router.replaceAll([
+        const AuthFlowRoute(children: [SignInRoute()]),
+      ]);
+    } catch (e) {
+      hideLoading();
+      final message = e is NetworkException
+          ? e.message
+          : TranslationKeys.deleteAccountFailed.tr(context: context);
+      if (context.mounted) {
+        display.error(
+          message.isNotEmpty
+              ? message
+              : TranslationKeys.deleteAccountFailed.tr(context: context),
+        );
+      }
+    }
+  }
+
+  /// Tasdiqdan keyin tokenlarni tozalash, login sahifasiga o‘tish.
   static Future<void> _finishSessionAndGoToLogin() async {
     final router = getIt<AppRouter>();
     final rootCtx = router.navigatorKey.currentContext;

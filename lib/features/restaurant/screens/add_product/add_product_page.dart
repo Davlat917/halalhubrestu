@@ -95,6 +95,18 @@ class _AddProductBodyState extends State<_AddProductFormBody>
     ]);
   }
 
+  String? _buildModifierGroupsJson(AddProductState state) {
+    if (state.modifierGroups.isEmpty) return null;
+    return jsonEncode(
+      state.modifierGroups.map((e) => e.toJson()).toList(growable: false),
+    );
+  }
+
+  String? _buildRecommendationsJson(AddProductState state) {
+    if (state.selectedRecommendationIds.isEmpty) return null;
+    return jsonEncode(state.selectedRecommendationIds.toList(growable: false));
+  }
+
   Future<void> _pickImages() async {
     final files = await _picker.pickMultiImage(imageQuality: 85);
     if (!mounted || files.isEmpty) return;
@@ -139,6 +151,8 @@ class _AddProductBodyState extends State<_AddProductFormBody>
       description: nonEmptyOrNull(descriptionController.text),
       discountsJson: _buildDiscountsJson(),
       deletedImageIds: null,
+      modifierGroupsJson: _buildModifierGroupsJson(state),
+      recommendationsJson: _buildRecommendationsJson(state),
     );
 
     if (!mounted) return;
@@ -210,6 +224,18 @@ class _AddProductBodyState extends State<_AddProductFormBody>
             context.read<AddProductBloc>().toggleIngredient(id, selected);
             formKey.currentState?.validate();
           },
+          onToggleRecommendation: (id, selected) {
+            context.read<AddProductBloc>().toggleRecommendation(id, selected);
+          },
+          onAddModifierGroup: (group) {
+            context.read<AddProductBloc>().addModifierGroup(group);
+          },
+          onUpdateModifierGroup: (index, group) {
+            context.read<AddProductBloc>().updateModifierGroupAt(index, group);
+          },
+          onRemoveModifierGroup: (index) {
+            context.read<AddProductBloc>().removeModifierGroupAt(index);
+          },
           onChangeAvailability: (value) =>
               context.read<AddProductBloc>().setAvailability(value),
           showSelectionSummaryFields: false,
@@ -239,13 +265,9 @@ class _AddProductLoadingSkeleton extends StatelessWidget {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _imageSkeleton(),
-                      ),
+                      Expanded(child: _imageSkeleton()),
                       const SizedBox(width: 24),
-                      Expanded(
-                        child: _detailsSkeleton(),
-                      ),
+                      Expanded(child: _detailsSkeleton()),
                     ],
                   );
                 }

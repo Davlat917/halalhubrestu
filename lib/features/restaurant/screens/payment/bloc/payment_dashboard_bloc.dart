@@ -11,6 +11,8 @@ import 'package:halalhub_restaurant/features/restaurant/data/repositories/restau
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/bloc/payment_dashboard_event.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/bloc/payment_dashboard_state.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/models/payment_history_row.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/payment/utils/payment_stripe_connect_urls.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/payment/utils/payment_stripe_details_utils.dart';
 
 class PaymentDashboardBloc
     extends Bloc<PaymentDashboardEvent, PaymentDashboardState> {
@@ -21,6 +23,9 @@ class PaymentDashboardBloc
     on<PaymentPayoutHistoryLoadMore>(_onPayoutHistoryLoadMore);
     on<PaymentWithdrawRequestSubmitted>(_onWithdrawRequestSubmitted);
     on<PaymentWithdrawRequestStatusCleared>(_onWithdrawRequestStatusCleared);
+    on<PaymentStripeCheckRequested>(_onStripeCheckRequested);
+    on<PaymentStripeConnectRequested>(_onStripeConnectRequested);
+    on<PaymentStripeConnectHandled>(_onStripeConnectHandled);
   }
 
   final RestaurantRepo _repo;
@@ -66,6 +71,88 @@ class PaymentDashboardBloc
         clearPayoutHistoryError: payoutResult.errorMessage == null,
         applyPayoutNextUrl: true,
         payoutNextUrl: payoutResult.nextUrl,
+      ),
+    );
+  }
+
+  Future<void> _onStripeCheckRequested(
+    PaymentStripeCheckRequested event,
+    Emitter<PaymentDashboardState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        stripeCheckStatus: PaymentDashboardStatus.loading,
+        clearStripeCheckError: true,
+      ),
+    );
+    final result = await _fetchStripeCheckResult();
+    emit(
+      state.copyWith(
+        stripeCheckStatus: result.status,
+        stripeIsConnected: result.isConnected,
+        stripeChargesEnabled: result.chargesEnabled,
+        stripeRequirements: result.requirements,
+        stripeDetailsEn: result.detailsEn,
+        stripeCheckErrorMessage: result.errorMessage,
+        clearStripeCheckError: result.errorMessage == null,
+      ),
+    );
+  }
+
+  Future<void> _onStripeConnectRequested(
+    PaymentStripeConnectRequested event,
+    Emitter<PaymentDashboardState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        stripeConnectStatus: PaymentDashboardStatus.loading,
+        clearStripeConnectError: true,
+        clearStripeOnboardingUrl: true,
+      ),
+    );
+    try {
+      final result = await _repo.connectVendorStripe(
+        returnUrl: PaymentStripeConnectUrls.returnUrl,
+        refreshUrl: PaymentStripeConnectUrls.refreshUrl,
+      );
+      final url = result.onboardingUrl.trim();
+      if (url.isEmpty) {
+        emit(
+          state.copyWith(
+            stripeConnectStatus: PaymentDashboardStatus.failure,
+            stripeConnectErrorMessage:
+                TranslationKeys.paymentStripeConnectFailed.tr(),
+          ),
+        );
+        return;
+      }
+      emit(
+        state.copyWith(
+          stripeConnectStatus: PaymentDashboardStatus.success,
+          stripeOnboardingUrl: url,
+        ),
+      );
+    } catch (e) {
+      final ex = e is NetworkException ? e : null;
+      emit(
+        state.copyWith(
+          stripeConnectStatus: PaymentDashboardStatus.failure,
+          stripeConnectErrorMessage:
+              ex?.message ?? TranslationKeys.paymentStripeConnectFailed.tr(),
+        ),
+      );
+    }
+  }
+
+  void _onStripeConnectHandled(
+    PaymentStripeConnectHandled event,
+    Emitter<PaymentDashboardState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        stripeConnectStatus: PaymentDashboardStatus.initial,
+        clearStripeConnectError: true,
+        clearStripeOnboardingUrl: true,
       ),
     );
   }
@@ -230,8 +317,50 @@ class PaymentDashboardBloc
     }
   }
 
+  Future<_StripeCheckFetchResult> _fetchStripeCheckResult() async {
+    try {
+      final vendor = await _repo.getVendorMe();
+      final vendorId = vendor.id;
+      if (vendorId == null || vendorId <= 0) {
+        return _StripeCheckFetchResult(
+          status: PaymentDashboardStatus.failure,
+          isConnected: false,
+          chargesEnabled: false,
+          requirements: const [],
+          detailsEn: '',
+          errorMessage: TranslationKeys.paymentStripeVendorNotFound.tr(),
+        );
+      }
+      final check = await _repo.checkVendorStripe(vendorId: vendorId);
+      return _StripeCheckFetchResult(
+        status: PaymentDashboardStatus.success,
+        isConnected: check.isConnected,
+        chargesEnabled: check.chargesEnabled,
+        requirements: check.requirements,
+        detailsEn: check.isConnected
+            ? PaymentStripeDetailsUtils.buildConnectedMessage(check)
+            : PaymentStripeDetailsUtils.englishDetails(check.detailsMessage),
+      );
+    } catch (e) {
+      final ex = e is NetworkException ? e : null;
+      return _StripeCheckFetchResult(
+        status: PaymentDashboardStatus.failure,
+        isConnected: false,
+        chargesEnabled: false,
+        requirements: const [],
+        detailsEn: '',
+        errorMessage:
+            ex?.message ?? TranslationKeys.paymentStripeCheckFailed.tr(),
+      );
+    }
+  }
+
   Future<
-    (_DashboardFetchResult, _BankInfoFetchResult, _PayoutHistoryFetchResult)
+    (
+      _DashboardFetchResult,
+      _BankInfoFetchResult,
+      _PayoutHistoryFetchResult,
+    )
   >
   _fetchAllData() async {
     final results = await Future.wait([
@@ -393,5 +522,23 @@ class _PayoutHistoryFetchResult {
   final PaymentDashboardStatus status;
   final List<PaymentHistoryRowData> rows;
   final String? nextUrl;
+  final String? errorMessage;
+}
+
+class _StripeCheckFetchResult {
+  const _StripeCheckFetchResult({
+    required this.status,
+    required this.isConnected,
+    required this.chargesEnabled,
+    required this.requirements,
+    required this.detailsEn,
+    this.errorMessage,
+  });
+
+  final PaymentDashboardStatus status;
+  final bool isConnected;
+  final bool chargesEnabled;
+  final List<String> requirements;
+  final String detailsEn;
   final String? errorMessage;
 }

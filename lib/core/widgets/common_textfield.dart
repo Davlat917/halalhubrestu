@@ -127,7 +127,9 @@ class _CommonTextFieldState extends State<CommonTextField> {
       borderRadius: _borderRadius,
     );
     _enabledBorder = OutlineInputBorder(
-      borderSide: BorderSide(color: widget.enabledBorderColor ?? StaticColors.backgroundColor),
+      borderSide: BorderSide(
+        color: widget.enabledBorderColor ?? StaticColors.backgroundColor,
+      ),
       borderRadius: _borderRadius,
     );
     _disabledBorder = OutlineInputBorder(
@@ -135,7 +137,9 @@ class _CommonTextFieldState extends State<CommonTextField> {
       borderRadius: _borderRadius,
     );
     _focusedBorder = OutlineInputBorder(
-      borderSide: BorderSide(color: widget.focusedBorderColor ?? StaticColors.primary.withAlpha(125)),
+      borderSide: BorderSide(
+        color: widget.focusedBorderColor ?? StaticColors.primary.withAlpha(125),
+      ),
       borderRadius: _borderRadius,
     );
     _errorBorder = OutlineInputBorder(
@@ -162,33 +166,55 @@ class _CommonTextFieldState extends State<CommonTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final double aW = widget.availableWidth ?? MediaQuery.sizeOf(context).width; // ✅
+    final double aW =
+        widget.availableWidth ?? MediaQuery.sizeOf(context).width; // ✅
     final bool isTablet = aW >= 700;
 
-    final double inputTextSize = widget.textSize ?? (isTablet ? context.spOf(18, aW) : context.spOf(16, aW)); // ✅
-    final double hintTextSize = widget.textSize ?? (isTablet ? context.spOf(16, aW) : context.spOf(14, aW));  // ✅
+    final double inputTextSize =
+        widget.textSize ??
+        (isTablet ? context.spOf(18, aW) : context.spOf(16, aW)); // ✅
+    final double hintTextSize =
+        widget.textSize ??
+        (isTablet ? context.spOf(16, aW) : context.spOf(14, aW)); // ✅
 
-    final EdgeInsets resolvedPadding = widget.padding ??
+    final bool isSingleLine = (widget.maxLines ?? 1) == 1;
+    final double horizontalPadding = isTablet
+        ? context.wOf(20, aW).clamp(16.0, 24.0).toDouble()
+        : context.wOf(16, aW);
+    final double verticalPadding = isSingleLine
+        ? (isTablet
+              ? context.wOf(12, aW).clamp(12.0, 14.0).toDouble()
+              : context.wOf(12, aW))
+        : (isTablet
+              ? context.wOf(16, aW).clamp(14.0, 18.0).toDouble()
+              : context.wOf(12, aW));
+
+    final EdgeInsets resolvedPadding =
+        widget.padding ??
         EdgeInsets.symmetric(
-          horizontal: isTablet ? context.wOf(20, aW) : context.wOf(16, aW),
-          vertical: isTablet ? context.wOf(16, aW) : context.wOf(12, aW),
+          horizontal: horizontalPadding,
+          vertical: verticalPadding,
         );
 
     return TextFormField(
       scrollPadding: widget.scrollPadding ?? EdgeInsets.all(context.size16),
       maxLength: widget.maxLength,
-      buildCounter: (
-        BuildContext context, {
-        required int currentLength,
-        required bool isFocused,
-        required int? maxLength,
-      }) => null,
-      textCapitalization: widget.upperCaseInput ? TextCapitalization.characters : TextCapitalization.sentences,
+      buildCounter:
+          (
+            BuildContext context, {
+            required int currentLength,
+            required bool isFocused,
+            required int? maxLength,
+          }) => null,
+      textCapitalization: widget.upperCaseInput
+          ? TextCapitalization.characters
+          : TextCapitalization.sentences,
       validator: widget.validator,
       focusNode: widget.focusNode,
       readOnly: widget.readOnly,
-      textAlignVertical:
-          (widget.maxLines ?? 1) > 1 ? TextAlignVertical.top : TextAlignVertical.center,
+      textAlignVertical: (widget.maxLines ?? 1) > 1
+          ? TextAlignVertical.top
+          : TextAlignVertical.center,
       maxLines: widget.maxLines,
       minLines: widget.minLines,
       initialValue: widget.initialValue,
@@ -212,6 +238,7 @@ class _CommonTextFieldState extends State<CommonTextField> {
       inputFormatters: _getFormatters(),
       textInputAction: widget.textInputAction,
       decoration: InputDecoration(
+        isDense: true,
         filled: true,
         fillColor: widget.background ?? StaticColors.backgroundColor,
         hintText: widget.hint,
@@ -219,7 +246,11 @@ class _CommonTextFieldState extends State<CommonTextField> {
         contentPadding: resolvedPadding,
         prefixIcon: widget.prefixIcon == null
             ? null
-            : Align(widthFactor: 1, alignment: Alignment.center, child: widget.prefixIcon),
+            : Align(
+                widthFactor: 1,
+                alignment: Alignment.center,
+                child: widget.prefixIcon,
+              ),
         hintStyle: TextStyle(
           fontSize: hintTextSize, // ✅
           fontWeight: FontWeight.w400,
@@ -235,13 +266,16 @@ class _CommonTextFieldState extends State<CommonTextField> {
             ? IconButton(
                 icon: Icon(
                   color: StaticColors.primary,
-                  _passwordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _passwordVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                 ),
-                onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+                onPressed: () =>
+                    setState(() => _passwordVisible = !_passwordVisible),
               )
             : widget.suffix != null
-                ? IconButton(icon: widget.suffix!, onPressed: widget.suffixPressed)
-                : null,
+            ? IconButton(icon: widget.suffix!, onPressed: widget.suffixPressed)
+            : null,
       ),
       style: TextStyle(
         fontSize: inputTextSize, // ✅
@@ -256,7 +290,10 @@ class _CommonTextFieldState extends State<CommonTextField> {
 
 class PriceInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     String newText = newValue.text.replaceAll(RegExp(r'\D'), '');
     final StringBuffer buffer = StringBuffer();
     final int len = newText.length;
@@ -280,7 +317,10 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   final int? maxLength;
 
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     if (maxLength != null && newValue.text.length > maxLength!) {
       return oldValue;
     }

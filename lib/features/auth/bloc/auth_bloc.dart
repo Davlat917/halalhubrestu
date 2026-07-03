@@ -18,7 +18,6 @@ class AuthBloc extends BaseBloc<AuthEvent, AuthState> {
 
     on<LoginEmailSubmitted>(_onLoginEmail);
     on<SignUpEmailSubmitted>(_onSignUpEmail);
-    on<SignUpPhoneSubmitted>(_onSignUpPhone);
     on<VerifyOtpSubmitted>(_onVerifyOtp);
     on<ResetOtpRequested>(_onResetOtp);
     on<PasswordResetRequestSubmitted>(_onPasswordResetRequest);
@@ -64,16 +63,6 @@ class AuthBloc extends BaseBloc<AuthEvent, AuthState> {
         password2: event.password2,
         role: event.role,
       );
-      emit(const AuthSuccess(message: 'Verification code sent.'));
-    } catch (e) {
-      _emitFailure(emit, e);
-    }
-  }
-
-  Future<void> _onSignUpPhone(SignUpPhoneSubmitted event, Emitter<AuthState> emit) async {
-    emit(const AuthLoading(AuthPendingAction.signUpPhone));
-    try {
-      await _authRepository.signUpPhone(phoneNumber: event.phoneNumber, role: event.role);
       emit(const AuthSuccess(message: 'Verification code sent.'));
     } catch (e) {
       _emitFailure(emit, e);

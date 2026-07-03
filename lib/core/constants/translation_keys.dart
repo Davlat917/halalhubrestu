@@ -14,12 +14,32 @@ abstract final class TranslationKeys {
   // Account menu
   static const accountTitle = 'account.title';
   static const support = 'account.support';
+  static const settings = 'account.settings';
   static const notification = 'account.notification';
   static const language = 'account.language';
   static const logout = 'account.logout';
   static const delete = 'account.delete';
   static const comingSoon = 'account.comingSoon';
   static const comingSoonWithLabel = 'account.comingSoonWithLabel';
+  static const accountInstagram = 'account.instagram';
+  static const accountWhatsapp = 'account.whatsapp';
+  static const accountPhone = 'account.phone';
+  static const settingsVendorName = 'settings.vendorName';
+  static const settingsEmail = 'settings.email';
+  static const settingsPhoneNumber = 'settings.phoneNumber';
+  static const settingsChangePassword = 'settings.changePassword';
+  static const changePasswordTitle = 'settings.changePasswordTitle';
+  static const changePasswordDescription = 'settings.changePasswordDescription';
+  static const changePasswordRequestSent = 'settings.changePasswordRequestSent';
+  static const changePasswordOtpTitle = 'settings.changePasswordOtpTitle';
+  static const changePasswordOtpDescription =
+      'settings.changePasswordOtpDescription';
+  static const changePasswordVerify = 'settings.changePasswordVerify';
+  static const changePasswordCodeRequired =
+      'settings.changePasswordCodeRequired';
+  static const changePasswordCodeVerified =
+      'settings.changePasswordCodeVerified';
+  static const settingsProfileLoadFailed = 'settings.profileLoadFailed';
   static const vendorNavOrders = 'vendorNav.orders';
   static const vendorNavAddProduct = 'vendorNav.addProduct';
   static const vendorNavDetail = 'vendorNav.detail';
@@ -55,6 +75,8 @@ abstract final class TranslationKeys {
   static const deleteReasonOther = 'deleteAccount.reasons.other';
   static const deleteConfirmTitle = 'deleteAccount.confirmTitle';
   static const deleteConfirmDescription = 'deleteAccount.confirmDescription';
+  static const deleteAccountSuccess = 'deleteAccount.success';
+  static const deleteAccountFailed = 'deleteAccount.failed';
 
   // Logout dialog
   static const logoutConfirmTitle = 'logout.confirmTitle';
@@ -140,8 +162,10 @@ abstract final class TranslationKeys {
   static const printerSendOrdersTo = 'printer.sendOrdersTo';
   static const printerOptionTablet = 'printer.optionTablet';
   static const printerOptionClover = 'printer.optionClover';
-  static const printerCloverComingSoonMessage = 'printer.cloverComingSoonMessage';
-  static const printerProviderComingSoonMessage = 'printer.providerComingSoonMessage';
+  static const printerCloverComingSoonMessage =
+      'printer.cloverComingSoonMessage';
+  static const printerProviderComingSoonMessage =
+      'printer.providerComingSoonMessage';
   static const printerWifiIpNotDetected = 'printer.wifiIpNotDetected';
   static const printerSearchingNetwork = 'printer.searchingNetwork';
   static const printerNotFoundHint = 'printer.notFoundHint';
@@ -156,7 +180,8 @@ abstract final class TranslationKeys {
   static const printerSendFailed = 'printer.sendFailed';
   static const printerSavedRemoved = 'printer.savedRemoved';
   static const printerCloverConnectFailed = 'printer.cloverConnectFailed';
-  static const printerCloverOpenBrowserFailed = 'printer.cloverOpenBrowserFailed';
+  static const printerCloverOpenBrowserFailed =
+      'printer.cloverOpenBrowserFailed';
   static const printerVendorNotFound = 'printer.vendorNotFound';
   static const printerSelectProviderFailed = 'printer.selectProviderFailed';
   static const printerNetworkCount = 'printer.networkCount';
@@ -186,6 +211,10 @@ abstract final class TranslationKeys {
   static const ordersPaymentType = 'orders.paymentType';
   static const ordersPaymentStatus = 'orders.paymentStatus';
   static const ordersTotalPrice = 'orders.totalPrice';
+  static const ordersItemsTotal = 'orders.itemsTotal';
+  static const ordersModifiersTotal = 'orders.modifiersTotal';
+  static const ordersDeliveryPhone = 'orders.deliveryPhone';
+  static const ordersDeliveryAddress = 'orders.deliveryAddress';
   static const ordersInvalidHistoryResponse = 'orders.invalidHistoryResponse';
   static const ordersInvalidOrdersResponse = 'orders.invalidOrdersResponse';
   static const ordersInvalidDetailResponse = 'orders.invalidDetailResponse';
@@ -316,6 +345,12 @@ abstract final class TranslationKeys {
       'vendorDetail.financeTransactionsQuantity';
   static const vendorFinanceTransactionsPriceLabel =
       'vendorDetail.financeTransactionsPriceLabel';
+  static const vendorFinanceTransactionsDownloadPdf =
+      'vendorDetail.financeTransactionsDownloadPdf';
+  static const vendorFinanceTransactionsPdfDownloading =
+      'vendorDetail.financeTransactionsPdfDownloading';
+  static const vendorFinanceTransactionsPdfFailed =
+      'vendorDetail.financeTransactionsPdfFailed';
 
   // Update restaurant
   static const updateAddCategory = 'updateRestaurant.addCategory';
@@ -386,6 +421,28 @@ abstract final class TranslationKeys {
   static const paymentManualWithdrawal = 'payment.manualWithdrawal';
   static const paymentManualWithdrawalSubtitle =
       'payment.manualWithdrawalSubtitle';
+  static const paymentWeeklyPayoutNoticeTitle =
+      'payment.weeklyPayoutNoticeTitle';
+  static const paymentWeeklyPayoutNoticeDescription =
+      'payment.weeklyPayoutNoticeDescription';
+  static const paymentManualWithdrawDescription =
+      'payment.manualWithdrawDescription';
+  static const paymentStripeNotConnectedTitle =
+      'payment.stripeNotConnectedTitle';
+  static const paymentStripeAccount = 'payment.stripeAccount';
+  static const paymentStripeCheck = 'payment.stripeCheck';
+  static const paymentStripeChecking = 'payment.stripeChecking';
+  static const paymentStripeCheckHint = 'payment.stripeCheckHint';
+  static const paymentStripeConnectedTitle = 'payment.stripeConnectedTitle';
+  static const paymentStripeConnectedIncompleteTitle =
+      'payment.stripeConnectedIncompleteTitle';
+  static const paymentStripeCheckFailed = 'payment.stripeCheckFailed';
+  static const paymentStripeConnect = 'payment.stripeConnect';
+  static const paymentStripeConnecting = 'payment.stripeConnecting';
+  static const paymentStripeConnectFailed = 'payment.stripeConnectFailed';
+  static const paymentStripeConnectOpenFailed =
+      'payment.stripeConnectOpenFailed';
+  static const paymentStripeVendorNotFound = 'payment.stripeVendorNotFound';
   static const paymentFullBusinessName = 'payment.fullBusinessName';
   static const paymentBusinessNameHint = 'payment.businessNameHint';
   static const paymentEinNumber = 'payment.einNumber';

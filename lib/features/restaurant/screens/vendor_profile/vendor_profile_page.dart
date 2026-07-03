@@ -9,6 +9,7 @@ import 'package:halalhub_restaurant/features/restaurant/screens/add_product/bloc
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/payment/bloc/payment_dashboard_bloc.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/services/receipt_printer_service.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_clips/bloc/vendor_clips_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/bloc/vendor_detail_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/widgets/vendor_profile_scaffold.dart';
@@ -29,6 +30,7 @@ class VendorProfilePage extends ResponsiveSection {
         create: (_) => OrdersBloc(
           getIt<OrdersRepository>(),
           getIt<VendorNotificationsWsService>(),
+          getIt<ReceiptPrinterService>(),
         ),
       ),
       BlocProvider(create: (_) => AddProductBloc(getIt<RestaurantRepo>())),
@@ -52,6 +54,7 @@ class VendorProfilePage extends ResponsiveSection {
         create: (_) => OrdersBloc(
           getIt<OrdersRepository>(),
           getIt<VendorNotificationsWsService>(),
+          getIt<ReceiptPrinterService>(),
         ),
       ),
       BlocProvider(create: (_) => AddProductBloc(getIt<RestaurantRepo>())),

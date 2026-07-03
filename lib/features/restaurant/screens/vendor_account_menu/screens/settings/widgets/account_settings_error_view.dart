@@ -1,0 +1,41 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
+import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
+import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
+
+class AccountSettingsErrorView extends StatelessWidget {
+  const AccountSettingsErrorView({super.key, required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              TranslationKeys.settingsProfileLoadFailed.tr(context: context),
+              textAlign: TextAlign.center,
+              style: AppTextStyle.regular14(
+                context,
+                color: StaticColors.c666666,
+              ),
+            ),
+            const SizedBox(height: 16),
+            CustomButton(
+              label: TranslationKeys.retry.tr(context: context),
+              width: 180,
+              height: 46,
+              onPressed: onRetry,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

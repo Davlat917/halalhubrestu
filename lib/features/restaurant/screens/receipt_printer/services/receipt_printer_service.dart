@@ -36,6 +36,10 @@ class ReceiptPrinterService {
   static const int defaultRawPort = 9100;
 
   Future<void> _printQueue = Future.value();
+  Future<void> _orderPrintQueue = Future.value();
+  final Map<String, _CachedOrderReceiptPayload> _pendingOrderReceiptPayloads = {};
+  static const int _maxCachedOrderReceiptPayloads = 40;
+  static const Duration _cachedOrderReceiptTtl = Duration(hours: 24);
   _ReceiptVendorHeader? _cachedHeader;
   DateTime? _cachedHeaderAt;
   static const Duration _headerTtl = Duration(minutes: 5);
@@ -44,14 +48,15 @@ class ReceiptPrinterService {
   int? _cachedLogoCacheVersion;
   static const String _logoAssetPath = 'assets/images/logo_image.png';
   static const int _receiptMarginPx = 20;
+
   /// 80mm termal ~576 dot (203 DPI). 58mm bo'lsa 384 qilib o'zgartiring.
   static const int _printerDotsWidth = 576;
   static const int _dotsPerCharNormal = 12;
-  static const int _contentDotsWidth =
-      _printerDotsWidth - 2 * _receiptMarginPx;
+  static const int _contentDotsWidth = _printerDotsWidth - 2 * _receiptMarginPx;
   static const int _receiptLineWidth = _contentDotsWidth ~/ _dotsPerCharNormal;
   static const int _logoMaxWidthPx = 240;
   static const int _logoCanvasPaddingPx = 28;
+
   /// Qora card (order ID + ism). Test chek + hot **restart** (reload yetmaydi).
   /// [_orderBarInnerPadChars] — chap/o'ng bo'shliq (0, 1, 2, 3... belgi).
   /// [_orderBarVertPadLines] — yuqori/past qora padding: 0, 0.5, 1, 1.5, 2
@@ -79,8 +84,7 @@ class ReceiptPrinterService {
     return (host != null && host.isNotEmpty) ? 'clover' : 'tablet';
   }
 
-  Stream<String?> watchSelectedPrinterType() =>
-      _storage.receiptPrinterType.watch();
+  Stream<String?> watchSelectedPrinterType() => _storage.receiptPrinterType.watch();
 
   Future<void> setSelectedPrinterType(String type) async {
     final normalized = type.trim().toLowerCase();
@@ -96,11 +100,7 @@ class ReceiptPrinterService {
 
   Future<void> clearSavedPrinter() => _storage.receiptPrinterHost.delete();
 
-  Future<bool> probeHost(
-    String host, {
-    int port = defaultRawPort,
-    Duration timeout = const Duration(milliseconds: 900),
-  }) async {
+  Future<bool> probeHost(String host, {int port = defaultRawPort, Duration timeout = const Duration(milliseconds: 900)}) async {
     final h = host.trim();
     if (h.isEmpty) return false;
     Socket? socket;
@@ -108,8 +108,7 @@ class ReceiptPrinterService {
       socket = await Socket.connect(h, port, timeout: timeout);
       return true;
     } catch (e, st) {
-      _logDebug('Receipt printer probe failed for $h:$port — $e',
-          stackTrace: st);
+      _logDebug('Receipt printer probe failed for $h:$port — $e', stackTrace: st);
       return false;
     } finally {
       try {
@@ -120,18 +119,11 @@ class ReceiptPrinterService {
 
   Future<String?> currentWifiIpv4() async {
     try {
-      final interfaces = await NetworkInterface.list(
-        includeLoopback: false,
-        type: InternetAddressType.IPv4,
-      );
+      final interfaces = await NetworkInterface.list(includeLoopback: false, type: InternetAddressType.IPv4);
       String? fallback;
       for (final ni in interfaces) {
         final name = ni.name.toLowerCase();
-        final wifiLike = name.contains('wlan') ||
-            name.contains('wifi') ||
-            name.contains('wl') ||
-            name == 'en0' ||
-            name.contains('p2p');
+        final wifiLike = name.contains('wlan') || name.contains('wifi') || name.contains('wl') || name == 'en0' || name.contains('p2p');
         for (final addr in ni.addresses) {
           if (addr.isLoopback) continue;
           final ip = addr.address;
@@ -157,23 +149,17 @@ class ReceiptPrinterService {
     return List.generate(254, (i) => '$a.$b.$c.${i + 1}');
   }
 
-  Future<List<String>> discoverRawPrinters({
-    int port = defaultRawPort,
-    Duration perHostTimeout = const Duration(milliseconds: 650),
-    int batchSize = 36,
-  }) async {
+  Future<List<String>> discoverRawPrinters({int port = defaultRawPort, Duration perHostTimeout = const Duration(milliseconds: 650), int batchSize = 36}) async {
     final wifiIp = await currentWifiIpv4();
     if (wifiIp == null) {
-      _logInfo(
-          'Receipt printer discover: WiFi IP topilmadi (simulator yoki ruxsat).');
+      _logInfo('Receipt printer discover: WiFi IP topilmadi (simulator yoki ruxsat).');
       return const [];
     }
     final hosts = _hostsInSameSubnet(wifiIp);
     final found = <String>[];
 
     for (var i = 0; i < hosts.length; i += batchSize) {
-      final slice = hosts.sublist(
-          i, i + batchSize > hosts.length ? hosts.length : i + batchSize);
+      final slice = hosts.sublist(i, i + batchSize > hosts.length ? hosts.length : i + batchSize);
       final results = await Future.wait(
         slice.map((h) async {
           final ok = await probeHost(h, port: port, timeout: perHostTimeout);
@@ -190,47 +176,129 @@ class ReceiptPrinterService {
   Future<void> _ensureVendorHeaderLoaded({bool forceRefresh = false}) async {
     final now = DateTime.now();
     final ts = _cachedHeaderAt;
-    if (!forceRefresh &&
-        _cachedHeader != null &&
-        ts != null &&
-        now.difference(ts) < _headerTtl) {
+    if (!forceRefresh && _cachedHeader != null && ts != null && now.difference(ts) < _headerTtl) {
       return;
     }
     try {
       final r = await _dio.get(Constants.vendorsMe);
       final data = r.data;
       if (data is! Map<String, dynamic>) return;
-      _cachedHeader = _ReceiptVendorHeader(
-        name: data['name']?.toString().trim(),
-        address: data['address']?.toString().trim(),
-        phone: (data['phone_number1'] ?? data['phone'] ?? data['phone_number2'])
-            ?.toString()
-            .trim(),
-      );
+      _cachedHeader = _ReceiptVendorHeader(name: data['name']?.toString().trim(), address: data['address']?.toString().trim(), phone: (data['phone_number1'] ?? data['phone'] ?? data['phone_number2'])?.toString().trim());
       _cachedHeaderAt = now;
     } catch (e, st) {
       _logDebug('Vendor header olishda xato: $e', stackTrace: st);
     }
   }
 
-  Future<bool> printNewOrderReceiptFromWs(Map<String, dynamic> raw) async {
-    final h = savedHost?.trim();
-    if (h == null || h.isEmpty) return false;
-    try {
-      await _ensureVendorHeaderLoaded(forceRefresh: true);
-      final enriched = await _enrichOrderPayload(raw);
-      final data = await _buildNewOrderEscPosPayload(enriched);
-      final ok = await _sendEscPos(data, host: h);
-      if (ok) _logInfo('Yangi zakaz cheki yuborildi: $h');
-      return ok;
-    } catch (e, st) {
-      _logWarn('Zakaz cheki chop etishda xato: $e', stackTrace: st);
-      return false;
+  /// WS `order_created` to'liq payload — confirm cheki uchun saqlanadi.
+  void cacheOrderCreatedPayload(Map<String, dynamic> raw) {
+    final keys = _orderPayloadCacheKeys(raw);
+    if (keys.isEmpty) return;
+    _pruneOrderReceiptPayloadCache();
+    final entry = _CachedOrderReceiptPayload(Map<String, dynamic>.from(raw), DateTime.now());
+    for (final key in keys) {
+      _pendingOrderReceiptPayloads[key] = entry;
     }
   }
 
-  Future<Map<String, dynamic>> _enrichOrderPayload(
-      Map<String, dynamic> raw) async {
+  Future<bool> printNewOrderReceiptFromWs(Map<String, dynamic> raw) async {
+    final done = Completer<bool>();
+    _orderPrintQueue = _orderPrintQueue.then((_) async {
+      try {
+        final ok = await _printNewOrderReceiptBody(raw);
+        if (!done.isCompleted) done.complete(ok);
+      } catch (e, st) {
+        _logWarn('Zakaz cheki chop etishda xato: $e', stackTrace: st);
+        if (!done.isCompleted) done.complete(false);
+      }
+    });
+    return done.future;
+  }
+
+  Future<bool> _printNewOrderReceiptBody(Map<String, dynamic> raw) async {
+    final h = savedHost?.trim();
+    if (h == null || h.isEmpty) return false;
+    if (!await _shouldAllowOrderPrint(raw)) {
+      _logInfo('Zakaz cheki dublikat — chop etilmadi');
+      return false;
+    }
+    await _recordPrintedOrder(raw);
+    await _ensureVendorHeaderLoaded(forceRefresh: true);
+    final payload = _resolvePrintPayload(raw);
+    final enriched = await _enrichOrderPayload(payload);
+    final data = await _buildNewOrderEscPosPayload(enriched);
+    final ok = await _sendEscPos(data, host: h);
+    if (ok) {
+      _logInfo('Buyurtma cheki yuborildi (confirm): $h');
+      _removeCachedOrderPayload(payload);
+    }
+    return ok;
+  }
+
+  Map<String, dynamic> _resolvePrintPayload(Map<String, dynamic> raw) {
+    final key = _orderPayloadCacheKey(raw);
+    if (key == null) return raw;
+    final cached = _pendingOrderReceiptPayloads[key];
+    if (cached == null) return raw;
+    return {...cached.raw, ...raw};
+  }
+
+  void _removeCachedOrderPayload(Map<String, dynamic> raw) {
+    for (final key in _orderPayloadCacheKeys(raw)) {
+      _pendingOrderReceiptPayloads.remove(key);
+    }
+  }
+
+  void _pruneOrderReceiptPayloadCache() {
+    final now = DateTime.now();
+    _pendingOrderReceiptPayloads.removeWhere((_, entry) => now.difference(entry.cachedAt) > _cachedOrderReceiptTtl);
+    while (_pendingOrderReceiptPayloads.length > _maxCachedOrderReceiptPayloads) {
+      _pendingOrderReceiptPayloads.remove(_pendingOrderReceiptPayloads.keys.first);
+    }
+  }
+
+  String? _orderPayloadCacheKey(Map<String, dynamic> raw) {
+    final keys = _orderPayloadCacheKeys(raw);
+    return keys.isEmpty ? null : keys.first;
+  }
+
+  List<String> _orderPayloadCacheKeys(Map<String, dynamic> raw) {
+    final keys = <String>[];
+    for (final key in const ['order_id', 'orderId', 'id', 'order_number', 'orderNumber']) {
+      final value = raw[key];
+      if (value == null) continue;
+      final s = value.toString().trim();
+      if (s.isNotEmpty && !keys.contains(s)) keys.add(s);
+    }
+    return keys;
+  }
+
+  bool _hasRichReceiptPayload(Map<String, dynamic> raw) {
+    final items = raw['items'];
+    final priceData = raw['price_data'];
+    return items is List && items.isNotEmpty && priceData is Map && priceData.isNotEmpty;
+  }
+
+  void _preserveWsReceiptFields(Map<String, dynamic> merged, Map<String, dynamic> preserve) {
+    for (final key in const ['items', 'price_data', 'customer_name', 'order_type', 'payment_type', 'order_number', 'order_id', 'created_at']) {
+      if (!_payloadFieldHasValue(preserve[key])) continue;
+      merged[key] = preserve[key];
+    }
+  }
+
+  bool _payloadFieldHasValue(dynamic value) {
+    if (value == null) return false;
+    if (value is String) return value.trim().isNotEmpty;
+    if (value is List) return value.isNotEmpty;
+    if (value is Map) return value.isNotEmpty;
+    return true;
+  }
+
+  Future<Map<String, dynamic>> _enrichOrderPayload(Map<String, dynamic> raw) async {
+    final snapshot = Map<String, dynamic>.from(raw);
+    if (_hasRichReceiptPayload(snapshot)) {
+      return snapshot;
+    }
     final merged = Map<String, dynamic>.from(raw);
     try {
       final response = await _dio.get(Constants.vendorsOrders);
@@ -238,13 +306,8 @@ class ReceiptPrinterService {
       if (data is! Map<String, dynamic>) return merged;
       final results = data['results'];
       if (results is! List) return merged;
-      final orderId =
-          _scalarString(raw, const ['order_id', 'orderId', 'id']);
-      final orderNo = _scalarString(raw, const [
-        'order_number',
-        'orderNumber',
-        'number',
-      ]);
+      final orderId = _scalarString(raw, const ['order_id', 'orderId', 'id']);
+      final orderNo = _scalarString(raw, const ['order_number', 'orderNumber', 'number']);
       Map<String, dynamic>? matched;
       for (final row in results) {
         if (row is! Map) continue;
@@ -264,8 +327,7 @@ class ReceiptPrinterService {
       final detailId = _backendOrderId(merged);
       if (detailId != null) {
         try {
-          final detailRes =
-              await _dio.get(Constants.vendorsOrderDetailById(detailId));
+          final detailRes = await _dio.get(Constants.vendorsOrderDetailById(detailId));
           final detailData = detailRes.data;
           if (detailData is Map<String, dynamic>) {
             merged.addAll(detailData);
@@ -279,6 +341,7 @@ class ReceiptPrinterService {
     } catch (e, st) {
       _logDebug('Order payload enrich xato: $e', stackTrace: st);
     }
+    _preserveWsReceiptFields(merged, snapshot);
     return merged;
   }
 
@@ -294,10 +357,7 @@ class ReceiptPrinterService {
     return null;
   }
 
-  Future<bool> printTestReceipt({
-    String? host,
-    int port = defaultRawPort,
-  }) async {
+  Future<bool> printTestReceipt({String? host, int port = defaultRawPort}) async {
     final h = (host ?? savedHost)?.trim();
     if (h == null || h.isEmpty) {
       _logWarn('printTestReceipt: printer host yo\'q');
@@ -343,44 +403,29 @@ class ReceiptPrinterService {
       'customer_name': 'Michelle Taylor',
       'items': [
         {
-          'name': 'Big Mac Meal',
-          'quantity': 1,
-          'price': '7.29',
-          'total_price': '7.29',
-        },
-        {
-          'name': 'Large Fries',
+          'name': 'Burger',
           'quantity': 2,
-          'price': '2.75',
-          'total_price': '5.50',
+          'price': '34.00',
+          'total_price': '68.00',
+          'modifiers': [
+            {'name': 'Meet', 'group_name': 'Protein', 'price': '4.00'},
+            {'name': 'Tzatziki', 'group_name': 'Sauce', 'price': '0.00'},
+            {'name': 'Garlic Mayo', 'group_name': 'Sauce', 'price': '0.00'},
+            {'name': 'No Onions', 'group_name': 'Remove', 'price': '0.00'},
+          ],
         },
-        {
-          'name': 'Coke',
-          'quantity': 1,
-          'price': '5.50',
-          'total_price': '5.50',
-        },
+        {'name': 'Large Fries', 'quantity': 2, 'price': '2.75', 'total_price': '5.50'},
+        {'name': 'Coke', 'quantity': 1, 'price': '5.50', 'total_price': '5.50'},
       ],
-      'price_data': {
-        'subtotal': '22.95',
-        'tax': '2.05',
-        'delivery_price': '0.00',
-        'service_fee': '0.00',
-        'total_price': '25.00',
-      },
+      'price_data': {'subtotal': '22.95', 'tax': '2.05', 'delivery_price': '0.00', 'service_fee': '0.00', 'total_price': '25.00'},
     };
   }
 
-  Future<bool> _sendEscPos(
-    Uint8List data, {
-    required String host,
-    int port = defaultRawPort,
-  }) {
+  Future<bool> _sendEscPos(Uint8List data, {required String host, int port = defaultRawPort}) {
     final done = Completer<bool>();
     _printQueue = _printQueue.then((_) async {
       try {
-        final ok =
-            await _sendEscPosWithRetries(data, host: host, port: port);
+        final ok = await _sendEscPosWithRetries(data, host: host, port: port);
         if (!done.isCompleted) done.complete(ok);
       } catch (e, st) {
         _logWarn('ESC/POS yuborishda xato: $e', stackTrace: st);
@@ -393,33 +438,20 @@ class ReceiptPrinterService {
   static const int _connectAttempts = 3;
   static const Duration _connectTimeout = Duration(seconds: 15);
 
-  Future<bool> _sendEscPosWithRetries(
-    Uint8List data, {
-    required String host,
-    int port = defaultRawPort,
-  }) async {
+  Future<bool> _sendEscPosWithRetries(Uint8List data, {required String host, int port = defaultRawPort}) async {
     for (var attempt = 0; attempt < _connectAttempts; attempt++) {
       if (attempt > 0) {
         await Future<void>.delayed(Duration(milliseconds: 350 * attempt));
       }
-      final ok = await _sendEscPosOnce(data,
-          host: host, port: port, timeout: _connectTimeout);
+      final ok = await _sendEscPosOnce(data, host: host, port: port, timeout: _connectTimeout);
       if (ok) return true;
-      _logDebug(
-          'Printer ulanmadi (${attempt + 1}/$_connectAttempts): $host:$port');
+      _logDebug('Printer ulanmadi (${attempt + 1}/$_connectAttempts): $host:$port');
     }
-    _logWarn(
-      'ESC/POS: $_connectAttempts marta urinishdan keyin muvaffaqiyatsiz — $host:$port.',
-    );
+    _logWarn('ESC/POS: $_connectAttempts marta urinishdan keyin muvaffaqiyatsiz — $host:$port.');
     return false;
   }
 
-  Future<bool> _sendEscPosOnce(
-    Uint8List data, {
-    required String host,
-    int port = defaultRawPort,
-    required Duration timeout,
-  }) async {
+  Future<bool> _sendEscPosOnce(Uint8List data, {required String host, int port = defaultRawPort, required Duration timeout}) async {
     Socket? socket;
     try {
       socket = await Socket.connect(host, port, timeout: timeout);
@@ -439,14 +471,12 @@ class ReceiptPrinterService {
   }
 
   void _appendLatin1Line(BytesBuilder b, String s) {
-    final safe =
-        String.fromCharCodes(s.runes.map((r) => r <= 0xFF ? r : 0x3F));
+    final safe = String.fromCharCodes(s.runes.map((r) => r <= 0xFF ? r : 0x3F));
     b.add(latin1.encode('$safe\n'));
   }
 
   void _appendLatin1Part(BytesBuilder b, String s) {
-    final safe =
-        String.fromCharCodes(s.runes.map((r) => r <= 0xFF ? r : 0x3F));
+    final safe = String.fromCharCodes(s.runes.map((r) => r <= 0xFF ? r : 0x3F));
     b.add(latin1.encode(safe));
   }
 
@@ -462,8 +492,7 @@ class ReceiptPrinterService {
   }
 
   Future<void> _ensureLogoEscPos() async {
-    if (_cachedLogoEscPos != null &&
-        _cachedLogoCacheVersion == _logoCacheVersion) {
+    if (_cachedLogoEscPos != null && _cachedLogoCacheVersion == _logoCacheVersion) {
       return;
     }
     try {
@@ -480,17 +509,9 @@ class ReceiptPrinterService {
   img.Image _prepareLogoForPrint(img.Image decoded) {
     final transparent = img.ColorRgba8(255, 255, 255, 0);
     var work = _trimLogoContent(decoded);
-    work = img.copyExpandCanvas(
-      work,
-      padding: _logoCanvasPaddingPx,
-      backgroundColor: transparent,
-    );
+    work = img.copyExpandCanvas(work, padding: _logoCanvasPaddingPx, backgroundColor: transparent);
     if (work.width > _logoMaxWidthPx) {
-      work = img.copyResize(
-        work,
-        width: _logoMaxWidthPx,
-        interpolation: img.Interpolation.cubic,
-      );
+      work = img.copyResize(work, width: _logoMaxWidthPx, interpolation: img.Interpolation.cubic);
     }
     return _centerLogoOnPaper(work);
   }
@@ -510,28 +531,14 @@ class ReceiptPrinterService {
       }
     }
     if (maxX < minX || maxY < minY) return src;
-    return img.copyCrop(
-      src,
-      x: minX,
-      y: minY,
-      width: maxX - minX + 1,
-      height: maxY - minY + 1,
-    );
+    return img.copyCrop(src, x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1);
   }
 
   img.Image _centerLogoOnPaper(img.Image src) {
     if (src.width >= _contentDotsWidth) return src;
-    final canvas = img.Image(
-      width: _contentDotsWidth,
-      height: src.height,
-      numChannels: 4,
-    );
+    final canvas = img.Image(width: _contentDotsWidth, height: src.height, numChannels: 4);
     img.fill(canvas, color: img.ColorRgba8(255, 255, 255, 0));
-    img.compositeImage(
-      canvas,
-      src,
-      dstX: (_contentDotsWidth - src.width) ~/ 2,
-    );
+    img.compositeImage(canvas, src, dstX: (_contentDotsWidth - src.width) ~/ 2);
     return canvas;
   }
 
@@ -572,10 +579,7 @@ class ReceiptPrinterService {
   }
 
   String _receiptOrderId(Map<String, dynamic> raw) {
-    var id =
-        _scalarString(raw, const ['order_number', 'orderNumber', 'number']) ??
-            _scalarString(raw, const ['order_id', 'orderId', 'id']) ??
-            '';
+    var id = _scalarString(raw, const ['order_number', 'orderNumber', 'number']) ?? _scalarString(raw, const ['order_id', 'orderId', 'id']) ?? '';
     id = id.trim();
     if (id.startsWith('#')) id = id.substring(1);
     // "ORD-CF8C5319" -> "CF8C5319" — qisqaroq, bardan o'tadi
@@ -584,19 +588,13 @@ class ReceiptPrinterService {
   }
 
   bool _isDeliveryOrder(Map<String, dynamic> raw) {
-    final orderType =
-        _scalarString(raw, const ['order_type', 'orderType']) ?? 'pickup';
+    final orderType = _scalarString(raw, const ['order_type', 'orderType']) ?? 'pickup';
     final normalized = orderType.trim().toLowerCase();
-    return normalized == 'delivery' ||
-        normalized == 'driver' ||
-        normalized == 'courier';
+    return normalized == 'delivery' || normalized == 'driver' || normalized == 'courier';
   }
 
   String _formatReceiptDate(DateTime dt) {
-    const months = <String>[
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
+    const months = <String>['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final minute = dt.minute.toString().padLeft(2, '0');
     final suffix = dt.hour >= 12 ? 'pm' : 'am';
@@ -614,13 +612,11 @@ class ReceiptPrinterService {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
 
-    final parts =
-        trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = trimmed.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.length <= 1) return trimmed;
 
     final first = parts.first;
-    final lastLetters =
-        parts.last.replaceAll(RegExp(r'[^A-Za-z]'), '');
+    final lastLetters = parts.last.replaceAll(RegExp(r'[^A-Za-z]'), '');
     if (lastLetters.isEmpty) return first;
 
     return '$first ${lastLetters[0].toUpperCase()}.';
@@ -645,24 +641,15 @@ class ReceiptPrinterService {
   }
 
   String _receiptCustomerDisplayNameFromFlatMap(Map<String, dynamic> raw) {
-    final flat = _scalarString(raw, const [
-      'customer_name', 'customer_full_name', 'full_name', 'client_name',
-      'recipient_name', 'buyer_name', 'contact_name', 'receiver_name',
-      'delivery_name', 'delivery_contact_name', 'user_name',
-      'user_full_name', 'profile_name', 'customer_display_name',
-    ]);
+    final flat = _scalarString(raw, const ['customer_name', 'customer_full_name', 'full_name', 'client_name', 'recipient_name', 'buyer_name', 'contact_name', 'receiver_name', 'delivery_name', 'delivery_contact_name', 'user_name', 'user_full_name', 'profile_name', 'customer_display_name']);
     if (flat != null && flat.trim().isNotEmpty) return flat.trim();
 
-    final cfn =
-        _scalarString(raw, const ['customer_first_name', 'buyer_first_name']);
-    final cln =
-        _scalarString(raw, const ['customer_last_name', 'buyer_last_name']);
+    final cfn = _scalarString(raw, const ['customer_first_name', 'buyer_first_name']);
+    final cln = _scalarString(raw, const ['customer_last_name', 'buyer_last_name']);
     final combined = '${cfn ?? ''} ${cln ?? ''}'.trim();
     if (combined.isNotEmpty) return combined;
 
-    for (final nestKey in const [
-      'customer', 'user', 'client', 'buyer', 'profile', 'recipient',
-    ]) {
+    for (final nestKey in const ['customer', 'user', 'client', 'buyer', 'profile', 'recipient']) {
       final m = _nestedMap(raw, nestKey);
       if (m == null) continue;
       final nested = _receiptCustomerDisplayNameFromFlatMap(m);
@@ -674,22 +661,15 @@ class ReceiptPrinterService {
   void _escNormalSize(BytesBuilder b) => b.add(const [0x1D, 0x21, 0x00]);
   void _escDoubleHeight(BytesBuilder b) => b.add(const [0x1D, 0x21, 0x01]);
   void _escDoubleSize(BytesBuilder b) => b.add(const [0x1D, 0x21, 0x11]);
-  void _escLineSpacing(BytesBuilder b, int dots) =>
-      b.add([0x1B, 0x33, dots]);
+  void _escLineSpacing(BytesBuilder b, int dots) => b.add([0x1B, 0x33, dots]);
   void _escFeedLines(BytesBuilder b, int lines) => b.add([0x1B, 0x64, lines]);
 
   /// Chap/o'ng [_receiptMarginPx]. GS W ishlatilmaydi — tor maydon o'ngda bo'sh qoldirardi.
   void _escSetReceiptMargins(BytesBuilder b) {
-    b.add([
-      0x1D,
-      0x4C,
-      _receiptMarginPx & 0xFF,
-      (_receiptMarginPx >> 8) & 0xFF,
-    ]);
+    b.add([0x1D, 0x4C, _receiptMarginPx & 0xFF, (_receiptMarginPx >> 8) & 0xFF]);
   }
 
-  Future<Uint8List> _buildNewOrderEscPosPayload(
-      Map<String, dynamic> raw) async {
+  Future<Uint8List> _buildNewOrderEscPosPayload(Map<String, dynamic> raw) async {
     await _ensureLogoEscPos();
     final b = BytesBuilder(copy: false);
 
@@ -711,8 +691,7 @@ class ReceiptPrinterService {
             current = '';
           }
           for (var i = 0; i < w.length; i += maxWidth) {
-            final end =
-                (i + maxWidth > w.length) ? w.length : i + maxWidth;
+            final end = (i + maxWidth > w.length) ? w.length : i + maxWidth;
             out.add(w.substring(i, end));
           }
           continue;
@@ -728,8 +707,6 @@ class ReceiptPrinterService {
       if (current.isNotEmpty) out.add(current);
       return out;
     }
-
-
 
     // pairRow: left chapga, right o'ngda — jami W char (margin ichidagi kenglik).
     void pairRow(String left, String right, {bool bold = false, bool boldLeft = false}) {
@@ -803,8 +780,7 @@ class ReceiptPrinterService {
 
       final leftPart = '${' ' * innerPad}$left';
       final rightPart = '${' ' * innerPad}$right';
-      final gap =
-          (barCharW - leftPart.length - rightPart.length).clamp(1, barCharW);
+      final gap = (barCharW - leftPart.length - rightPart.length).clamp(1, barCharW);
       final barText = '$leftPart${' ' * gap}$rightPart';
 
       void blackCardLineFull() {
@@ -882,9 +858,7 @@ class ReceiptPrinterService {
     b.add(const [0x1D, 0x42, 0x00]);
     b.add(const [0x1B, 0x45, 0x00]);
     b.add(const [0x1B, 0x61, 0x00]); // chapga
-    final placedAt =
-        _parseOrderDate(raw, const ['created_at', 'placed_at']) ??
-            DateTime.now();
+    final placedAt = _parseOrderDate(raw, const ['created_at', 'placed_at']) ?? DateTime.now();
     line('Placed at ${_formatReceiptDate(placedAt)}');
     blankLines(_sectionGapLines);
     line('-' * _receiptLineWidth);
@@ -909,12 +883,23 @@ class ReceiptPrinterService {
     final items = _extractReceiptItems(raw);
     if (items.isNotEmpty) {
       for (final item in items) {
-        pairRow('${item.qty}x ${item.name}', item.price, bold: true);
+        final qtyPrefix = '${item.qty}x ';
+        pairRow('$qtyPrefix${item.name}', item.price, bold: true);
+        final modifiersLine = _formatReceiptModifiersLine(item.modifiers);
+        if (modifiersLine.isNotEmpty) {
+          final priceText = item.price.trim();
+          final reservedRight = priceText.isEmpty ? 0 : priceText.length + 1;
+          final modifiersMaxWidth = (_receiptLineWidth - qtyPrefix.length - reservedRight)
+              .clamp(1, _receiptLineWidth - qtyPrefix.length);
+          final indent = ' ' * qtyPrefix.length;
+          for (final wrapped in wrapWords(modifiersLine, modifiersMaxWidth)) {
+            line('$indent$wrapped');
+          }
+        }
         blankLines(1);
       }
     } else {
-      final ordersSummary =
-          _scalarString(raw, const ['orders', 'items_summary']);
+      final ordersSummary = _scalarString(raw, const ['orders', 'items_summary']);
       if (ordersSummary != null) pairRow(ordersSummary, '', bold: true);
       final msg = _scalarString(raw, const ['message', 'title', 'body']);
       if (msg != null) pairRow(msg, '', bold: true);
@@ -932,13 +917,7 @@ class ReceiptPrinterService {
     // price_data ichidan oladi; 0.00 bo'lgan promotion ko'rsatilmaydi
     // ---------------------------------------------------------------
     _escNormalSize(b);
-    _buildPriceSection(
-      b,
-      raw,
-      isDeliveryOrder,
-      pairRow,
-      () => blankLines(_priceRowGapLines),
-    );
+    _buildPriceSection(b, raw, isDeliveryOrder, pairRow, () => blankLines(_priceRowGapLines));
 
     // ---------------------------------------------------------------
     // FOOTER
@@ -961,21 +940,15 @@ class ReceiptPrinterService {
   // ---------------------------------------------------------------
   // Narxlar sektsiyasi — pickup va delivery uchun alohida mantig'
   // ---------------------------------------------------------------
-  void _buildPriceSection(
-    BytesBuilder b,
-    Map<String, dynamic> raw,
-    bool isDelivery,
-    void Function(String, String, {bool bold, bool boldLeft}) pairRow,
-    void Function() gapAfterRow,
-  ) {
+  void _buildPriceSection(BytesBuilder b, Map<String, dynamic> raw, bool isDelivery, void Function(String, String, {bool bold, bool boldLeft}) pairRow, void Function() gapAfterRow) {
     void priceRow(String left, String right, {bool bold = false}) {
       pairRow(left, right, bold: bold);
       gapAfterRow();
     }
+
     final pd = _nestedMap(raw, 'price_data') ?? const <String, dynamic>{};
 
-    String? _get(List<String> keys) =>
-        _scalarString(pd, keys) ?? _scalarString(raw, keys);
+    String? _get(List<String> keys) => _scalarString(pd, keys) ?? _scalarString(raw, keys);
 
     String _fmt(String? v) {
       if (v == null || v.trim().isEmpty) return '';
@@ -989,9 +962,7 @@ class ReceiptPrinterService {
       return n == null || n == 0.0;
     }
 
-    final subtotal = _get(const [
-      'subtotal', 'item_total_price', 'items_total', 'items_total_price',
-    ]);
+    final subtotal = _get(const ['subtotal', 'item_total_price', 'items_total', 'items_total_price']);
     final promotion = _get(const ['promotion', 'discount']);
     final serviceFee = _get(const ['service_fee', 'commission_fee']);
     final deliveryFee = _get(const ['delivery_price', 'delivery_fee']);
@@ -1019,10 +990,7 @@ class ReceiptPrinterService {
     if (tax != null) priceRow('Tax', _fmt(tax));
 
     // Agar original_total != total_price bo'lsa — ikkalasini ko'rsat
-    final hasOriginal = originalTotal != null &&
-        totalPrice != null &&
-        originalTotal.trim() != totalPrice.trim() &&
-        !_isZero(promotion);
+    final hasOriginal = originalTotal != null && totalPrice != null && originalTotal.trim() != totalPrice.trim() && !_isZero(promotion);
 
     if (hasOriginal) {
       priceRow('Original total', _fmt(originalTotal));
@@ -1038,25 +1006,14 @@ class ReceiptPrinterService {
   }
 
   String? _money(Map<String, dynamic> raw, List<String> keys) {
-    final value = _scalarString(raw, keys) ??
-        _scalarString(
-          _nestedMap(raw, 'price_data') ?? const <String, dynamic>{},
-          keys,
-        );
+    final value = _scalarString(raw, keys) ?? _scalarString(_nestedMap(raw, 'price_data') ?? const <String, dynamic>{}, keys);
     if (value == null) return null;
     if (value.contains('\$')) return value;
     return '\$$value';
   }
 
   bool _hasAnyTotals(Map<String, dynamic> raw) {
-    return _money(raw, const [
-              'item_total_price', 'subtotal', 'items_total',
-              'items_total_price',
-            ]) !=
-            null ||
-        _money(raw, const ['delivery_price', 'delivery_fee']) != null ||
-        _money(raw, const ['service_fee', 'commission_fee']) != null ||
-        _money(raw, const ['total_price', 'total']) != null;
+    return _money(raw, const ['item_total_price', 'subtotal', 'items_total', 'items_total_price']) != null || _money(raw, const ['delivery_price', 'delivery_fee']) != null || _money(raw, const ['service_fee', 'commission_fee']) != null || _money(raw, const ['total_price', 'total']) != null;
   }
 
   List<_ReceiptLineItem> _extractReceiptItems(Map<String, dynamic> raw) {
@@ -1082,25 +1039,72 @@ class ReceiptPrinterService {
     for (final e in source) {
       if (e is! Map) continue;
       final m = e.cast<dynamic, dynamic>();
-      final name =
-          (m['name'] ?? m['title'] ?? m['product_name'] ?? m['product'] ?? '')
-              .toString()
-              .trim();
+      final name = (m['name'] ?? m['title'] ?? m['product_name'] ?? m['product'] ?? '').toString().trim();
       if (name.isEmpty) continue;
       final qty = (m['quantity'] ?? m['qty'] ?? 1).toString().trim();
-      final unitPriceRaw =
-          (m['price'] ?? m['unit_price'] ?? '').toString().trim();
-      final totalPriceRaw =
-          (m['total_price'] ?? m['line_total'] ?? '').toString().trim();
-      final effectiveRaw = totalPriceRaw.isNotEmpty
-          ? totalPriceRaw
-          : (unitPriceRaw.isNotEmpty ? unitPriceRaw : '');
-      final price = effectiveRaw.isEmpty
-          ? ''
-          : (effectiveRaw.contains('\$') ? effectiveRaw : '\$$effectiveRaw');
-      out.add(_ReceiptLineItem(name: name, qty: qty, price: price));
+      final unitPriceRaw = (m['price'] ?? m['unit_price'] ?? '').toString().trim();
+      final totalPriceRaw = (m['total_price'] ?? m['line_total'] ?? '').toString().trim();
+      final effectiveRaw = totalPriceRaw.isNotEmpty ? totalPriceRaw : (unitPriceRaw.isNotEmpty ? unitPriceRaw : '');
+      final price = effectiveRaw.isEmpty ? '' : _formatReceiptMoney(effectiveRaw);
+      final modifiers = _mapReceiptModifiers(m['modifiers']);
+      out.add(
+        _ReceiptLineItem(
+          name: name,
+          qty: qty,
+          price: price,
+          modifiers: modifiers,
+        ),
+      );
     }
     return out;
+  }
+
+  List<_ReceiptModifierLine> _mapReceiptModifiers(dynamic rawModifiers) {
+    if (rawModifiers is! List) return const [];
+    final out = <_ReceiptModifierLine>[];
+    for (final entry in rawModifiers) {
+      if (entry is! Map) continue;
+      final map = entry.cast<dynamic, dynamic>();
+      final name = (map['name'] ?? '').toString().trim();
+      if (name.isEmpty) continue;
+      final priceRaw = (map['price'] ?? '').toString().trim();
+      out.add(
+        _ReceiptModifierLine(
+          name: name,
+          price: priceRaw.isEmpty ? '' : _formatReceiptMoney(priceRaw),
+        ),
+      );
+    }
+    return out;
+  }
+
+  String _formatReceiptModifiersLine(List<_ReceiptModifierLine> modifiers) {
+    final parts = <String>[];
+    for (final modifier in modifiers) {
+      final token = _formatModifierToken(modifier);
+      if (token.isNotEmpty) parts.add(token);
+    }
+    return parts.join(', ');
+  }
+
+  String _formatModifierToken(_ReceiptModifierLine modifier) {
+    final name = modifier.name.trim();
+    if (name.isEmpty) return '';
+    if (_isZeroMoney(modifier.price)) return name;
+    return '$name + ${modifier.price}';
+  }
+
+  bool _isZeroMoney(String value) {
+    final normalized = value.replaceAll('\$', '').trim();
+    if (normalized.isEmpty) return true;
+    final amount = double.tryParse(normalized);
+    return amount == null || amount == 0.0;
+  }
+
+  String _formatReceiptMoney(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+    return trimmed.contains('\$') ? trimmed : '\$$trimmed';
   }
 
   Uint8List _buildTestEscPosPayload(String printerHost, int port) {
@@ -1127,6 +1131,78 @@ class ReceiptPrinterService {
     b.add(const [0x1D, 0x56, 0x00]);
     return b.takeBytes();
   }
+
+  static const Duration _printDedupWindow = Duration(seconds: 90);
+
+  Future<bool> _shouldAllowOrderPrint(Map<String, dynamic> raw) async {
+    final key = _orderPrintKey(raw);
+    if (key == null) return true;
+    final now = DateTime.now();
+    final map = _readPrintDedupMap();
+    final lastPrintedAt = map[key];
+    if (lastPrintedAt != null && now.difference(lastPrintedAt) < _printDedupWindow) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _recordPrintedOrder(Map<String, dynamic> raw) async {
+    final key = _orderPrintKey(raw);
+    if (key == null) return;
+    final now = DateTime.now();
+    final map = _readPrintDedupMap();
+    map.removeWhere((_, ts) => now.difference(ts) > _printDedupWindow);
+    map[key] = now;
+    await _writePrintDedupMap(map);
+  }
+
+  Map<String, DateTime> _readPrintDedupMap() {
+    final raw = _storage.receiptPrintDedupJson.call();
+    if (raw == null || raw.trim().isEmpty) return <String, DateTime>{};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return <String, DateTime>{};
+      final out = <String, DateTime>{};
+      decoded.forEach((key, value) {
+        final k = key.toString();
+        if (value is String) {
+          final dt = DateTime.tryParse(value);
+          if (dt != null) out[k] = dt;
+        }
+      });
+      return out;
+    } catch (_) {
+      return <String, DateTime>{};
+    }
+  }
+
+  Future<void> _writePrintDedupMap(Map<String, DateTime> map) async {
+    final encoded = jsonEncode(map.map((key, value) => MapEntry(key, value.toIso8601String())));
+    await _storage.receiptPrintDedupJson.set(encoded);
+  }
+
+  String? _orderPrintKey(Map<String, dynamic> raw) {
+    const candidates = <String>['order_id', 'orderId', 'id', 'order_number', 'orderNumber'];
+    for (final key in candidates) {
+      final value = raw[key];
+      if (value == null) continue;
+      final s = value.toString().trim();
+      if (s.isNotEmpty) return s;
+    }
+    final message = raw['message']?.toString().trim() ?? '';
+    if (message.isEmpty) return null;
+    return 'msg:$message';
+  }
+}
+
+class _ReceiptModifierLine {
+  const _ReceiptModifierLine({
+    required this.name,
+    required this.price,
+  });
+
+  final String name;
+  final String price;
 }
 
 class _ReceiptLineItem {
@@ -1134,11 +1210,13 @@ class _ReceiptLineItem {
     required this.name,
     required this.qty,
     required this.price,
+    this.modifiers = const [],
   });
 
   final String name;
   final String qty;
   final String price;
+  final List<_ReceiptModifierLine> modifiers;
 }
 
 class _ReceiptVendorHeader {
@@ -1147,4 +1225,11 @@ class _ReceiptVendorHeader {
   final String? name;
   final String? address;
   final String? phone;
+}
+
+class _CachedOrderReceiptPayload {
+  const _CachedOrderReceiptPayload(this.raw, this.cachedAt);
+
+  final Map<String, dynamic> raw;
+  final DateTime cachedAt;
 }

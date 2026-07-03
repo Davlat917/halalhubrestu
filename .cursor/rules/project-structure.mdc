@@ -1,0 +1,44 @@
+---
+description: Project structure and widget extraction rules
+alwaysApply: true
+---
+
+# Project Structure
+
+Bu loyiha bo'yicha strukturaviy qoidalar:
+
+- Agar biror widget loyiha bo'ylab ikki martadan ortiq ishlatilsa, uni global widget sifatida `lib/core/widgets/` ichiga chiqarish kerak.
+- Global widgetlar qayta ishlatiladigan, feature'ga qattiq bog'lanmagan va parametrlar orqali sozlanadigan bo'lishi kerak.
+- Feature ichidagi faqat bitta ekranga tegishli widgetlar o'sha feature ichida qoladi; umumiylashganidan keyin `core/widgets`ga ko'chiriladi.
+- App bo'ylab barcha path qiymatlari `lib/core/constants/` ichidagi constantlardan olinishi kerak. String pathlarni UI yoki service kodida hardcode qilmaslik kerak.
+- Har qanday color kerak bo'lsa, avval `lib/core/theme/colors/static_colors.dart` ichiga qo'shib, keyin `StaticColors` orqali ishlatish kerak. UI kodida raw `Color(...)` ishlatmaslik kerak, faqat juda lokal va asosli holatlar bundan mustasno.
+- Size, spacing, radius va responsive o'lchamlar uchun `lib/core/extensions/size_extension.dart` extensionlaridan foydalanish kerak.
+- Barcha `TextStyle`lar uchun `lib/core/theme/app_textstyle/app_text_style.dart` ichidagi `AppTextStyle` helperlaridan foydalanish kerak. UI kodida inline `TextStyle(...)` yozmaslik kerak.
+- Barcha snackbar/toast/display xabarlari uchun `lib/core/widgets/display/` ichidagi display layerdan foydalanish kerak. `ScaffoldMessenger.showSnackBar` yoki bevosita `showSnackBar` ishlatmaslik kerak.
+- Dialoglar uchun `lib/core/widgets/app_confirm_dialog.dart` ichidagi `AppConfirmDialog`dan foydalanish kerak.
+- Barcha bo'sh holatlar uchun `lib/core/widgets/app_empty_state.dart` ichidagi `AppEmptyState`dan foydalanish kerak.
+- Barcha inputlar uchun `lib/core/widgets/common_textfield.dart` ichidagi `CommonTextField`dan foydalanish kerak.
+- Asosiy buttonlar uchun `lib/core/widgets/custom_button.dart` ichidagi `CustomButton`dan foydalanish kerak. Kichik button kerak bo'lsa, avval uni global reusable widget sifatida yaratib, keyin ishlatish kerak.
+- Network imagelar uchun `lib/core/widgets/network_image_chache.dart` ichidagi mavjud image widgetdan foydalanish kerak.
+- OTP/PIN kiritish UI uchun `lib/core/widgets/pincode_text.dart` ichidagi `PincodeText`dan foydalanish kerak.
+
+# Screen Structure
+
+Har bir screen folderi quyidagi strukturaga ega bo'lishi kerak:
+
+- `widgets/` - screen ichidagi mayda reusable UI widgetlar.
+- `sections/` - screenning yirik UI bo'limlari.
+- `data/` - screen ma'lumot qatlami.
+- `mixins/` - screen UI logikasi, controllerlar, local o'zgaruvchilar va funksiyalar.
+- `bloc/` - screen state management qatlami.
+
+Screen yozishda quyidagi qoidalarga amal qilish kerak:
+
+- Loyihani mayda widgetlarga ajratib yozish kerak; ajratilgan widgetlar screen ichidagi `widgets/` folderiga joylanadi.
+- UI ichidagi har qanday o'zgaruvchi, controller, listener va funksiya `mixins/` ichidagi mixin fayllarga chiqariladi.
+- `setState` ishlatilmaydi. Oddiy local reactive holatlar uchun `ValueNotifier`/`ValueListenableBuilder` ishlatiladi; murakkab holatlar uchun `bloc/` qatlami ishlatiladi.
+- Agar screen ichida shu pagega tegishli subpage bo'lsa, `screens/` folder ochiladi va uning ichida subpage uchun xuddi shu struktura tashkil qilinadi.
+- Subpage uchun alohida `mixins/` folder ochilmaydi; subpage mixinlari ota screenning `mixins/` folderi ichida alohida fayl qilib yoziladi.
+- `data/` folder ichida `models/` va `repository/` folderlari bo'ladi.
+- `data/repository/` ichida repository abstract/interface fayli va `repository_impl` fayli bo'lishi kerak.
+- API/network ishlari uchun `lib/core/network/` ichidagi umumiy network layerdan foydalanish kerak; feature ichida alohida Dio/client yaratmaslik kerak.

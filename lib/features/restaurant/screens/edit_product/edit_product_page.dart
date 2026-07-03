@@ -10,6 +10,7 @@ import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/display/display.dart';
+import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_product/vendor_product_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/bloc/add_product_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/add_product/mixins/add_product_form_mixin.dart';
@@ -32,6 +33,9 @@ class EditProductPage extends StatelessWidget {
     required this.initialIngredientTitles,
     required this.initialImageUrls,
     required this.initialImageIds,
+    this.initialModifierGroups = const [],
+    this.initialRecommendationProducts = const [],
+    this.initialRecommendationIds = const [],
     this.initialDiscountTitle,
     this.initialDiscountPercent,
   });
@@ -47,6 +51,9 @@ class EditProductPage extends StatelessWidget {
   final List<String> initialIngredientTitles;
   final List<String> initialImageUrls;
   final List<int> initialImageIds;
+  final List<VendorProductModifierGroupModel> initialModifierGroups;
+  final List<VendorProductRecommendationRefModel> initialRecommendationProducts;
+  final List<int> initialRecommendationIds;
   final String? initialDiscountTitle;
   final double? initialDiscountPercent;
 
@@ -83,6 +90,9 @@ class EditProductPage extends StatelessWidget {
           initialIngredientTitles: initialIngredientTitles,
           initialImageUrls: initialImageUrls,
           initialImageIds: initialImageIds,
+          initialModifierGroups: initialModifierGroups,
+          initialRecommendationProducts: initialRecommendationProducts,
+          initialRecommendationIds: initialRecommendationIds,
           initialDiscountTitle: initialDiscountTitle,
           initialDiscountPercent: initialDiscountPercent,
         ),
@@ -104,6 +114,9 @@ class _EditProductBody extends StatefulWidget {
     required this.initialIngredientTitles,
     required this.initialImageUrls,
     required this.initialImageIds,
+    required this.initialModifierGroups,
+    required this.initialRecommendationProducts,
+    required this.initialRecommendationIds,
     required this.initialDiscountTitle,
     required this.initialDiscountPercent,
   });
@@ -119,6 +132,9 @@ class _EditProductBody extends StatefulWidget {
   final List<String> initialIngredientTitles;
   final List<String> initialImageUrls;
   final List<int> initialImageIds;
+  final List<VendorProductModifierGroupModel> initialModifierGroups;
+  final List<VendorProductRecommendationRefModel> initialRecommendationProducts;
+  final List<int> initialRecommendationIds;
   final String? initialDiscountTitle;
   final double? initialDiscountPercent;
 
@@ -168,6 +184,18 @@ class _EditProductBodyState extends State<_EditProductBody>
     return jsonEncode({'percent': normalizedPercent, 'title': title});
   }
 
+  String? _buildModifierGroupsJson(AddProductState state) {
+    if (state.modifierGroups.isEmpty) return null;
+    return jsonEncode(
+      state.modifierGroups.map((e) => e.toJson()).toList(growable: false),
+    );
+  }
+
+  String? _buildRecommendationsJson(AddProductState state) {
+    if (state.selectedRecommendationIds.isEmpty) return null;
+    return jsonEncode(state.selectedRecommendationIds.toList(growable: false));
+  }
+
   Future<void> _pickImages() async {
     final files = await _picker.pickMultiImage(imageQuality: 85);
     if (!mounted || files.isEmpty) return;
@@ -208,6 +236,8 @@ class _EditProductBodyState extends State<_EditProductBody>
       deletedImageIds: _deletedExistingImageIds.isEmpty
           ? null
           : jsonEncode(_deletedExistingImageIds.toList(growable: false)),
+      modifierGroupsJson: _buildModifierGroupsJson(state),
+      recommendationsJson: _buildRecommendationsJson(state),
     );
 
     if (!mounted) return;
@@ -267,6 +297,36 @@ class _EditProductBodyState extends State<_EditProductBody>
           context.read<AddProductBloc>().hydrateForEdit(
             selectedCategoryIds: widget.initialCategoryIds.toSet(),
             selectedIngredientIds: ingredientIds,
+            selectedRecommendationIds: widget.initialRecommendationIds.toSet(),
+            initialRecommendationProducts: widget.initialRecommendationProducts
+                .map(
+                  (product) => VendorProductModel(
+                    id: product.id,
+                    name: product.name.isEmpty
+                        ? 'Product #${product.id}'
+                        : product.name,
+                  ),
+                )
+                .toList(growable: false),
+            modifierGroups: widget.initialModifierGroups
+                .map(
+                  (group) => AddProductModifierGroup(
+                    name: group.name,
+                    selectionType: group.selectionType,
+                    isRequired: group.isRequired,
+                    minSelect: group.minSelect,
+                    maxSelect: group.maxSelect,
+                    options: group.options
+                        .map(
+                          (option) => AddProductModifierOption(
+                            name: option.name,
+                            price: option.price,
+                          ),
+                        )
+                        .toList(growable: false),
+                  ),
+                )
+                .toList(growable: false),
             isAvailable: widget.initialIsAvailable,
           );
         }
@@ -304,6 +364,18 @@ class _EditProductBodyState extends State<_EditProductBody>
           onToggleIngredient: (id, selected) {
             context.read<AddProductBloc>().toggleIngredient(id, selected);
             formKey.currentState?.validate();
+          },
+          onToggleRecommendation: (id, selected) {
+            context.read<AddProductBloc>().toggleRecommendation(id, selected);
+          },
+          onAddModifierGroup: (group) {
+            context.read<AddProductBloc>().addModifierGroup(group);
+          },
+          onUpdateModifierGroup: (index, group) {
+            context.read<AddProductBloc>().updateModifierGroupAt(index, group);
+          },
+          onRemoveModifierGroup: (index) {
+            context.read<AddProductBloc>().removeModifierGroupAt(index);
           },
           onChangeAvailability: (value) =>
               context.read<AddProductBloc>().setAvailability(value),

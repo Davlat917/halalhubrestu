@@ -16,7 +16,7 @@ class BasicInfoUpdateSection extends StatelessWidget {
     required this.validateName,
     required this.validateEmail,
     required this.validateRequired,
-    required this.validateUsPhone,
+    required this.validateOptionalUsPhone,
     this.showCategory = true, //
     this.showMediaRow = true,
   });
@@ -24,7 +24,8 @@ class BasicInfoUpdateSection extends StatelessWidget {
   final String? Function(String?) validateName;
   final String? Function(String?) validateEmail;
   final String? Function(String?, {required String field}) validateRequired;
-  final String? Function(String?) validateUsPhone;
+  final String? Function(String?, {required String? otherValue})
+  validateOptionalUsPhone;
   final bool showCategory;
   final bool showMediaRow;
   static const _labelColor = Color(0xFF3F3F3F);
@@ -215,7 +216,10 @@ class BasicInfoUpdateSection extends StatelessWidget {
                     onChanged: cubit.setPhone1,
                     mask: '+1 (###) ###-####',
                     keyboardType: TextInputType.phone,
-                    validator: validateUsPhone,
+                    validator: (value) => validateOptionalUsPhone(
+                      value,
+                      otherValue: state.phone2,
+                    ),
                     textSize: 14,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -232,7 +236,10 @@ class BasicInfoUpdateSection extends StatelessWidget {
                     onChanged: cubit.setPhone2,
                     mask: '+1 (###) ###-####',
                     keyboardType: TextInputType.phone,
-                    validator: validateUsPhone,
+                    validator: (value) => validateOptionalUsPhone(
+                      value,
+                      otherValue: state.phone1,
+                    ),
                     textSize: 14,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

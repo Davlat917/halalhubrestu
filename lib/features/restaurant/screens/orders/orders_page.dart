@@ -11,44 +11,24 @@ import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orde
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_event.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/sections/orders_body_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/services/receipt_printer_service.dart';
 
 @RoutePage()
 class OrdersPage extends ResponsiveSection {
   const OrdersPage({super.key});
 
   @override
-  Widget buildMobile(BuildContext context) => BlocProvider(
-    create: (_) => OrdersBloc(
-      getIt<OrdersRepository>(),
-      getIt<VendorNotificationsWsService>(),
-    )..add(const OrdersLoadRequested()),
-    child: const _OrdersScaffold(maxContentWidth: null, columnCount: 1),
-  );
+  Widget buildMobile(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: null, columnCount: 1));
 
   @override
-  Widget buildTablet(BuildContext context) => BlocProvider(
-    create: (_) => OrdersBloc(
-      getIt<OrdersRepository>(),
-      getIt<VendorNotificationsWsService>(),
-    )..add(const OrdersLoadRequested()),
-    child: const _OrdersScaffold(maxContentWidth: 720, columnCount: 1),
-  );
+  Widget buildTablet(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: 720, columnCount: 1));
 
   @override
-  Widget buildDesktop(BuildContext context) => BlocProvider(
-    create: (_) => OrdersBloc(
-      getIt<OrdersRepository>(),
-      getIt<VendorNotificationsWsService>(),
-    )..add(const OrdersLoadRequested()),
-    child: const _OrdersScaffold(maxContentWidth: 1200, columnCount: 2),
-  );
+  Widget buildDesktop(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: 1200, columnCount: 2));
 }
 
 class _OrdersScaffold extends StatelessWidget {
-  const _OrdersScaffold({
-    required this.maxContentWidth,
-    required this.columnCount,
-  });
+  const _OrdersScaffold({required this.maxContentWidth, required this.columnCount});
 
   final double? maxContentWidth;
   final int columnCount;
@@ -64,23 +44,14 @@ class _OrdersScaffold extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         leading: Align(
           alignment: Alignment.center,
-          child: CircleBtnWidget(
-            bgColor: StaticColors.white,
-            iconColor: StaticColors.black,
-            onPress: () => context.router.maybePop(),
-          ),
+          child: CircleBtnWidget(bgColor: StaticColors.white, iconColor: StaticColors.black, onPress: () => context.router.maybePop()),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: StaticColors.cE2E2E2),
         ),
       ),
-      body: OrdersBodySection(
-        maxContentWidth: maxContentWidth,
-        columnCount: columnCount,
-        onOrderHistoryTap: () =>
-            context.router.push(const OrdersHistoryRoute()),
-      ),
+      body: OrdersBodySection(maxContentWidth: maxContentWidth, columnCount: columnCount, onOrderHistoryTap: () => context.router.push(const OrdersHistoryRoute())),
     );
   }
 }

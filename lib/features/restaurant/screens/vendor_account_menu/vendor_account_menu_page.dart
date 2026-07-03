@@ -9,6 +9,7 @@ import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_destructive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_general_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_preferences_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_social_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/vendor_account_menu_handlers.dart';
 
 /// Vendor logotip / avatar orqali ochiladigan hisob menyusi.
@@ -36,17 +37,32 @@ class VendorAccountMenuPage extends StatelessWidget {
             ),
           ),
         ),
-        title: Text(TranslationKeys.accountTitle.tr(context: context), style: AppTextStyle.semibold18(context)),
+        title: Text(
+          TranslationKeys.accountTitle.tr(context: context),
+          style: AppTextStyle.semibold18(context),
+        ),
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         children: [
           VendorAccountMenuGeneralSection(
-            onSupportTap: (context) => context.router.push(const SupportChatRoute()),
+            onSupportTap: (context) =>
+                context.router.push(const SupportChatRoute()),
             onUsageTap: VendorAccountMenuHandlers.showComingSoon, //
           ),
-          VendorAccountMenuPreferencesSection(onNotificationTap: (context) => context.router.push(const NotificationRoute()), onLanguageTap: VendorAccountMenuHandlers.showLanguagePicker),
+          VendorAccountMenuPreferencesSection(
+            onSettingsTap: (context) =>
+                context.router.push(const AccountSettingsRoute()),
+            onNotificationTap: (context) =>
+                context.router.push(const NotificationRoute()),
+            onLanguageTap: VendorAccountMenuHandlers.showLanguagePicker,
+          ),
+          VendorAccountMenuSocialSection(
+            onInstagramTap: VendorAccountMenuHandlers.openInstagram,
+            onWhatsappTap: VendorAccountMenuHandlers.openWhatsapp,
+            onPhoneTap: VendorAccountMenuHandlers.openPhone,
+          ),
           const VendorAccountMenuDestructiveSection(),
         ],
       ),

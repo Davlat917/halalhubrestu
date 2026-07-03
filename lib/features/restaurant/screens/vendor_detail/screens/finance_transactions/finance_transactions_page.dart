@@ -13,6 +13,7 @@ import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/da
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/bloc/finance_transactions_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/bloc/finance_transactions_event.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/widgets/finance_transactions_body_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/screens/finance_transactions/widgets/finance_transactions_pdf_download_bar.dart';
 
 @RoutePage()
 class FinanceTransactionsPage extends ResponsiveSection {
@@ -102,9 +103,16 @@ class _FinanceTransactionsScaffold extends StatelessWidget {
           child: Container(height: 1, color: StaticColors.cE2E2E2),
         ),
       ),
-      body: FinanceTransactionsBodySection(
-        maxContentWidth: maxContentWidth,
-        columnCount: columnCount,
+      body: Column(
+        children: [
+          Expanded(
+            child: FinanceTransactionsBodySection(
+              maxContentWidth: maxContentWidth,
+              columnCount: columnCount,
+            ),
+          ),
+          const FinanceTransactionsPdfDownloadBar(),
+        ],
       ),
     );
   }

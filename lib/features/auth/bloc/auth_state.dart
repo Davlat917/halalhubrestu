@@ -4,7 +4,6 @@ part of 'auth_bloc.dart';
 enum AuthPendingAction {
   loginEmail,
   signUpEmail,
-  signUpPhone,
   verifyOtp,
   resetOtp,
   passwordResetRequest,

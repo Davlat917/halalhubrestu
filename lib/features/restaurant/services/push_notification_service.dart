@@ -17,8 +17,10 @@ import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_servic
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  if (kDebugMode) debugPrint('[FCM] backgroundHandler: ${message.data}');
-  if (kDebugMode) debugPrint('[FCM] title: ${message.notification?.title}');
+  if (kDebugMode) {
+    debugPrint('[FCM] backgroundHandler: ${message.data}');
+    debugPrint('[FCM] title: ${message.notification?.title}');
+  }
 }
 
 @pragma('vm:entry-point')
@@ -273,21 +275,27 @@ class PushNotificationService {
     _log('[$source] push-open payload: ${message.data}');
     if (_looksLikeNewOrderMessage(message)) {
       _log('[$source] new order detected from push → start sound loop');
-      unawaited(ws.startNewOrderAlertSoundLoop());
+      unawaited(ws.startNewOrderAlertSoundLoop(forceRestart: true));
     }
     // Payload format turlicha bo'lishi mumkin; backend holati bilan aniq sync qilamiz.
-    unawaited(ws.syncAlertSoundWithPendingOrdersFromBackend());
+    unawaited(ws.syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true));
     // Ba'zi holatlarda app resume bo'lgach network/state kechroq tiklanadi.
     unawaited(
       Future<void>.delayed(
         const Duration(milliseconds: 900),
-        ws.syncAlertSoundWithPendingOrdersFromBackend,
+        () => ws.syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true),
       ),
     );
     unawaited(
       Future<void>.delayed(
         const Duration(seconds: 2),
-        ws.syncAlertSoundWithPendingOrdersFromBackend,
+        () => ws.syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true),
+      ),
+    );
+    unawaited(
+      Future<void>.delayed(
+        const Duration(seconds: 5),
+        () => ws.syncAlertSoundWithPendingOrdersFromBackend(forceRestart: true),
       ),
     );
   }
@@ -296,7 +304,7 @@ class PushNotificationService {
     final data = message.data;
     final type = (data['type'] ?? '').toString().trim().toLowerCase();
     if (type == 'order_created') return true;
-    final keys = <String>[
+    const keys = <String>[
       'order_id',
       'orderId',
       'id',
@@ -312,10 +320,5 @@ class PushNotificationService {
 
   static void _handleMessage(RemoteMessage message, {required String source}) {
     _log('[$source] data=${message.data} | title=${message.notification?.title}');
-    if (source == 'foreground') {
-      // Ilova ochiq: FCM banner/shovqin ko'rinmasin — yangi buyurtma WS + dialog + AudioPlayer.
-      return;
-    }
-    // TODO: background/initial: navigate yoki state update
   }
 }

@@ -11,6 +11,22 @@
 part of 'app_router.dart';
 
 /// generated route for
+/// [AccountSettingsPage]
+class AccountSettingsRoute extends PageRouteInfo<void> {
+  const AccountSettingsRoute({List<PageRouteInfo>? children})
+    : super(AccountSettingsRoute.name, initialChildren: children);
+
+  static const String name = 'AccountSettingsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const AccountSettingsPage();
+    },
+  );
+}
+
+/// generated route for
 /// [AppStartPage]
 class AppStartRoute extends PageRouteInfo<void> {
   const AppStartRoute({List<PageRouteInfo>? children})
@@ -40,6 +56,153 @@ class AuthFlowRoute extends PageRouteInfo<void> {
       return const AuthFlowPage();
     },
   );
+}
+
+/// generated route for
+/// [ChangePasswordConfirmPage]
+class ChangePasswordConfirmRoute
+    extends PageRouteInfo<ChangePasswordConfirmRouteArgs> {
+  ChangePasswordConfirmRoute({
+    Key? key,
+    required String resetToken,
+    List<PageRouteInfo>? children,
+  }) : super(
+         ChangePasswordConfirmRoute.name,
+         args: ChangePasswordConfirmRouteArgs(key: key, resetToken: resetToken),
+         initialChildren: children,
+       );
+
+  static const String name = 'ChangePasswordConfirmRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<ChangePasswordConfirmRouteArgs>();
+      return ChangePasswordConfirmPage(
+        key: args.key,
+        resetToken: args.resetToken,
+      );
+    },
+  );
+}
+
+class ChangePasswordConfirmRouteArgs {
+  const ChangePasswordConfirmRouteArgs({this.key, required this.resetToken});
+
+  final Key? key;
+
+  final String resetToken;
+
+  @override
+  String toString() {
+    return 'ChangePasswordConfirmRouteArgs{key: $key, resetToken: $resetToken}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ChangePasswordConfirmRouteArgs) return false;
+    return key == other.key && resetToken == other.resetToken;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ resetToken.hashCode;
+}
+
+/// generated route for
+/// [ChangePasswordOtpPage]
+class ChangePasswordOtpRoute extends PageRouteInfo<ChangePasswordOtpRouteArgs> {
+  ChangePasswordOtpRoute({
+    Key? key,
+    required String email,
+    List<PageRouteInfo>? children,
+  }) : super(
+         ChangePasswordOtpRoute.name,
+         args: ChangePasswordOtpRouteArgs(key: key, email: email),
+         initialChildren: children,
+       );
+
+  static const String name = 'ChangePasswordOtpRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<ChangePasswordOtpRouteArgs>();
+      return ChangePasswordOtpPage(key: args.key, email: args.email);
+    },
+  );
+}
+
+class ChangePasswordOtpRouteArgs {
+  const ChangePasswordOtpRouteArgs({this.key, required this.email});
+
+  final Key? key;
+
+  final String email;
+
+  @override
+  String toString() {
+    return 'ChangePasswordOtpRouteArgs{key: $key, email: $email}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ChangePasswordOtpRouteArgs) return false;
+    return key == other.key && email == other.email;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ email.hashCode;
+}
+
+/// generated route for
+/// [ChangePasswordPage]
+class ChangePasswordRoute extends PageRouteInfo<ChangePasswordRouteArgs> {
+  ChangePasswordRoute({
+    Key? key,
+    String? initialEmail,
+    List<PageRouteInfo>? children,
+  }) : super(
+         ChangePasswordRoute.name,
+         args: ChangePasswordRouteArgs(key: key, initialEmail: initialEmail),
+         initialChildren: children,
+       );
+
+  static const String name = 'ChangePasswordRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<ChangePasswordRouteArgs>(
+        orElse: () => const ChangePasswordRouteArgs(),
+      );
+      return ChangePasswordPage(key: args.key, initialEmail: args.initialEmail);
+    },
+  );
+}
+
+class ChangePasswordRouteArgs {
+  const ChangePasswordRouteArgs({this.key, this.initialEmail});
+
+  final Key? key;
+
+  final String? initialEmail;
+
+  @override
+  String toString() {
+    return 'ChangePasswordRouteArgs{key: $key, initialEmail: $initialEmail}';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ChangePasswordRouteArgs) return false;
+    return key == other.key && initialEmail == other.initialEmail;
+  }
+
+  @override
+  int get hashCode => key.hashCode ^ initialEmail.hashCode;
 }
 
 /// generated route for
@@ -139,6 +302,10 @@ class EditProductRoute extends PageRouteInfo<EditProductRouteArgs> {
     required List<String> initialIngredientTitles,
     required List<String> initialImageUrls,
     required List<int> initialImageIds,
+    List<VendorProductModifierGroupModel> initialModifierGroups = const [],
+    List<VendorProductRecommendationRefModel> initialRecommendationProducts =
+        const [],
+    List<int> initialRecommendationIds = const [],
     String? initialDiscountTitle,
     double? initialDiscountPercent,
     List<PageRouteInfo>? children,
@@ -157,6 +324,9 @@ class EditProductRoute extends PageRouteInfo<EditProductRouteArgs> {
            initialIngredientTitles: initialIngredientTitles,
            initialImageUrls: initialImageUrls,
            initialImageIds: initialImageIds,
+           initialModifierGroups: initialModifierGroups,
+           initialRecommendationProducts: initialRecommendationProducts,
+           initialRecommendationIds: initialRecommendationIds,
            initialDiscountTitle: initialDiscountTitle,
            initialDiscountPercent: initialDiscountPercent,
          ),
@@ -182,6 +352,9 @@ class EditProductRoute extends PageRouteInfo<EditProductRouteArgs> {
         initialIngredientTitles: args.initialIngredientTitles,
         initialImageUrls: args.initialImageUrls,
         initialImageIds: args.initialImageIds,
+        initialModifierGroups: args.initialModifierGroups,
+        initialRecommendationProducts: args.initialRecommendationProducts,
+        initialRecommendationIds: args.initialRecommendationIds,
         initialDiscountTitle: args.initialDiscountTitle,
         initialDiscountPercent: args.initialDiscountPercent,
       );
@@ -203,6 +376,9 @@ class EditProductRouteArgs {
     required this.initialIngredientTitles,
     required this.initialImageUrls,
     required this.initialImageIds,
+    this.initialModifierGroups = const [],
+    this.initialRecommendationProducts = const [],
+    this.initialRecommendationIds = const [],
     this.initialDiscountTitle,
     this.initialDiscountPercent,
   });
@@ -231,13 +407,19 @@ class EditProductRouteArgs {
 
   final List<int> initialImageIds;
 
+  final List<VendorProductModifierGroupModel> initialModifierGroups;
+
+  final List<VendorProductRecommendationRefModel> initialRecommendationProducts;
+
+  final List<int> initialRecommendationIds;
+
   final String? initialDiscountTitle;
 
   final double? initialDiscountPercent;
 
   @override
   String toString() {
-    return 'EditProductRouteArgs{key: $key, vendorId: $vendorId, productId: $productId, initialName: $initialName, initialDescription: $initialDescription, initialPrice: $initialPrice, initialPreparationTime: $initialPreparationTime, initialIsAvailable: $initialIsAvailable, initialCategoryIds: $initialCategoryIds, initialIngredientTitles: $initialIngredientTitles, initialImageUrls: $initialImageUrls, initialImageIds: $initialImageIds, initialDiscountTitle: $initialDiscountTitle, initialDiscountPercent: $initialDiscountPercent}';
+    return 'EditProductRouteArgs{key: $key, vendorId: $vendorId, productId: $productId, initialName: $initialName, initialDescription: $initialDescription, initialPrice: $initialPrice, initialPreparationTime: $initialPreparationTime, initialIsAvailable: $initialIsAvailable, initialCategoryIds: $initialCategoryIds, initialIngredientTitles: $initialIngredientTitles, initialImageUrls: $initialImageUrls, initialImageIds: $initialImageIds, initialModifierGroups: $initialModifierGroups, initialRecommendationProducts: $initialRecommendationProducts, initialRecommendationIds: $initialRecommendationIds, initialDiscountTitle: $initialDiscountTitle, initialDiscountPercent: $initialDiscountPercent}';
   }
 
   @override
@@ -268,6 +450,18 @@ class EditProductRouteArgs {
           initialImageIds,
           other.initialImageIds,
         ) &&
+        const ListEquality<VendorProductModifierGroupModel>().equals(
+          initialModifierGroups,
+          other.initialModifierGroups,
+        ) &&
+        const ListEquality<VendorProductRecommendationRefModel>().equals(
+          initialRecommendationProducts,
+          other.initialRecommendationProducts,
+        ) &&
+        const ListEquality<int>().equals(
+          initialRecommendationIds,
+          other.initialRecommendationIds,
+        ) &&
         initialDiscountTitle == other.initialDiscountTitle &&
         initialDiscountPercent == other.initialDiscountPercent;
   }
@@ -286,6 +480,13 @@ class EditProductRouteArgs {
       const ListEquality<String>().hash(initialIngredientTitles) ^
       const ListEquality<String>().hash(initialImageUrls) ^
       const ListEquality<int>().hash(initialImageIds) ^
+      const ListEquality<VendorProductModifierGroupModel>().hash(
+        initialModifierGroups,
+      ) ^
+      const ListEquality<VendorProductRecommendationRefModel>().hash(
+        initialRecommendationProducts,
+      ) ^
+      const ListEquality<int>().hash(initialRecommendationIds) ^
       initialDiscountTitle.hashCode ^
       initialDiscountPercent.hashCode;
 }

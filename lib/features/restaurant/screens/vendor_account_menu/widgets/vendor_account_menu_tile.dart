@@ -12,6 +12,9 @@ class VendorAccountMenuTile extends StatelessWidget {
     this.iconColor = StaticColors.black,
     this.labelColor = StaticColors.black,
     this.showTrailing = true,
+    this.preserveIconColors = false,
+    this.iconSize = 24,
+    this.iconScale = 1,
   });
 
   final SvgGenImage iconAsset;
@@ -20,18 +23,29 @@ class VendorAccountMenuTile extends StatelessWidget {
   final Color iconColor;
   final Color labelColor;
   final bool showTrailing;
+  final bool preserveIconColors;
+  final double iconSize;
+  final double iconScale;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: SizedBox(
-        width: 24,
-        height: 24,
-        child: iconAsset.svg(
-          width: 24,
-          height: 24,
-          fit: BoxFit.contain,
-          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        width: 28,
+        height: 28,
+        child: Center(
+          child: Transform.scale(
+            scale: iconScale,
+            child: iconAsset.svg(
+              width: iconSize,
+              height: iconSize,
+              fit: BoxFit.contain,
+              alignment: Alignment.center,
+              colorFilter: preserveIconColors
+                  ? null
+                  : ColorFilter.mode(iconColor, BlendMode.srcIn),
+            ),
+          ),
         ),
       ),
       title: Text(label, style: AppTextStyle.medium16(context, size: 15, color: labelColor)),
