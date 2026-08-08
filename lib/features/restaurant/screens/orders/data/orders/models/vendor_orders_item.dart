@@ -77,6 +77,8 @@ class VendorOrdersItem extends Equatable {
       case 'pending':
       case 'created':
         return VendorOrderStatus.newOrder;
+      case 'awaiting_customer':
+        return VendorOrderStatus.awaitingCustomer;
       case 'confirmed':
       case 'preparing':
         return VendorOrderStatus.accepted;

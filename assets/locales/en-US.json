@@ -15,7 +15,11 @@
     "successTitle": "Completed successfully",
     "certificate": "certificate",
     "couldNotOpenLink": "Could not open the link.",
-    "search": "Search"
+    "search": "Search",
+    "skip": "Skip",
+    "updateRecommendedTitle": "Update recommended",
+    "updateRecommendedDesc": "A new version of the app is available. Please update for the best experience.",
+    "updateApp": "Update app"
   },
   "account": {
     "title": "Account",
@@ -353,8 +357,14 @@
     "action": {
       "confirm": "Confirm",
       "ready": "Ready",
-      "completed": "Completed"
+      "completed": "Completed",
+      "accept": "Accept"
     },
+    "waitingForCustomer": "Waiting for customer • {time}",
+    "customerConfirmedContinue": "Customer confirmed • Continue order",
+    "customerContinuedBannerTitle": "Customer chose to continue",
+    "customerContinuedBanner": "The unavailable item has been removed from Order #{orderNumber}. The order will continue with the remaining items.",
+    "itemIdsMissing": "Item ids are missing. Cannot send availability decision.",
     "empty": "No orders have been placed yet",
     "invalidHistoryResponse": "Invalid order history response",
     "invalidOrdersResponse": "Invalid orders response",

@@ -15,7 +15,11 @@
     "successTitle": "Muvaffaqiyatli bajarildi",
     "certificate": "sertifikat",
     "couldNotOpenLink": "Havolani ochib bo‘lmadi.",
-    "search": "Qidirish"
+    "search": "Qidirish",
+    "skip": "O‘tkazib yuborish",
+    "updateRecommendedTitle": "Yangilash tavsiya etiladi",
+    "updateRecommendedDesc": "Ilovaning yangi versiyasi mavjud. Eng yaxshi tajriba uchun yangilang.",
+    "updateApp": "Ilovani yangilash"
   },
   "account": {
     "title": "Hisob",
@@ -353,8 +357,14 @@
     "action": {
       "confirm": "Tasdiqlash",
       "ready": "Tayyor",
-      "completed": "Tugallash"
+      "completed": "Tugallash",
+      "accept": "Qabul qilish"
     },
+    "waitingForCustomer": "Mijoz javobi kutilmoqda • {time}",
+    "customerConfirmedContinue": "Mijoz tasdiqladi • Buyurtma davom etadi",
+    "customerContinuedBannerTitle": "Mijoz davom ettirishni tanladi",
+    "customerContinuedBanner": "Mavjud bo‘lmagan mahsulot #{orderNumber} buyurtmadan olib tashlandi. Buyurtma qolgan mahsulotlar bilan davom etadi.",
+    "itemIdsMissing": "Mahsulot id lari topilmadi. Mavjudlik qarorini yuborib bo‘lmaydi.",
     "empty": "Hali buyurtmalar yo‘q",
     "invalidHistoryResponse": "Buyurtmalar tarixi javobi noto‘g‘ri",
     "invalidOrdersResponse": "Buyurtmalar javobi noto‘g‘ri",

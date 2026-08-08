@@ -15,7 +15,11 @@
     "successTitle": "تم التنفيذ بنجاح",
     "certificate": "شهادة",
     "couldNotOpenLink": "تعذر فتح الرابط.",
-    "search": "بحث"
+    "search": "بحث",
+    "skip": "تخطي",
+    "updateRecommendedTitle": "يُنصح بالتحديث",
+    "updateRecommendedDesc": "يتوفر إصدار جديد من التطبيق. يُرجى التحديث لأفضل تجربة.",
+    "updateApp": "تحديث التطبيق"
   },
   "account": {
     "title": "الحساب",
@@ -353,8 +357,14 @@
     "action": {
       "confirm": "تأكيد",
       "ready": "جاهز",
-      "completed": "إكمال"
+      "completed": "إكمال",
+      "accept": "قبول"
     },
+    "waitingForCustomer": "بانتظار العميل • {time}",
+    "customerConfirmedContinue": "أكد العميل • متابعة الطلب",
+    "customerContinuedBannerTitle": "اختار العميل المتابعة",
+    "customerContinuedBanner": "تمت إزالة العنصر غير المتوفر من الطلب #{orderNumber}. سيستمر الطلب بالعناصر المتبقية.",
+    "itemIdsMissing": "معرّفات العناصر غير موجودة. لا يمكن إرسال قرار التوفر.",
     "empty": "لا توجد طلبات بعد",
     "invalidHistoryResponse": "استجابة سجل الطلبات غير صالحة",
     "invalidOrdersResponse": "استجابة الطلبات غير صالحة",

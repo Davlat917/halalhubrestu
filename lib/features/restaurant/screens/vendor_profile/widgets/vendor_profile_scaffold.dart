@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:halalhub_restaurant/core/app_version/app_version_gate.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/router/app_router.dart';
 import 'package:halalhub_restaurant/core/services/vendor_shell_navigation_service.dart';
@@ -55,6 +58,7 @@ class _VendorProfileScaffoldState extends State<VendorProfileScaffold>
       final nav = getIt<VendorShellNavigationService>();
       nav.attachOpenOrdersTab(_switchToOrdersTab);
       nav.setOrdersTabActive(_selectedNavItem == VendorNavItem.orders);
+      unawaited(AppVersionGate.checkOnce(context));
     });
   }
 

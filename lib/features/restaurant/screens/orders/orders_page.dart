@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/router/app_router.dart';
 import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart';
+import 'package:halalhub_restaurant/core/storage/storage.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/widgets/circle_btn_widget.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
@@ -18,13 +19,37 @@ class OrdersPage extends ResponsiveSection {
   const OrdersPage({super.key});
 
   @override
-  Widget buildMobile(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: null, columnCount: 1));
+  Widget buildMobile(BuildContext context) => BlocProvider(
+    create: (_) => OrdersBloc(
+      getIt<OrdersRepository>(),
+      getIt<VendorNotificationsWsService>(),
+      getIt<ReceiptPrinterService>(),
+      getIt<Storage>(),
+    )..add(const OrdersLoadRequested()),
+    child: const _OrdersScaffold(maxContentWidth: null, columnCount: 1),
+  );
 
   @override
-  Widget buildTablet(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: 720, columnCount: 1));
+  Widget buildTablet(BuildContext context) => BlocProvider(
+    create: (_) => OrdersBloc(
+      getIt<OrdersRepository>(),
+      getIt<VendorNotificationsWsService>(),
+      getIt<ReceiptPrinterService>(),
+      getIt<Storage>(),
+    )..add(const OrdersLoadRequested()),
+    child: const _OrdersScaffold(maxContentWidth: 720, columnCount: 1),
+  );
 
   @override
-  Widget buildDesktop(BuildContext context) => BlocProvider(create: (_) => OrdersBloc(getIt<OrdersRepository>(), getIt<VendorNotificationsWsService>(), getIt<ReceiptPrinterService>())..add(const OrdersLoadRequested()), child: const _OrdersScaffold(maxContentWidth: 1200, columnCount: 2));
+  Widget buildDesktop(BuildContext context) => BlocProvider(
+    create: (_) => OrdersBloc(
+      getIt<OrdersRepository>(),
+      getIt<VendorNotificationsWsService>(),
+      getIt<ReceiptPrinterService>(),
+      getIt<Storage>(),
+    )..add(const OrdersLoadRequested()),
+    child: const _OrdersScaffold(maxContentWidth: 1200, columnCount: 2),
+  );
 }
 
 class _OrdersScaffold extends StatelessWidget {

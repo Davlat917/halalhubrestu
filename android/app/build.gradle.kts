@@ -47,8 +47,8 @@ android {
         applicationId = "com.infonex.halalhubrestu"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
-        versionCode = 21
-        versionName = "1.0.21"
+        versionCode = 24
+        versionName = "1.0.24"
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 

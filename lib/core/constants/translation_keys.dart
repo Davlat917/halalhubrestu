@@ -10,6 +10,10 @@ abstract final class TranslationKeys {
   static const browseFile = 'common.browseFile';
   static const commonCertificate = 'common.certificate';
   static const commonCouldNotOpenLink = 'common.couldNotOpenLink';
+  static const skip = 'common.skip';
+  static const updateRecommendedTitle = 'common.updateRecommendedTitle';
+  static const updateRecommendedDesc = 'common.updateRecommendedDesc';
+  static const updateApp = 'common.updateApp';
 
   // Account menu
   static const accountTitle = 'account.title';
@@ -229,6 +233,13 @@ abstract final class TranslationKeys {
   static const orderActionConfirm = 'orders.action.confirm';
   static const orderActionReady = 'orders.action.ready';
   static const orderActionCompleted = 'orders.action.completed';
+  static const orderActionAccept = 'orders.action.accept';
+  static const ordersWaitingForCustomer = 'orders.waitingForCustomer';
+  static const ordersCustomerConfirmedContinue = 'orders.customerConfirmedContinue';
+  static const ordersCustomerContinuedBannerTitle =
+      'orders.customerContinuedBannerTitle';
+  static const ordersCustomerContinuedBanner = 'orders.customerContinuedBanner';
+  static const ordersItemIdsMissing = 'orders.itemIdsMissing';
 
   // Payment extras
   static const paymentFailedLoadDashboard = 'payment.failedLoadDashboard';

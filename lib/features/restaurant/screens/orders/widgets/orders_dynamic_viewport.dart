@@ -3,8 +3,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
+import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_order_detail_model.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_bloc.dart';
@@ -12,6 +14,7 @@ import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orde
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/bloc/orders_state.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/models/vendor_order_ui_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/models/vendor_order_status.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/widgets/order_detail_sheet.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/widgets/orders_empty_view.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/widgets/vendor_order_card.dart';
@@ -50,7 +53,9 @@ class OrdersDynamicViewport extends StatelessWidget {
               prev.status != curr.status ||
               prev.items != curr.items ||
               prev.isLoadingMore != curr.isLoadingMore ||
-              prev.errorMessage != curr.errorMessage,
+              prev.errorMessage != curr.errorMessage ||
+              prev.listBannerOrderId != curr.listBannerOrderId ||
+              prev.decisionLoadingOrderId != curr.decisionLoadingOrderId,
           builder: (context, state) {
             if (state.status == OrdersLoadStatus.loading &&
                 state.items.isEmpty) {
@@ -179,16 +184,23 @@ class OrdersDynamicViewport extends StatelessWidget {
               );
             }
 
-            return RefreshIndicator(
-              color: StaticColors.primary,
-              onRefresh: () async {
-                final bloc = context.read<OrdersBloc>();
-                bloc.add(const OrdersRefreshRequested());
-                await bloc.stream.firstWhere(
-                  (s) => s.status != OrdersLoadStatus.loading,
-                );
-              },
-              child: list,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    color: StaticColors.primary,
+                    onRefresh: () async {
+                      final bloc = context.read<OrdersBloc>();
+                      bloc.add(const OrdersRefreshRequested());
+                      await bloc.stream.firstWhere(
+                        (s) => s.status != OrdersLoadStatus.loading,
+                      );
+                    },
+                    child: list,
+                  ),
+                ),
+              ],
             );
           },
         );
@@ -197,16 +209,33 @@ class OrdersDynamicViewport extends StatelessWidget {
   }
 
   Widget _card(BuildContext context, VendorOrderUiModel order) {
+    final bloc = context.read<OrdersBloc>();
     return VendorOrderCard(
       order: order,
-      onConfirm: () => onStatusChangeRequest(order, 'confirmed'),
-      onCancel: () => onStatusChangeRequest(order, 'cancelled'),
+      onConfirm: () => bloc.add(
+        OrdersDecisionRequested(
+          orderBackendId: order.backendId,
+          action: 'confirm',
+        ),
+      ),
+      onCancel: () => bloc.add(
+        OrdersDecisionRequested(
+          orderBackendId: order.backendId,
+          action: 'cancel',
+        ),
+      ),
       onReady: () => onStatusChangeRequest(order, 'ready'),
       onCompleted: () {
         final statusForDone = order.isPickup ? 'completed' : 'delivered';
         onStatusChangeRequest(order, statusForDone);
       },
       onMore: () => _openOrderDetail(context, order),
+      onAwaitingExpired: () => bloc.add(
+        OrdersAwaitingExpiredRequested(orderBackendId: order.backendId),
+      ),
+      onDismissCustomerBanner: () => bloc.add(
+        OrdersCustomerBannerDismissed(orderBackendId: order.backendId),
+      ),
     );
   }
 
@@ -237,20 +266,62 @@ class OrdersDynamicViewport extends StatelessWidget {
     if (rootNavigator.canPop()) rootNavigator.pop();
     if (!context.mounted) return;
 
+    final isNewOrder = order.status == VendorOrderStatus.newOrder;
     final isMobile = ResponsiveSection.isMobileLayout(context);
+    final ordersBloc = context.read<OrdersBloc>();
+
+    Future<void> onAccept(List<int> unavailableIds) async {
+      final loadedDetail = detail;
+      if (loadedDetail == null) return;
+      // Never allow a "partial" accept without real OrderItem ids — empty list
+      // means full confirm on the backend.
+      final markedUnavailable = loadedDetail.items
+          .where((item) => unavailableIds.contains(item.id))
+          .length;
+      if (unavailableIds.isNotEmpty &&
+          (unavailableIds.any((id) => id <= 0) ||
+              markedUnavailable != unavailableIds.length)) {
+        getIt<Display>().error(
+          TranslationKeys.ordersItemIdsMissing.tr(context: context),
+        );
+        return;
+      }
+      ordersBloc.add(
+        OrdersDecisionRequested(
+          orderBackendId: order.backendId,
+          action: 'confirm',
+          unavailableItemIds: unavailableIds,
+        ),
+      );
+      if (context.mounted) Navigator.of(context).maybePop();
+    }
+
     if (!isMobile) {
       await showDialog<void>(
         context: context,
-        builder: (_) => Dialog(
-          backgroundColor: StaticColors.white,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 20,
+        builder: (dialogContext) => BlocProvider.value(
+          value: ordersBloc,
+          child: Dialog(
+            backgroundColor: StaticColors.white,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 20,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: BlocBuilder<OrdersBloc, OrdersState>(
+              builder: (context, state) {
+                return OrderDetailSheet(
+                  order: detail!,
+                  expandBody: false,
+                  acceptLoading:
+                      state.decisionLoadingOrderId == order.backendId,
+                  onAccept: isNewOrder ? onAccept : null,
+                );
+              },
+            ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: OrderDetailSheet(order: detail!, expandBody: false),
         ),
       );
       return;
@@ -262,13 +333,24 @@ class OrdersDynamicViewport extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.86,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (_, controller) =>
-            OrderDetailSheet(order: detail!, scrollController: controller),
+      builder: (sheetContext) => BlocProvider.value(
+        value: ordersBloc,
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.86,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, controller) => BlocBuilder<OrdersBloc, OrdersState>(
+            builder: (context, state) {
+              return OrderDetailSheet(
+                order: detail!,
+                scrollController: controller,
+                acceptLoading: state.decisionLoadingOrderId == order.backendId,
+                onAccept: isNewOrder ? onAccept : null,
+              );
+            },
+          ),
+        ),
       ),
     );
   }

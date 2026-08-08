@@ -4,6 +4,7 @@ import 'package:halalhub_restaurant/core/constants/constants.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/network/network_exception.dart' show ExceptionHandler, NetworkException, UnexpectedException;
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_order_detail_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_item.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_page_result.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/orders_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -67,6 +68,32 @@ class OrdersRepositoryImpl implements OrdersRepository {
   Future<void> updateOrderStatus({required int orderId, required String status}) async {
     try {
       await _dio.patch(Constants.vendorsOrderStatusById(orderId), data: {'status': status});
+    } catch (e) {
+      _rethrow(e);
+    }
+  }
+
+  @override
+  Future<VendorOrdersItem> submitOrderDecision({
+    required int orderId,
+    required String action,
+    List<int> unavailableItemIds = const [],
+  }) async {
+    try {
+      final response = await _dio.post(
+        Constants.vendorsOrderDecisionById(orderId),
+        data: {
+          'action': action,
+          'unavailable_item_ids': unavailableItemIds,
+        },
+      );
+      final data = response.data;
+      if (data is! Map<String, dynamic>) {
+        throw NetworkException(
+          message: TranslationKeys.ordersInvalidOrdersResponse.tr(),
+        );
+      }
+      return VendorOrdersItem.fromJson(data);
     } catch (e) {
       _rethrow(e);
     }

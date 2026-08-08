@@ -12,6 +12,10 @@
 import 'package:app_links/app_links.dart' as _i327;
 import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
+import 'package:halalhub_restaurant/core/app_version/app_version_repository.dart'
+    as _i676;
+import 'package:halalhub_restaurant/core/app_version/app_version_repository_impl.dart'
+    as _i407;
 import 'package:halalhub_restaurant/core/di/app_module.dart' as _i810;
 import 'package:halalhub_restaurant/core/di/network_module.dart' as _i231;
 import 'package:halalhub_restaurant/core/network/auth_interceptor/auth_interceptor.dart'
@@ -179,6 +183,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i8.VendorPosProvidersRepositoryImpl(
         gh<_i1036.VendorPosProvidersApi>(),
       ),
+    );
+    gh.factory<_i676.AppVersionRepository>(
+      () => _i407.AppVersionRepositoryImpl(gh<_i361.Dio>()),
     );
     gh.lazySingleton<_i200.SocialAuth>(
       () => _i200.SocialAuth(gh<_i533.AuthRepository>()),

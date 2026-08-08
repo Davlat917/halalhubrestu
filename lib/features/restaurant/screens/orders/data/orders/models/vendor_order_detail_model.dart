@@ -26,22 +26,33 @@ class VendorOrderDetailModifierModel extends Equatable {
 
 class VendorOrderDetailItemModel extends Equatable {
   const VendorOrderDetailItemModel({
+    required this.id,
+    required this.productId,
     required this.product,
     required this.description,
+    required this.category,
     required this.quantity,
     required this.image,
     required this.price,
     required this.modifiers,
     required this.modifiersTotal,
+    required this.isUnavailable,
   });
 
+  /// OrderItem id — `unavailable_item_ids` uchun.
+  final int id;
+
+  /// Mahsulot katalog id (reference).
+  final int productId;
   final String product;
   final String description;
+  final String category;
   final int quantity;
   final String image;
   final String price;
   final List<VendorOrderDetailModifierModel> modifiers;
   final String modifiersTotal;
+  final bool isUnavailable;
 
   factory VendorOrderDetailItemModel.fromJson(Map<String, dynamic> json) {
     final rawModifiers = json['modifiers'];
@@ -58,26 +69,51 @@ class VendorOrderDetailItemModel extends Equatable {
       }
     }
 
+    final categoryRaw = json['category'];
+    final category = categoryRaw is Map
+        ? (categoryRaw['name']?.toString() ?? '')
+        : (json['category']?.toString() ??
+              json['category_name']?.toString() ??
+              '');
+
+    final rawId = json['id'] ??
+        json['order_item_id'] ??
+        json['item_id'] ??
+        json['pk'] ??
+        (json['order_item'] is Map ? json['order_item']['id'] : null);
+
+    final rawProductId = json['product_id'] ?? json['productId'];
+
     return VendorOrderDetailItemModel(
+      id: (rawId as num?)?.toInt() ?? int.tryParse(rawId?.toString() ?? '') ?? 0,
+      productId: (rawProductId as num?)?.toInt() ??
+          int.tryParse(rawProductId?.toString() ?? '') ??
+          0,
       product: json['product']?.toString() ?? json['name']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
+      category: category,
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       image: json['image']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       modifiers: modifiers,
       modifiersTotal: json['modifiers_total']?.toString() ?? '',
+      isUnavailable: json['is_unavailable'] == true,
     );
   }
 
   @override
   List<Object?> get props => [
+    id,
+    productId,
     product,
     description,
+    category,
     quantity,
     image,
     price,
     modifiers,
     modifiersTotal,
+    isUnavailable,
   ];
 }
 

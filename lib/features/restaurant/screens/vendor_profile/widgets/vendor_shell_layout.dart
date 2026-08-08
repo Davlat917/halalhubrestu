@@ -1,14 +1,17 @@
 import 'dart:math' as math;
-// import 'package:auto_route/auto_route.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
-// import 'package:halalhub_restaurant/core/router/app_router.dart';
+import 'package:halalhub_restaurant/core/router/app_router.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
 import 'package:halalhub_restaurant/core/theme/theme_extension.dart';
 import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/models/vendor_me/vendor_me_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_general_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/sections/vendor_account_menu_social_section.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/vendor_account_menu/vendor_account_menu_handlers.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/navigation/vendor_nav_item.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/widgets/vendor_nav_sidebar.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/widgets/vendor_shell_app_bars.dart';
@@ -56,6 +59,52 @@ class _VendorShellLayoutState extends State<VendorShellLayout> {
     }
   }
 
+  void _openSupport(BuildContext context, {required bool closeDrawer}) {
+    if (closeDrawer) Navigator.of(context).pop();
+    context.router.push(const SupportChatRoute());
+  }
+
+  void _openInstagram(BuildContext context, {required bool closeDrawer}) {
+    if (closeDrawer) Navigator.of(context).pop();
+    VendorAccountMenuHandlers.openInstagram(context);
+  }
+
+  void _openWhatsapp(BuildContext context, {required bool closeDrawer}) {
+    if (closeDrawer) Navigator.of(context).pop();
+    VendorAccountMenuHandlers.openWhatsapp(context);
+  }
+
+  void _openPhone(BuildContext context, {required bool closeDrawer}) {
+    if (closeDrawer) Navigator.of(context).pop();
+    VendorAccountMenuHandlers.openPhone(context);
+  }
+
+  Widget _contactMenu(BuildContext context, {required bool closeDrawer}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Divider(height: 1, color: StaticColors.cE2E2E2),
+        ),
+        VendorAccountMenuGeneralSection(
+          onSupportTap: (context) =>
+              _openSupport(context, closeDrawer: closeDrawer),
+          onUsageTap: VendorAccountMenuHandlers.showComingSoon,
+        ),
+        VendorAccountMenuSocialSection(
+          onInstagramTap: (context) =>
+              _openInstagram(context, closeDrawer: closeDrawer),
+          onWhatsappTap: (context) =>
+              _openWhatsapp(context, closeDrawer: closeDrawer),
+          onPhoneTap: (context) =>
+              _openPhone(context, closeDrawer: closeDrawer),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bg = context.colors.background;
@@ -98,6 +147,7 @@ class _VendorShellLayoutState extends State<VendorShellLayout> {
                         child: VendorNavSidebar(
                           selected: widget.selectedNavItem,
                           onItemTap: (item) => _onNavItem(context, item),
+                          footer: _contactMenu(context, closeDrawer: false),
                         ),
                       ),
                     ],
@@ -150,6 +200,7 @@ class _VendorShellLayoutState extends State<VendorShellLayout> {
             Expanded(
               child: VendorNavSidebar(
                 selected: widget.selectedNavItem,
+                footer: _contactMenu(context, closeDrawer: true),
                 onItemTap: (item) {
                   Navigator.of(context).pop();
                   _onNavItem(context, item);

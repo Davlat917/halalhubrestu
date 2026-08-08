@@ -1,23 +1,86 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:halalhub_restaurant/core/constants/translation_keys.dart';
+import 'package:halalhub_restaurant/core/di/injection.dart';
 import 'package:halalhub_restaurant/core/theme/app_textstyle/app_text_style.dart';
 import 'package:halalhub_restaurant/core/theme/colors/static_colors.dart';
+import 'package:halalhub_restaurant/core/widgets/custom_button.dart';
+import 'package:halalhub_restaurant/core/widgets/display/display.dart';
 import 'package:halalhub_restaurant/core/widgets/network_image_chache.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_order_detail_model.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/data/orders/models/vendor_orders_item.dart';
+import 'package:halalhub_restaurant/features/restaurant/screens/orders/models/vendor_order_status.dart';
 
-class OrderDetailSheet extends StatelessWidget {
+class OrderDetailSheet extends StatefulWidget {
   const OrderDetailSheet({
     super.key,
     required this.order,
     this.scrollController,
     this.expandBody = true,
+    this.onAccept,
+    this.acceptLoading = false,
   });
 
   final VendorOrderDetailModel order;
   final ScrollController? scrollController;
   final bool expandBody;
+  final Future<void> Function(List<int> unavailableItemIds)? onAccept;
+  final bool acceptLoading;
+
+  @override
+  State<OrderDetailSheet> createState() => _OrderDetailSheetState();
+}
+
+class _OrderDetailSheetState extends State<OrderDetailSheet> {
+  late final List<ValueNotifier<bool>> _availableByIndex;
+
+  bool get _canDecide {
+    if (widget.onAccept == null) return false;
+    final status = VendorOrdersItem.statusFromApi(widget.order.status);
+    return status == VendorOrderStatus.newOrder;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _availableByIndex = [
+      for (final item in widget.order.items)
+        ValueNotifier<bool>(!item.isUnavailable),
+    ];
+  }
+
+  @override
+  void dispose() {
+    for (final notifier in _availableByIndex) {
+      notifier.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _onAcceptPressed() async {
+    final onAccept = widget.onAccept;
+    if (onAccept == null || widget.acceptLoading) return;
+
+    final unavailable = <int>[];
+    var toggledOffCount = 0;
+    for (var i = 0; i < widget.order.items.length; i++) {
+      if (_availableByIndex[i].value) continue;
+      toggledOffCount++;
+      final id = widget.order.items[i].id;
+      if (id > 0) unavailable.add(id);
+    }
+
+    // Switches off but API item ids missing → empty ids would wrongly full-confirm.
+    if (toggledOffCount > 0 && unavailable.length != toggledOffCount) {
+      getIt<Display>().error(
+        TranslationKeys.ordersItemIdsMissing.tr(context: context),
+      );
+      return;
+    }
+
+    await onAccept(unavailable);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,55 +94,57 @@ class OrderDetailSheet extends StatelessWidget {
     final gridColumns = isTablet
         ? (orientation == Orientation.landscape ? 3 : 2)
         : (isMobile ? 2 : 3);
-    final customerType = order.isPickup
+    final customerType = widget.order.isPickup
         ? TranslationKeys.ordersCustomerPickup.tr(context: context)
         : TranslationKeys.ordersCustomerDriver.tr(context: context);
+    final showAccept = _canDecide;
 
-    final leftContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          TranslationKeys.ordersDetailTitle.tr(context: context),
-          style: AppTextStyle.semibold20(context),
-        ),
-        const SizedBox(height: 14),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const spacing = 10.0;
-            const runSpacing = 12.0;
-            final cardWidth =
-                (constraints.maxWidth - spacing * (gridColumns - 1)) /
-                gridColumns;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: runSpacing,
-              children: [
-                for (final item in order.items)
-                  SizedBox(
-                    width: cardWidth,
-                    child: OrderDetailItemCard(item: item),
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
+    final itemsGrid = LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        const runSpacing = 12.0;
+        final cardWidth =
+            (constraints.maxWidth - spacing * (gridColumns - 1)) / gridColumns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: runSpacing,
+          children: [
+            for (var i = 0; i < widget.order.items.length; i++)
+              SizedBox(
+                width: cardWidth,
+                child: OrderDetailItemCard(
+                  item: widget.order.items[i],
+                  availabilityNotifier:
+                      showAccept ? _availableByIndex[i] : null,
+                  readOnlyAvailable: showAccept
+                      ? null
+                      : !widget.order.items[i].isUnavailable,
+                ),
+              ),
+          ],
+        );
+      },
     );
 
     final summary = OrderDetailSummaryPanel(
-      notes: order.comment,
+      notes: widget.order.comment,
       customerType: customerType,
-      paymentStatus: order.paymentStatus,
-      total: order.totalPrice,
+      paymentStatus: widget.order.paymentStatus,
+      total: widget.order.totalPrice,
+      showAccept: showAccept,
+      acceptLoading: widget.acceptLoading,
+      pinAcceptToBottom: isWide,
+      onAccept: _onAcceptPressed,
     );
+
     final body = isWide
         ? Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: leftContent,
+                  controller: widget.scrollController,
+                  child: itemsGrid,
                 ),
               ),
               const SizedBox(width: 16),
@@ -89,149 +154,229 @@ class OrderDetailSheet extends StatelessWidget {
             ],
           )
         : ListView(
-            controller: scrollController,
-            shrinkWrap: true,
-            children: [leftContent, const SizedBox(height: 14), summary],
+            controller: widget.scrollController,
+            children: [
+              itemsGrid,
+              const SizedBox(height: 14),
+              summary,
+            ],
           );
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: expandBody ? MainAxisSize.max : MainAxisSize.min,
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '#${order.displayOrderNumber}',
-                    style: AppTextStyle.semibold18(
-                      context,
-                      color: StaticColors.c666666,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (expandBody)
-              Expanded(child: body)
-            else
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.72,
-                ),
-                child: body,
+            Expanded(
+              child: Text(
+                TranslationKeys.ordersDetailTitle.tr(context: context),
+                style: AppTextStyle.semibold20(context),
               ),
+            ),
+            IconButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.close_rounded),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Expanded(child: body),
+      ],
+    );
+
+    if (widget.expandBody) {
+      return SafeArea(
+        child: Padding(padding: const EdgeInsets.all(16), child: content),
+      );
+    }
+
+    return SizedBox(
+      width: size.width * 0.92,
+      height: size.height * 0.85,
+      child: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }
 }
 
 class OrderDetailItemCard extends StatelessWidget {
-  const OrderDetailItemCard({super.key, required this.item});
+  const OrderDetailItemCard({
+    super.key,
+    required this.item,
+    this.availabilityNotifier,
+    this.readOnlyAvailable,
+  });
 
   final VendorOrderDetailItemModel item;
+  final ValueNotifier<bool>? availabilityNotifier;
+
+  /// When set (and [availabilityNotifier] is null), switch is shown read-only.
+  final bool? readOnlyAvailable;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: StaticColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: StaticColors.cE2E2E2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-            child: SizedBox(
-              height: 110,
-              child: item.image.isEmpty
-                  ? const ColoredBox(color: StaticColors.white)
-                  : NetworkImageCache(
-                      imgUrl: item.image,
-                      heightH: 110,
-                      radius: 0,
-                      fit: BoxFit.cover,
-                    ),
-            ),
+    final description = item.description.trim();
+    final category = item.category.trim();
+    const imageHeight = 120.0;
+    final showSwitch =
+        availabilityNotifier != null || readOnlyAvailable != null;
+    final isUnavailableVisual = availabilityNotifier == null
+        ? (readOnlyAvailable == false || item.isUnavailable)
+        : false;
+
+    return Opacity(
+      opacity: isUnavailableVisual ? 0.55 : 1,
+      child: Container(
+        decoration: BoxDecoration(
+          color: StaticColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isUnavailableVisual
+                ? StaticColors.cFF4E4E.withValues(alpha: 0.45)
+                : StaticColors.cE2E2E2,
           ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.product,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.medium16(context),
+          boxShadow: [
+            BoxShadow(
+              color: StaticColors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
+              child: SizedBox(
+                height: imageHeight,
+                child: item.image.isEmpty
+                    ? const ColoredBox(color: StaticColors.white)
+                    : NetworkImageCache(
+                        imgUrl: item.image,
+                        heightH: imageHeight,
+                        radius: 0,
+                        fit: BoxFit.cover,
                       ),
-                    ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.product,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyle.medium16(context),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatItemPrice(item.price),
+                        style: AppTextStyle.medium14(
+                          context,
+                          color: StaticColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
                     Text(
-                      '\$${item.price}',
-                      style: AppTextStyle.medium14(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.regular12(
                         context,
-                        color: StaticColors.primary,
+                        color: StaticColors.c9AA0A6,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${TranslationKeys.ordersAmount.tr(context: context)}: ${item.quantity}',
-                  style: AppTextStyle.bold16(context),
-                ),
-                if (item.modifiers.isNotEmpty) ...[
+                  if (category.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.regular12(
+                        context,
+                        color: StaticColors.c9AA0A6,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
-                  const Divider(height: 1, color: StaticColors.cE2E2E2),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatModifiersLine(item.modifiers),
-                    style: AppTextStyle.regular12(context),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${TranslationKeys.ordersAmount.tr(context: context)}: ${item.quantity}',
+                          style: AppTextStyle.medium14(context),
+                        ),
+                      ),
+                      if (showSwitch) _availabilitySwitch(context),
+                    ],
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  String _formatModifiersLine(List<VendorOrderDetailModifierModel> modifiers) {
-    final parts = <String>[];
-    for (final modifier in modifiers) {
-      final token = _modifierLabel(modifier);
-      if (token.isNotEmpty) parts.add(token);
+  Widget _availabilitySwitch(BuildContext context) {
+    if (availabilityNotifier != null) {
+      return ValueListenableBuilder<bool>(
+        valueListenable: availabilityNotifier!,
+        builder: (context, available, _) {
+          return Transform.scale(
+            scale: 0.9,
+            alignment: Alignment.centerRight,
+            child: Switch(
+              value: available,
+              activeThumbColor: StaticColors.white,
+              activeTrackColor: StaticColors.primary,
+              inactiveThumbColor: StaticColors.white,
+              inactiveTrackColor: StaticColors.cD1D1D1,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: (value) => availabilityNotifier!.value = value,
+            ),
+          );
+        },
+      );
     }
-    return parts.join(', ');
+
+    final available = readOnlyAvailable ?? !item.isUnavailable;
+    return Transform.scale(
+      scale: 0.9,
+      alignment: Alignment.centerRight,
+      child: Switch(
+        value: available,
+        activeThumbColor: StaticColors.white,
+        activeTrackColor: StaticColors.primary,
+        inactiveThumbColor: StaticColors.white,
+        inactiveTrackColor: StaticColors.cD1D1D1,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        onChanged: null,
+      ),
+    );
   }
 
-  String _modifierLabel(VendorOrderDetailModifierModel modifier) {
-    final name = modifier.name.trim();
-    if (name.isEmpty) return '';
-    final price = modifier.price.trim();
-    if (price.isEmpty || _isZeroPrice(price)) return name;
-    return '$name + \$$price';
-  }
-
-  bool _isZeroPrice(String price) {
-    final amount = double.tryParse(price);
-    return amount == null || amount == 0.0;
+  String _formatItemPrice(String price) {
+    final trimmed = price.trim();
+    if (trimmed.isEmpty) return '';
+    if (trimmed.contains(r'$')) return trimmed;
+    return '$trimmed\$';
   }
 }
 
@@ -242,64 +387,130 @@ class OrderDetailSummaryPanel extends StatelessWidget {
     required this.customerType,
     required this.paymentStatus,
     required this.total,
+    this.showAccept = false,
+    this.acceptLoading = false,
+    this.pinAcceptToBottom = false,
+    this.onAccept,
   });
 
   final String notes;
   final String customerType;
   final String paymentStatus;
   final String total;
+  final bool showAccept;
+  final bool acceptLoading;
+  final bool pinAcceptToBottom;
+  final VoidCallback? onAccept;
 
   @override
   Widget build(BuildContext context) {
-    Widget row(String l, String v, {Color? valueColor}) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: Text('$l:', style: AppTextStyle.medium14(context))),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              v,
-              textAlign: TextAlign.end,
-              style: AppTextStyle.regular16(
-                context,
-                color: valueColor ?? StaticColors.c666666,
-              ),
+    Widget infoRow(
+      String label,
+      String value, {
+      Color? valueColor,
+      bool emphasize = false,
+      bool valueBold = false,
+    }) {
+      final labelStyle = emphasize
+          ? AppTextStyle.semibold14(context)
+          : AppTextStyle.medium14(context);
+      final valueStyle = emphasize
+          ? AppTextStyle.semibold16(context)
+          : valueBold
+          ? AppTextStyle.medium16(context, color: valueColor)
+          : AppTextStyle.regular16(
+              context,
+              color: valueColor ?? StaticColors.black,
+            );
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Text('$label:', style: labelStyle)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(value, textAlign: TextAlign.end, style: valueStyle),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
 
-    return Column(
+    final details = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           TranslationKeys.ordersSpecialNotes.tr(context: context),
-          style: AppTextStyle.medium16(context),
+          style: AppTextStyle.semibold16(context),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
           notes.isEmpty ? '-' : notes,
           style: AppTextStyle.regular14(context, color: StaticColors.c9AA0A6),
         ),
-        const SizedBox(height: 10),
-        const Divider(height: 1, color: StaticColors.cE2E2E2),
-        row(
+        const SizedBox(height: 12),
+        infoRow(
           TranslationKeys.ordersCustomerType.tr(context: context),
           customerType,
         ),
-        const Divider(height: 1, color: StaticColors.cE2E2E2),
-        row(
+        infoRow(
           TranslationKeys.ordersPaymentStatus.tr(context: context),
           paymentStatus,
           valueColor: StaticColors.primary,
+          valueBold: true,
         ),
         const Divider(height: 1, color: StaticColors.cE2E2E2),
-        row(TranslationKeys.ordersTotalPrice.tr(context: context), '\$$total'),
-        const Divider(height: 1, color: StaticColors.cE2E2E2),
+        infoRow(
+          TranslationKeys.ordersTotalPrice.tr(context: context),
+          _formatTotal(total),
+          emphasize: true,
+        ),
       ],
     );
+
+    final acceptButton = showAccept
+        ? CustomButton(
+            label: TranslationKeys.orderActionAccept.tr(context: context),
+            backgroundColor: StaticColors.primary,
+            foregroundColor: StaticColors.white,
+            isLoading: acceptLoading,
+            borderRadius: 12,
+            width: double.infinity,
+            onPressed: acceptLoading ? null : onAccept,
+          )
+        : null;
+
+    if (!pinAcceptToBottom) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          details,
+          if (acceptButton != null) ...[
+            const SizedBox(height: 16),
+            acceptButton,
+          ],
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: SingleChildScrollView(child: details)),
+        if (acceptButton != null) ...[
+          const SizedBox(height: 16),
+          acceptButton,
+        ],
+      ],
+    );
+  }
+
+  String _formatTotal(String total) {
+    final trimmed = total.trim();
+    if (trimmed.isEmpty) return r'$0';
+    if (trimmed.contains(r'$')) return trimmed;
+    return '\$$trimmed';
   }
 }

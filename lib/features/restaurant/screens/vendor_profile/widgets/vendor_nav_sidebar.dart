@@ -10,11 +10,13 @@ class VendorNavSidebar extends StatelessWidget {
     required this.selected,
     required this.onItemTap,
     this.horizontalPadding = 12,
+    this.footer,
   });
 
   final VendorNavItem selected;
   final ValueChanged<VendorNavItem> onItemTap;
   final double horizontalPadding;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class VendorNavSidebar extends StatelessWidget {
                   onTap: () => onItemTap(item),
                 ),
               ),
+            ?footer,
           ],
         ),
       ),

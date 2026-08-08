@@ -15,7 +15,11 @@
     "successTitle": "Успешно выполнено",
     "certificate": "сертификат",
     "couldNotOpenLink": "Не удалось открыть ссылку.",
-    "search": "Поиск"
+    "search": "Поиск",
+    "skip": "Пропустить",
+    "updateRecommendedTitle": "Рекомендуется обновление",
+    "updateRecommendedDesc": "Доступна новая версия приложения. Обновите для лучшего опыта.",
+    "updateApp": "Обновить приложение"
   },
   "account": {
     "title": "Аккаунт",
@@ -353,8 +357,14 @@
     "action": {
       "confirm": "Подтвердить",
       "ready": "Готово",
-      "completed": "Завершить"
+      "completed": "Завершить",
+      "accept": "Принять"
     },
+    "waitingForCustomer": "Ожидание клиента • {time}",
+    "customerConfirmedContinue": "Клиент подтвердил • Продолжить заказ",
+    "customerContinuedBannerTitle": "Клиент решил продолжить",
+    "customerContinuedBanner": "Недоступный товар удалён из заказа #{orderNumber}. Заказ продолжится с оставшимися товарами.",
+    "itemIdsMissing": "ID товаров отсутствуют. Нельзя отправить решение о наличии.",
     "empty": "Заказов пока нет",
     "invalidHistoryResponse": "Некорректный ответ истории заказов",
     "invalidOrdersResponse": "Некорректный ответ заказов",

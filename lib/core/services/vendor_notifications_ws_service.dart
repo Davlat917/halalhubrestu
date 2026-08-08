@@ -20,7 +20,12 @@ import 'package:injectable/injectable.dart';
 import 'package:logger/logger.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-enum VendorWsEventType { orderCreated, unknown }
+enum VendorWsEventType {
+  orderCreated,
+  orderStatusUpdated,
+  orderUpdated,
+  unknown,
+}
 
 class VendorWsEvent {
   const VendorWsEvent({required this.type, required this.raw, this.orderCreated});
@@ -33,7 +38,21 @@ class VendorWsEvent {
     final typeRaw = (json['type'] as String? ?? '').toLowerCase().trim();
     switch (typeRaw) {
       case 'order_created':
-        return VendorWsEvent(type: VendorWsEventType.orderCreated, raw: json, orderCreated: VendorWsOrderCreatedPayload.fromJson(json));
+        return VendorWsEvent(
+          type: VendorWsEventType.orderCreated,
+          raw: json,
+          orderCreated: VendorWsOrderCreatedPayload.fromJson(json),
+        );
+      case 'order_status_updated':
+        return VendorWsEvent(
+          type: VendorWsEventType.orderStatusUpdated,
+          raw: json,
+        );
+      case 'order_updated':
+        return VendorWsEvent(
+          type: VendorWsEventType.orderUpdated,
+          raw: json,
+        );
       default:
         return VendorWsEvent(type: VendorWsEventType.unknown, raw: json);
     }

@@ -1,5 +1,6 @@
 enum VendorOrderStatus {
   newOrder,
+  awaitingCustomer,
   accepted,
   ready,
   completed,

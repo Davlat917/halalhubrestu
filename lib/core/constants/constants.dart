@@ -87,6 +87,8 @@ class Constants {
   static const vendorsOrders = "/vendors/orders/";
   static String vendorsOrderDetailById(int id) => "/vendors/orders/vendor/$id/";
   static String vendorsOrderStatusById(int id) => "/vendors/orders/$id/status/";
+  static String vendorsOrderDecisionById(int id) =>
+      "/vendors/orders/$id/decision/";
 
   /// Vendor POS integratsiyalari (tablet, Clover, Rezku, …).
   static const deliveryVendorPosProviders = "/delivery/vendor/pos/providers/";
@@ -94,6 +96,9 @@ class Constants {
 
   /// Clover OAuth boshlash (authorize_url qaytaradi).
   static const deliveryCloverConnect = "/delivery/clover/connect/";
+
+  /// Vendor app force/soft update info (android + ios).
+  static const appVersionVendor = "/core/appversion/vendor/";
 
   /// Hisob menyusi — ijtimoiy tarmoq va aloqa.
   static const supportInstagramUsername = 'wehalalhub';

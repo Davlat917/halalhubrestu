@@ -2,6 +2,8 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:halalhub_restaurant/core/di/injection.dart';
+import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart';
+import 'package:halalhub_restaurant/core/storage/storage.dart';
 import 'package:halalhub_restaurant/core/widgets/responsive_section.dart';
 import 'package:halalhub_restaurant/features/restaurant/bloc/vendor_profile/vendor_profile_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/data/repositories/restaurant_repo.dart';
@@ -13,7 +15,6 @@ import 'package:halalhub_restaurant/features/restaurant/screens/receipt_printer/
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_clips/bloc/vendor_clips_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_detail/bloc/vendor_detail_bloc.dart';
 import 'package:halalhub_restaurant/features/restaurant/screens/vendor_profile/widgets/vendor_profile_scaffold.dart';
-import 'package:halalhub_restaurant/core/services/vendor_notifications_ws_service.dart';
 
 @RoutePage()
 class VendorProfilePage extends ResponsiveSection {
@@ -31,6 +32,7 @@ class VendorProfilePage extends ResponsiveSection {
           getIt<OrdersRepository>(),
           getIt<VendorNotificationsWsService>(),
           getIt<ReceiptPrinterService>(),
+          getIt<Storage>(),
         ),
       ),
       BlocProvider(create: (_) => AddProductBloc(getIt<RestaurantRepo>())),
@@ -55,6 +57,7 @@ class VendorProfilePage extends ResponsiveSection {
           getIt<OrdersRepository>(),
           getIt<VendorNotificationsWsService>(),
           getIt<ReceiptPrinterService>(),
+          getIt<Storage>(),
         ),
       ),
       BlocProvider(create: (_) => AddProductBloc(getIt<RestaurantRepo>())),

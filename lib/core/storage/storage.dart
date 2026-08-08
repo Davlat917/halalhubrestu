@@ -44,4 +44,12 @@ class Storage {
   /// Chek dublikatini oldini olish (fon/FCM + WS).
   BaseStorage<String> get receiptPrintDedupJson =>
       BaseStorage(_box, 'receiptPrintDedupJson');
+
+  /// Customer continue banner ko‘rsatiladigan order id lar (JSON int list).
+  BaseStorage<String> get customerContinuedBannerOrderIdsJson =>
+      BaseStorage(_box, 'customerContinuedBannerOrderIdsJson');
+
+  /// Continue info banner yopilgan order id lar (JSON int list).
+  BaseStorage<String> get customerContinuedBannerDismissedIdsJson =>
+      BaseStorage(_box, 'customerContinuedBannerDismissedIdsJson');
 }
